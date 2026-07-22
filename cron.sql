@@ -24,10 +24,10 @@ select cron.schedule(
   '0 8 * * *',
   $$
   select net.http_post(
-    url := 'https://YOUR-PROJECT-REF.supabase.co/functions/v1/send-email',
+    url := 'https://iolbegisxrlidgfcynis.supabase.co/functions/v1/send-email',
     headers := jsonb_build_object(
       'Content-Type', 'application/json',
-      'Authorization', 'Bearer YOUR_SUPABASE_ANON_KEY'
+      'Authorization', 'Bearer sb_publishable_lUVh90g95lJ3mb5UVqE6KQ_209lOOB3'
     ),
     body := jsonb_build_object('action', 'overdueAlertCheck')
   );
