@@ -1282,8 +1282,8 @@
     // 2. Run supabase/schema.sql in the Supabase SQL editor.
     // 3. Paste your Project URL and anon public key below. Everyone who
     //    opens this page shares the same Supabase database.
-    const SUPABASE_URL = "PASTE_YOUR_SUPABASE_URL";
-    const SUPABASE_ANON_KEY = "PASTE_YOUR_SUPABASE_ANON_KEY";
+    const SUPABASE_URL = "https://iolbegisxrlidgfcynis.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlvbGJlZ2lzeHJsaWRnZmN5bmlzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ2OTEwNjEsImV4cCI6MjEwMDI2NzA2MX0.p_07pYISUqKJ8EPjj71WN5sibWHw2tmHk7Ou7VlB9nU";
     const CLOUD_SYNC_ENABLED = !SUPABASE_URL.startsWith("PASTE_YOUR");
     const CLOUD_POLL_MS = 60000; // safety-net poll in case a realtime event is missed
     const supabase = CLOUD_SYNC_ENABLED ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
