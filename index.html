@@ -136,18 +136,58 @@
   .btn-action:hover{opacity:.92}
 
   /* ---------- Admin-only visibility ---------- */
+  /* NOTE: as of the role-structure update, "is-admin" now represents the
+     "full system control" tier (Super Admin + EHS Manager) — the only roles
+     that can delete records or manage users/activity log. See ROLE_PERMS
+     in the script for the source of truth. */
   .admin-only{display:none}
   body.is-admin .admin-only{display:revert}
   body.is-admin li.admin-only{display:list-item}
   body.is-admin div.admin-only,
   body.is-admin span.admin-only{display:block}
 
-  /* ---------- Safety Officer + Admin visibility (can add, cannot delete) ---------- */
+  /* ---------- "Full add access" + Admin visibility (can add broadly, cannot delete) ---------- */
+  /* NOTE: "is-officer-up" now represents roles with addScope:'all' in
+     ROLE_PERMS (Super Admin, EHS Manager, EHS Officer, Plant Head). Used
+     for generic add-forms that aren't restricted to a narrow role list
+     (Waste, Extinguisher, CAPA, Audit, Legal, Blog, Contacts, Notices,
+     Site Stats). */
   .officer-only{display:none}
   body.is-officer-up .officer-only{display:revert}
   body.is-officer-up li.officer-only{display:list-item}
   body.is-officer-up div.officer-only,
   body.is-officer-up span.officer-only{display:block}
+
+  /* ---------- Narrow, module-specific add permissions ---------- */
+  /* These cover the roles whose add-access is limited to a short list of
+     modules (ERT, Department Head, Store, Security) plus the two mail
+     scopes (general mail vs. visitor-pass-only mail for Security). Any
+     role with full add access (is-officer-up) automatically satisfies
+     these too — see the JS permission engine. */
+  .incident-add-only,.hira-add-only,.ptw-add-only,.training-add-only,.ppe-add-only,.visitor-add-only,.mail-general-only,.mail-visitor-only{display:none}
+  body.is-incident-adder .incident-add-only{display:revert}
+  body.is-hira-adder .hira-add-only{display:revert}
+  body.is-ptw-adder .ptw-add-only{display:revert}
+  body.is-training-adder .training-add-only{display:revert}
+  body.is-ppe-adder .ppe-add-only{display:revert}
+  body.is-visitor-adder .visitor-add-only{display:revert}
+  body.is-mail-general .mail-general-only{display:revert}
+  body.is-mail-visitor .mail-visitor-only{display:revert}
+  body.is-incident-adder li.incident-add-only,
+  body.is-hira-adder li.hira-add-only,
+  body.is-ptw-adder li.ptw-add-only,
+  body.is-training-adder li.training-add-only,
+  body.is-ppe-adder li.ppe-add-only,
+  body.is-visitor-adder li.visitor-add-only{display:list-item}
+  body.is-incident-adder div.incident-add-only, body.is-incident-adder span.incident-add-only,
+  body.is-hira-adder div.hira-add-only, body.is-hira-adder span.hira-add-only,
+  body.is-ptw-adder div.ptw-add-only, body.is-ptw-adder span.ptw-add-only,
+  body.is-training-adder div.training-add-only, body.is-training-adder span.training-add-only,
+  body.is-ppe-adder div.ppe-add-only, body.is-ppe-adder span.ppe-add-only,
+  body.is-visitor-adder div.visitor-add-only, body.is-visitor-adder span.visitor-add-only,
+  body.is-mail-general div.mail-general-only, body.is-mail-general span.mail-general-only,
+  body.is-mail-visitor div.mail-visitor-only, body.is-mail-visitor span.mail-visitor-only
+  {display:block}
 
   /* ---------- Cards / layout ---------- */
   .card{
@@ -198,16 +238,40 @@
   .admin-only[style*="background"], div.admin-only{border-radius:14px !important}
 
   /* ---------- Gallery ---------- */
-  .gallery{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
-  .gallery-item{position:relative;border-radius:var(--radius-sm);overflow:hidden;box-shadow:var(--shadow-sm);aspect-ratio:1/1;cursor:pointer;background:#eef3f4;transition:transform .2s ease, box-shadow .2s ease}
-  .gallery-item:hover{transform:translateY(-3px);box-shadow:var(--shadow-md)}
-  .gallery-item img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .35s ease}
-  .gallery-item:hover img{transform:scale(1.08)}
-  .gallery-item .gal-del{position:absolute;top:6px;right:6px;background:rgba(20,20,20,.65);color:#fff;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;z-index:2}
-  .gallery-item .gal-del:hover{background:var(--danger)}
-  .gallery img{width:100%;height:130px;object-fit:cover;border-radius:12px;cursor:pointer;transition:transform .2s, box-shadow .2s;box-shadow:var(--shadow-sm)}
-  .gallery img:hover{transform:scale(1.03);box-shadow:var(--shadow-md)}
-  .gal-del{position:absolute;top:6px;right:6px;background:var(--danger);color:white;border-radius:50%;width:24px;height:24px;text-align:center;line-height:24px;cursor:pointer;font-weight:bold;font-size:12px;border:2px solid white;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+  .gallery{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+  .gallery-item{
+    position:relative;border-radius:16px;overflow:hidden;aspect-ratio:1/1;cursor:pointer;
+    background:linear-gradient(135deg,#eef3f4,#e3ebee);
+    box-shadow:0 3px 10px rgba(15,40,60,.10);
+    border:1px solid rgba(15,40,60,.06);
+    transition:transform .25s ease, box-shadow .25s ease;
+  }
+  .gallery-item:hover{transform:translateY(-4px) scale(1.01);box-shadow:0 10px 24px rgba(15,40,60,.20)}
+  .gallery-item img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .45s ease}
+  .gallery-item:hover img{transform:scale(1.1)}
+  /* Subtle bottom gradient + zoom-in cue on hover, so tiles feel curated rather than raw thumbnails */
+  .gallery-item::after{
+    content:'';position:absolute;left:0;right:0;bottom:0;height:45%;pointer-events:none;
+    background:linear-gradient(to top, rgba(6,20,32,.55), rgba(6,20,32,0));
+    opacity:0;transition:opacity .25s ease;
+  }
+  .gallery-item:hover::after{opacity:1}
+  .gallery-item .gal-view{
+    position:absolute;left:10px;bottom:8px;color:#fff;font-size:11px;font-weight:700;
+    letter-spacing:.3px;opacity:0;transform:translateY(4px);transition:opacity .25s ease, transform .25s ease;
+    display:flex;align-items:center;gap:5px;text-shadow:0 1px 3px rgba(0,0,0,.4);
+  }
+  .gallery-item:hover .gal-view{opacity:1;transform:translateY(0)}
+  .gallery-item .gal-del{
+    position:absolute;top:8px;right:8px;background:rgba(20,20,20,.55);color:#fff;width:26px;height:26px;
+    border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;
+    z-index:2;backdrop-filter:blur(2px);transition:background .2s ease, transform .2s ease;
+  }
+  .gallery-item .gal-del:hover{background:var(--danger);transform:scale(1.1)}
+  #galleryGrid:empty::before{
+    content:'No photos uploaded yet — be the first to add one above.';
+    grid-column:1/-1;display:block;text-align:center;color:var(--muted);padding:30px 10px;font-size:13.5px;
+  }
 
   /* ---------- Policy cards ---------- */
   .pdf-grid{display:grid;grid-template-columns:repeat(auto-fill, minmax(200px, 1fr));gap:16px;margin-top:16px}
@@ -462,7 +526,7 @@
             <div id="noticeBoardDisplay" class="notice-board-banner">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
                     <h3 style="margin:0; color:white;">🚨 Global Notice Board</h3>
-                    <div class="admin-only">
+                    <div class="officer-only">
                         <button class="primary btn-sm" onclick="document.getElementById('noticeBoardModal').style.display='flex'" style="background:white; color:var(--text-dark);">Manage</button>
                     </div>
                 </div>
@@ -471,7 +535,7 @@
             
             <div style="display:flex; justify-content:space-between; align-items:center;">
               <h2>Company-Wide HSE Overview</h2>
-              <div class="admin-only"><button class="btn-action btn-sm" onclick="openSiteStats()">Update Factory Stats</button></div>
+              <div class="officer-only"><button class="btn-action btn-sm" onclick="openSiteStats()">Update Factory Stats</button></div>
             </div>
             
             <div class="tiles" style="margin-top:15px">
@@ -518,7 +582,7 @@
         </div>
         <p class="small" style="color:var(--muted)">Hazard Identification and Risk Assessment Register</p>
 
-        <div class="officer-only" style="background:#f9f9f9;padding:15px;border-radius:8px;margin-bottom:15px;border-left:4px solid var(--accent-3);">
+        <div class="hira-add-only" style="background:#f9f9f9;padding:15px;border-radius:8px;margin-bottom:15px;border-left:4px solid var(--accent-3);">
           <h4>Add New Activity Assessment</h4>
           <form onsubmit="addHIRA(event)">
             <div class="two-cols">
@@ -544,6 +608,7 @@
         <div style="overflow-x:auto">
           <table id="hiraTable"><thead><tr><th>Factory</th><th>Activity</th><th>Hazard</th><th>Risk Level</th><th>Controls</th><th class="admin-only">Action</th></tr></thead><tbody></tbody></table>
         </div>
+        <button class="ghost-dark btn-sm" onclick="exportTableToExcel('hiraTable','HIRA_Register')" style="margin-top:10px">⬇ Excel</button>
       </div>
     </section>
 
@@ -591,6 +656,7 @@
         <div style="overflow-x:auto">
           <table id="wasteTable"><thead><tr><th>Date</th><th>Factory</th><th>Category</th><th>Entry</th><th>Qty (Kg)</th><th>Location / Vendor</th><th class="admin-only">Action</th></tr></thead><tbody></tbody></table>
         </div>
+        <button class="ghost-dark btn-sm" onclick="exportTableToExcel('wasteTable','Waste_Management_Register')" style="margin-top:10px">⬇ Excel</button>
       </div>
     </section>
 
@@ -712,6 +778,7 @@
               </form>
             </div>
             <div style="overflow-x:auto"><table id="auditTable"><thead><tr><th>Date</th><th>Factory</th><th>Auditor</th><th>Score</th><th class="admin-only">Action</th></tr></thead><tbody></tbody></table></div>
+            <button class="ghost-dark btn-sm" onclick="exportTableToExcel('auditTable','Audit_Register')" style="margin-top:10px">⬇ Excel</button>
         </div>
 
         <div id="complaintsContainer" style="display:none">
@@ -773,7 +840,7 @@
       <div class="card">
         <h2>Incident / Accident Register</h2>
 
-        <div class="officer-only" style="background:#f9f9f9;padding:15px;border-radius:8px;margin:15px 0;border-left:4px solid var(--accent);">
+        <div class="incident-add-only" style="background:#f9f9f9;padding:15px;border-radius:8px;margin:15px 0;border-left:4px solid var(--accent);">
           <h4>Report / Add Incident, Accident, Near Miss, or Unsafe Condition</h4>
           <form id="incForm" onsubmit="submitIncident(event)">
             <div class="two-cols"><input id="rName" placeholder="Reporter Name" required><input id="rLoc" placeholder="Specific Location (e.g. Shop Floor 2)" required></div>
@@ -801,14 +868,14 @@
         <div style="overflow-x:auto; margin-top:10px">
           <table id="dashTable"><thead><tr><th>Date</th><th>Type</th><th>Reporter</th><th>Unit/Factory</th><th>Location</th><th>Severity</th><th>Injured Person</th><th>Description</th><th class="admin-only">Action</th></tr></thead><tbody></tbody></table>
         </div>
-        <button class="primary" onclick="exportJSON()" style="margin-top:15px">Export Data</button>
+        <button class="ghost-dark btn-sm" onclick="exportTableToExcel('dashTable','Incident_Accident_Register')" style="margin-top:15px">⬇ Excel</button>
       </div>
     </section>
     
     <section id="ppe" style="display:none" class="container">
       <div class="card">
         <h2>PPE Inventory</h2>
-        <div class="officer-only" style="background:#f9f9f9;padding:15px;border-radius:8px;margin-bottom:15px;border-left:4px solid var(--accent);">
+        <div class="ppe-add-only" style="background:#f9f9f9;padding:15px;border-radius:8px;margin-bottom:15px;border-left:4px solid var(--accent);">
               <h4>Add / Restock Item</h4>
               <p class="small" style="text-transform:none;font-weight:500;margin:-4px 0 8px;">If the item name already exists, the quantity below is <b>added to its current stock</b> instead of creating a duplicate row.</p>
             <form onsubmit="addPPEItem(event)">
@@ -819,20 +886,22 @@
         </div>
         <h3>Current Stock</h3>
         <div style="overflow-x:auto; margin-bottom: 20px;">
-            <table id="ppeTable"><thead><tr><th>Item</th><th>Present Stock</th><th>Unit</th><th>Status</th><th class="officer-only">Actions</th></tr></thead><tbody></tbody></table>
+            <table id="ppeTable"><thead><tr><th>Item</th><th>Present Stock</th><th>Unit</th><th>Status</th><th class="ppe-add-only admin-only">Actions</th></tr></thead><tbody></tbody></table>
         </div>
+        <button class="ghost-dark btn-sm" onclick="exportTableToExcel('ppeTable','PPE_Inventory')" style="margin-bottom:10px">⬇ Excel</button>
         
         <h3 style="border-top:1px solid #eee; padding-top:15px;">PPE Issue Log</h3>
         <div style="overflow-x:auto; max-height:250px;">
              <table id="ppeLogTable"><thead><tr><th>Date</th><th>Employee</th><th>Emp ID</th><th>Item</th><th>Qty</th><th>Location</th><th class="admin-only">Action</th></tr></thead><tbody></tbody></table>
         </div>
+        <button class="ghost-dark btn-sm" onclick="exportTableToExcel('ppeLogTable','PPE_Issue_Log')" style="margin-top:10px">⬇ Excel</button>
       </div>
     </section>
 
     <section id="training" style="display:none" class="container">
       <div class="card">
         <h2>Safety Training</h2>
-        <div class="officer-only" style="background:#f9f9f9;padding:15px;border-radius:8px;margin-bottom:15px">
+        <div class="training-add-only" style="background:#f9f9f9;padding:15px;border-radius:8px;margin-bottom:15px">
             <h4>Define Module</h4>
             <form onsubmit="addModule(event)">
                  <div class="two-cols"><input id="modName" placeholder="Module Name" required><input id="modFreq" type="number" placeholder="Frequency (Months)" required></div>
@@ -840,9 +909,10 @@
             </form>
         </div>
         <h3>Modules</h3>
-        <table id="modTable" style="margin-bottom:20px"><thead><tr><th>Module</th><th>Frequency</th><th class="admin-only">Actions</th></tr></thead><tbody></tbody></table>
+        <table id="modTable" style="margin-bottom:10px"><thead><tr><th>Module</th><th>Frequency</th><th class="admin-only">Actions</th></tr></thead><tbody></tbody></table>
+        <button class="ghost-dark btn-sm" onclick="exportTableToExcel('modTable','Training_Modules')" style="margin-bottom:15px">⬇ Excel</button>
         
-        <div class="officer-only" style="background:#f9f9f9;padding:15px;border-radius:8px;margin-bottom:15px">
+        <div class="training-add-only" style="background:#f9f9f9;padding:15px;border-radius:8px;margin-bottom:15px">
              <h4>Record Completion</h4>
             <form onsubmit="addRecord(event)">
                 <div class="two-cols"><input id="recName" placeholder="Employee Name" required><select id="recMod" required><option value="">Select Module</option></select></div>
@@ -851,12 +921,13 @@
         </div>
         <h3>Records</h3>
          <table id="recTable"><thead><tr><th>Employee</th><th>Module</th><th>Date</th><th>Next Due</th><th class="admin-only">Actions</th></tr></thead><tbody></tbody></table>
+        <button class="ghost-dark btn-sm" onclick="exportTableToExcel('recTable','Training_Records')" style="margin-top:10px">⬇ Excel</button>
 
         <div class="visitor-card" style="margin-top:30px; border-top: 2px solid #eee; padding-top:20px;">
           <h3>Visitor Safety Induction</h3>
           <p style="margin:6px 0 12px;color:var(--muted)">Record visitor induction, issue PPE and generate visitor induction certificate.</p>
           <div style="display:grid; gap:8px; margin-bottom:12px;">
-            <form id="visitorForm" class="officer-only" onsubmit="addVisitor(event)">
+            <form id="visitorForm" class="visitor-add-only" onsubmit="addVisitor(event)">
               <div class="two-cols">
                 <input id="visName" placeholder="Visitor Name" required>
                 <input id="visCompany" placeholder="Company Name" required>
@@ -895,6 +966,7 @@
               <tbody></tbody>
             </table>
           </div>
+          <button class="ghost-dark btn-sm" onclick="exportTableToExcel('visitorTable','Visitor_Register')" style="margin-top:10px">⬇ Excel</button>
         </div>
       </div>
     </section>
@@ -904,7 +976,7 @@
         <div style="display:flex; justify-content:space-between; align-items:center;">
           <h2>Permit To Work (PTW)</h2>
           <div>
-            <button class="primary officer-only" onclick="openPTWModal()">Create PTW</button>
+            <button class="primary ptw-add-only" onclick="openPTWModal()">Create PTW</button>
             <button class="ghost-dark" onclick="renderPTWList()">Refresh</button>
             <button class="ghost-dark" onclick="renderPTWList('all')">All</button>
             <button class="ghost-dark" onclick="renderPTWList('pending')">Pending</button>
@@ -921,10 +993,11 @@
           </div>
           <div style="overflow-x:auto;">
             <table id="ptwTable">
-              <thead><tr><th>ID</th><th>Date</th><th>Type</th><th>Factory</th><th>Location</th><th>Requester</th><th>Status</th><th class="officer-only">Actions</th></tr></thead>
+              <thead><tr><th>ID</th><th>Date</th><th>Type</th><th>Factory</th><th>Location</th><th>Requester</th><th>Status</th><th class="ptw-add-only">Actions</th></tr></thead>
               <tbody></tbody>
              </table>
           </div>
+          <button class="ghost-dark btn-sm" onclick="exportTableToExcel('ptwTable','PTW_Register')" style="margin-top:10px">⬇ Excel</button>
         </div>
       </div>
     </section>
@@ -989,7 +1062,7 @@
         <h2>📰 EHS Blog / News</h2>
         <p class="small" style="color:var(--muted);text-transform:none;font-weight:500;">Safety campaigns, announcements and updates from the HSE team.</p>
 
-        <div class="admin-only" style="background:#f9f9f9;padding:15px;border-radius:8px;margin-bottom:18px;border-left:4px solid var(--accent-3);">
+        <div class="officer-only" style="background:#f9f9f9;padding:15px;border-radius:8px;margin-bottom:18px;border-left:4px solid var(--accent-3);">
           <h4>Publish New Post</h4>
           <form onsubmit="addBlogPost(event)">
             <input id="blogTitle" placeholder="Post Title" required style="margin-bottom:8px">
@@ -1552,34 +1625,77 @@
 
     // --- STANDARD APP LOGIC ---
 
-    // Role structure: each role carries a display label + icon and an access
-    // "tier". Tier drives permissions app-wide (same two-level model as
-    // before: 'admin' = full control incl. delete/user-management,
-    // 'officer' = can add/edit but not delete or manage users, 'user' = base
-    // access). 'admin' and 'safetyofficer' are kept as legacy aliases so
-    // accounts created before this change keep working without a data
-    // migration.
+    // Role structure: each role carries a display label + icon (ROLE_META)
+    // plus a detailed permission profile (ROLE_PERMS). 'admin' and
+    // 'safetyofficer'/'user' are kept as legacy aliases so accounts created
+    // before this change keep working without a data migration.
     const ROLE_META = {
-      admin:         { label: 'Super Admin',         icon: '👑', tier: 'admin' },
-      ehsmanager:    { label: 'EHS Manager',         icon: '⛑️', tier: 'officer' },
-      ehsofficer:    { label: 'EHS Officer',         icon: '👷', tier: 'officer' },
-      ert:           { label: 'ERT Member',          icon: '🛡️', tier: 'officer' },
-      planthead:     { label: 'Plant Head',          icon: '💼', tier: 'officer' },
-      depthead:      { label: 'Department Head',    icon: '🏭', tier: 'officer' },
-      supervisor:    { label: 'Supervisor',          icon: '👨‍🔧', tier: 'officer' },
-      employee:      { label: 'Employee',            icon: '👷', tier: 'user' },
-      store:         { label: 'Store',               icon: '📦', tier: 'officer' },
-      security:      { label: 'Security Officer',    icon: '👮🏻‍♂️', tier: 'officer' },
-      auditor:       { label: 'Auditor',             icon: '👁️', tier: 'officer' },
-      topmanagement: { label: 'Top Management',      icon: '👨‍💼', tier: 'user' },
+      admin:         { label: 'Super Admin' },
+      ehsmanager:    { label: 'EHS Manager' },
+      ehsofficer:    { label: 'EHS Officer' },
+      ert:           { label: 'ERT Member' },
+      planthead:     { label: 'Plant Head' },
+      depthead:      { label: 'Department Head' },
+      supervisor:    { label: 'Supervisor' },
+      employee:      { label: 'Employee' },
+      store:         { label: 'Store' },
+      security:      { label: 'Security Officer' },
+      auditor:       { label: 'Auditor' },
+      topmanagement: { label: 'Top Management' },
       // Legacy values from before the role-structure update:
-      safetyofficer: { label: 'EHS Officer',         icon: '👷', tier: 'officer' },
-      user:          { label: 'Employee',            icon: '👷', tier: 'user' }
+      safetyofficer: { label: 'EHS Officer' },
+      user:          { label: 'Employee' }
     };
-    function getRoleMeta(roleValue) { return ROLE_META[roleValue] || { label: roleValue || 'Unknown', icon: '❔', tier: 'user' }; }
-    function getRoleLabel(roleValue) { const m = getRoleMeta(roleValue); return `${m.icon} ${m.label}`; }
-    function isAdminTier(user) { return !!(user && getRoleMeta(user.role).tier === 'admin'); }
-    function isOfficerTierUp(user) { return isAdminTier(user) || !!(user && getRoleMeta(user.role).tier === 'officer'); }
+    const ROLE_ICON = {
+      admin:'👑', ehsmanager:'⛑️', ehsofficer:'👷', ert:'🛡️', planthead:'💼',
+      depthead:'🏭', supervisor:'👨‍🔧', employee:'👷', store:'📦', security:'👮🏻‍♂️',
+      auditor:'👁️', topmanagement:'👨‍💼', safetyofficer:'👷', user:'👷'
+    };
+
+    // addScope: 'all' = can add data anywhere in the portal; an array names
+    //           the specific modules a role may add/manage data in.
+    // delete:   can delete records anywhere (Super Admin + EHS Manager only).
+    // manageSystem: can access Manage Users / Activity Log (Super Admin + EHS Manager only).
+    // mail:     true = can use every "send email" feature; an array names
+    //           the specific mail features allowed (Security = visitor pass only).
+    // changePassword: can change their OWN password via the self-service flow.
+    //           (Only the default Admin/001 can ever view or reset *other* users'
+    //           passwords — that is handled separately by currentUser.isMaster.)
+    const ROLE_PERMS = {
+      admin:         { addScope: 'all', delete: true,  manageSystem: true,  mail: true,           changePassword: true  }, // Super Admin
+      ehsmanager:    { addScope: 'all', delete: true,  manageSystem: true,  mail: true,           changePassword: true }, // EHS Manager
+      ehsofficer:    { addScope: 'all', delete: false, manageSystem: false, mail: false,          changePassword: true  }, // EHS Officer
+      ert:           { addScope: ['incident','ptw'],                    delete: false, manageSystem: false, mail: false, changePassword: true }, // ERT Member
+      planthead:     { addScope: 'all', delete: false, manageSystem: false, mail: true,           changePassword: true }, // Plant Head
+      depthead:      { addScope: ['incident','hira','ptw','training'], delete: false, manageSystem: false, mail: false, changePassword: true }, // Department Head
+      supervisor:    { addScope: [],    delete: false, manageSystem: false, mail: false,          changePassword: true  }, // view only
+      employee:      { addScope: [],    delete: false, manageSystem: false, mail: false,          changePassword: true  }, // view only
+      store:         { addScope: ['ppe'],               delete: false, manageSystem: false, mail: false, changePassword: true }, // Store
+      security:      { addScope: ['visitor'],           delete: false, manageSystem: false, mail: ['visitor'], changePassword: true }, // Security Officer
+      auditor:       { addScope: [],    delete: false, manageSystem: false, mail: false,          changePassword: true  }, // view only
+      topmanagement: { addScope: [],    delete: false, manageSystem: false, mail: false,          changePassword: true  }, // view only
+      // Legacy values from before the role-structure update:
+      safetyofficer: { addScope: 'all', delete: false, manageSystem: false, mail: false, changePassword: true },
+      user:          { addScope: [],    delete: false, manageSystem: false, mail: false, changePassword: true }
+    };
+    function getRolePerms(user) { return (user && ROLE_PERMS[user.role]) || ROLE_PERMS.user; }
+    function getRoleMeta(roleValue) { return ROLE_META[roleValue] || { label: roleValue || 'Unknown' }; }
+    function getRoleLabel(roleValue) { return `${ROLE_ICON[roleValue] || '❔'} ${getRoleMeta(roleValue).label}`; }
+    // Super Admin + EHS Manager: delete rights and Manage Users/Activity Log access.
+    function isAdminTier(user) { const p = getRolePerms(user); return !!(p.delete || p.manageSystem); }
+    // Anyone with unrestricted ("all") add-access across every module — a superset of isAdminTier.
+    function isOfficerTierUp(user) { return isAdminTier(user) || getRolePerms(user).addScope === 'all'; }
+    function canAddModule(user, mod) {
+      const scope = getRolePerms(user).addScope;
+      if (scope === 'all') return true;
+      return Array.isArray(scope) && scope.includes(mod);
+    }
+    function canMailModule(user, mod) {
+      const mail = getRolePerms(user).mail;
+      if (mail === true) return true;
+      return Array.isArray(mail) && mail.includes(mod);
+    }
+    function canChangeOwnPassword(user) { return !!getRolePerms(user).changePassword; }
 
     let currentUser = JSON.parse(sessionStorage.getItem('hse_user')) || null;
     let myChart = null;
@@ -1613,10 +1729,9 @@
         const badge = document.getElementById('userBadge');
         const chip = document.getElementById('userChip');
         const isAdmin = isAdminTier(currentUser);
-        // Officer-tier roles can add/view but not delete — everything below
-        // "admin" but above plain "user". Admins get this tier too since
-        // they're a superset. Which roles fall into which tier is defined
-        // once, in ROLE_META, above.
+        // "Full add access" roles (Super Admin, EHS Manager, EHS Officer,
+        // Plant Head) — everything below "admin" but above plain "user".
+        // Admins get this tier too since they're a superset. See ROLE_PERMS.
         const isOfficerUp = isOfficerTierUp(currentUser);
         // Toggle a body class instead of forcing inline display:block on every
         // .admin-only element — the old approach broke table cells/rows/list
@@ -1624,12 +1739,22 @@
         // handles per-tag-type visibility via body.is-admin .admin-only.
         document.body.classList.toggle('is-admin', isAdmin);
         document.body.classList.toggle('is-officer-up', isOfficerUp);
+        // Narrow, module-specific add permissions (ERT / Dept Head / Store / Security)
+        document.body.classList.toggle('is-incident-adder', canAddModule(currentUser, 'incident'));
+        document.body.classList.toggle('is-hira-adder', canAddModule(currentUser, 'hira'));
+        document.body.classList.toggle('is-ptw-adder', canAddModule(currentUser, 'ptw'));
+        document.body.classList.toggle('is-training-adder', canAddModule(currentUser, 'training'));
+        document.body.classList.toggle('is-ppe-adder', canAddModule(currentUser, 'ppe'));
+        document.body.classList.toggle('is-visitor-adder', canAddModule(currentUser, 'visitor'));
+        // Mail permissions (general vs. visitor-pass-only for Security)
+        document.body.classList.toggle('is-mail-general', canMailModule(currentUser, 'general'));
+        document.body.classList.toggle('is-mail-visitor', canMailModule(currentUser, 'visitor'));
         if (currentUser) {
             badge.innerText = `${getRoleLabel(currentUser.role)}: ${currentUser.username}`;
             document.getElementById('userAvatar').innerText = (currentUser.username || '?').trim().charAt(0).toUpperCase();
             chip.style.display = 'flex';
             document.getElementById('loginBtn').style.display = 'none';
-            document.getElementById('changePasswordBtn').style.display = 'block';
+            document.getElementById('changePasswordBtn').style.display = canChangeOwnPassword(currentUser) ? 'block' : 'none';
             document.getElementById('logoutBtn').style.display = 'block';
         } else {
             badge.innerText = '';
@@ -1675,6 +1800,7 @@
     // --- Change Password (any logged-in user: admin / safety officer / user) ---
     function openChangePassword() {
         if (!currentUser) { showLogin(); return; }
+        if (!canChangeOwnPassword(currentUser)) { alert('Your role cannot change its own password. Please contact the default Admin (Employee ID 001) to have it reset.'); return; }
         document.getElementById('cpCurrent').value = '';
         document.getElementById('cpNew').value = '';
         document.getElementById('cpConfirm').value = '';
@@ -1692,6 +1818,7 @@
     function submitChangePassword(e) {
         e.preventDefault();
         if (!currentUser) { showLogin(); return; }
+        if (!canChangeOwnPassword(currentUser)) { alert('Your role cannot change its own password. Please contact the default Admin (Employee ID 001) to have it reset.'); return; }
         const cur = document.getElementById('cpCurrent').value;
         const next = document.getElementById('cpNew').value;
         const confirmPass = document.getElementById('cpConfirm').value;
@@ -1915,7 +2042,7 @@
       tbody.innerHTML = list.map(n => `
         <tr><td>${escapeHtml(n.title)}</td><td>${n.active ? 'Yes' : 'No'}</td>
           <td><button class="btn-action btn-sm" onclick="toggleNoticeActive(${n.id})">${n.active?'Deactivate':'Activate'}</button>
-          <button class="btn-danger btn-sm" onclick="deleteNotice(${n.id})">Delete</button></td></tr>
+          <button class="btn-danger btn-sm admin-only" onclick="deleteNotice(${n.id})">Delete</button></td></tr>
       `).join('');
     }
     function toggleNoticeActive(id){
@@ -2385,7 +2512,7 @@
           <td>${targetCell}</td>
           <td>${respCell}</td>
           <td style="white-space:nowrap">
-            <button class="btn-action btn-sm admin-only" onclick="openEmailComplaint(${x.id})">✉ Mail</button>
+            <button class="btn-action btn-sm mail-general-only" onclick="openEmailComplaint(${x.id})">✉ Mail</button>
             <button class="btn-danger btn-sm admin-only" onclick="deleteComplaint(${x.id})">Del</button>
           </td>
         </tr>`;
@@ -2658,8 +2785,8 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
                 <td>${escapeHtml(p.unit)}</td>
                 <td><span class="status-badge ${p.qty <= p.reorder ? 'status-expired' : 'status-safe'}">${p.qty <= p.reorder ? 'Low' : 'OK'}</span></td>
                 <td>
-                    <button class="btn-action btn-sm officer-only" onclick="initiatePPEIssue(${p.id})">Issue</button>
-                    <button class="btn-action btn-sm officer-only" onclick="restockPPEItem(${p.id})">+ Stock</button>
+                    <button class="btn-action btn-sm ppe-add-only" onclick="initiatePPEIssue(${p.id})">Issue</button>
+                    <button class="btn-action btn-sm ppe-add-only" onclick="restockPPEItem(${p.id})">+ Stock</button>
                     <button class="btn-danger btn-sm admin-only" onclick="deletePPEItem(${p.id})">Delete</button>
                 </td>
             </tr>
@@ -2831,7 +2958,7 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
             <tr><td>${escapeHtml(v.name)}</td><td>${escapeHtml(v.company)}</td><td>${escapeHtml(v.mobile||'')}</td>
               <td>${escapeHtml(v.person||'-')}</td><td>${escapeHtml(v.time)}</td><td>${escapeHtml(v.brief||'No')}</td><td>${escapeHtml(v.ppe||'')}</td><td>${escapeHtml(v.factory)}</td>
               <td style="white-space:nowrap"><button class="ghost-dark btn-sm" onclick="reprintVisitorCertificate(${v.id})">🖨️ Certificate</button>
-              <button class="btn-action btn-sm officer-only" onclick="openMailVisitorPass(${v.id})">✉ Mail Pass</button>
+              <button class="btn-action btn-sm mail-visitor-only" onclick="openMailVisitorPass(${v.id})">✉ Mail Pass</button>
               <button class="btn-danger btn-sm admin-only" onclick="deleteVisitor(${v.id})">Delete</button></td></tr>
         `).join('') || '<tr><td colspan="9" style="text-align:center;color:grey">No visitors logged yet.</td></tr>';
     }
@@ -3038,8 +3165,8 @@ TARSONS HSE Portal`;
         if (keyword) list = list.filter(x => [x.requester, x.location, x.type].some(v => (v||'').toLowerCase().includes(keyword)));
         document.querySelector('#ptwTable tbody').innerHTML = list.map(p => `
             <tr><td>${escapeHtml(p.id)}</td><td>${escapeHtml(p.date)}</td><td>${escapeHtml(p.type)}</td><td>${escapeHtml(p.factory)}</td><td>${escapeHtml(p.location||'')}</td><td>${escapeHtml(p.requester||'')}</td><td>${escapeHtml(p.status||'Pending')}</td>
-              <td><button class="btn-action btn-sm officer-only" onclick="updatePTWStatus('${p.id}','Approved')">Approve</button>
-              <button class="btn-danger btn-sm officer-only" onclick="updatePTWStatus('${p.id}','Rejected')">Reject</button>
+              <td><button class="btn-action btn-sm ptw-add-only" onclick="updatePTWStatus('${p.id}','Approved')">Approve</button>
+              <button class="btn-danger btn-sm ptw-add-only" onclick="updatePTWStatus('${p.id}','Rejected')">Reject</button>
               <button class="btn-danger btn-sm admin-only" onclick="deletePTW('${p.id}')" style="margin-left:4px">X</button></td></tr>
         `).join('');
         refreshStats();
@@ -3222,23 +3349,6 @@ TARSONS HSE Portal`;
     }
     function deleteWaste(id){ if(!confirm('Delete waste record?')) return; LocalDB.set('waste', LocalDB.get('waste', []).filter(w => w.id !== id)); renderWaste(); }
 
-
-    function exportJSON() {
-        const data = { 
-            reports: LocalDB.get('reports'), factories: LocalDB.get('factories'), notices: LocalDB.get('notices'), 
-            ppe: LocalDB.get('ppe'), visitors: LocalDB.get('visitors'), ptw: LocalDB.get('ptw'), 
-            legal: LocalDB.get('legal'), extinguishers: LocalDB.get('extinguishers'), modules: LocalDB.get('modules'), 
-            records: LocalDB.get('records'), gallery: LocalDB.get('gallery'), policies: LocalDB.get('policies'), 
-            users: LocalDB.get('users'), audits: LocalDB.get('audits'),
-            hira: LocalDB.get('hira'), waste: LocalDB.get('waste'), ppe_logs: LocalDB.get('ppe_logs'),
-            complaints: LocalDB.get('complaints'), blog: LocalDB.get('blog')
-        };
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], {type:'application/json'}));
-        a.download = `HSE_Backup_${Date.now()}.json`;
-        a.click();
-    }
-
     function toggleMobileMenu() {
         const m = document.getElementById('mobileMenu');
         const btn = document.getElementById('mobileMenuBtn');
@@ -3400,9 +3510,8 @@ TARSONS HSE Portal`;
       if(!grid) return;
       grid.innerHTML = photos.map((p, i)=>{
         const raw = p.url || p.data;
-        return `<div class="gallery-item"><img src="${driveImageSrc(raw)}" data-fallback="${driveImageFallbackSrc(raw)}" onerror="if(this.dataset.fallback && this.src!==this.dataset.fallback){this.src=this.dataset.fallback}" loading="lazy" onclick="openFullscreen(${i})">${isAdmin?`<div class="gal-del" onclick="event.stopPropagation();delPhoto(${p.id})">X</div>`:''}</div>`;
-      }).join('') ||
-        '<p style="color:grey;grid-column:1/-1;text-align:center;">No photos uploaded yet.</p>';
+        return `<div class="gallery-item"><img src="${driveImageSrc(raw)}" data-fallback="${driveImageFallbackSrc(raw)}" onerror="if(this.dataset.fallback && this.src!==this.dataset.fallback){this.src=this.dataset.fallback}" loading="lazy" onclick="openFullscreen(${i})"><span class="gal-view">🔍 View</span>${isAdmin?`<div class="gal-del" onclick="event.stopPropagation();delPhoto(${p.id})">X</div>`:''}</div>`;
+      }).join('');
     }
 
     function updateFsCounter(){
@@ -3766,7 +3875,6 @@ TARSONS HSE Portal`;
     window.printHIRA = printHIRA;
     window.addWaste = addWaste;
     window.deleteWaste = deleteWaste;
-    window.exportJSON = exportJSON;
     window.toggleMobileMenu = toggleMobileMenu;
     window.openPolicyFile = openPolicyFile;
     window.openFullscreen = openFullscreen;
