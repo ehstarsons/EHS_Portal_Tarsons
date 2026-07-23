@@ -738,9 +738,18 @@
                    <input id="newUsername" placeholder="Name" required>
                   <select id="newRole" required>
                     <option value="">Select Role</option>
-                    <option value="admin">admin</option>
-                    <option value="safetyofficer">safety officer</option>
-                    <option value="user">user</option>
+                    <option value="admin">👑 Super Admin</option>
+                    <option value="ehsmanager">⛑️ EHS Manager</option>
+                    <option value="ehsofficer">👷 EHS Officer</option>
+                    <option value="ert">🛡️ ERT Member</option>
+                    <option value="planthead">💼 Plant Head</option>
+                    <option value="depthead">🏭 Department Head</option>
+                    <option value="supervisor">👨‍🔧 Supervisor</option>
+                    <option value="employee">👷 Employee</option>
+                    <option value="store">📦 Store</option>
+                    <option value="security">👮🏻‍♂️ Security Officer</option>
+                    <option value="auditor">👁️ Auditor</option>
+                    <option value="topmanagement">👨‍💼 Top Management</option>
                   </select>
                 </div>
                 <div class="two-cols" style="margin-top:10px">
@@ -1543,6 +1552,35 @@
 
     // --- STANDARD APP LOGIC ---
 
+    // Role structure: each role carries a display label + icon and an access
+    // "tier". Tier drives permissions app-wide (same two-level model as
+    // before: 'admin' = full control incl. delete/user-management,
+    // 'officer' = can add/edit but not delete or manage users, 'user' = base
+    // access). 'admin' and 'safetyofficer' are kept as legacy aliases so
+    // accounts created before this change keep working without a data
+    // migration.
+    const ROLE_META = {
+      admin:         { label: 'Super Admin',         icon: '👑', tier: 'admin' },
+      ehsmanager:    { label: 'EHS Manager',         icon: '⛑️', tier: 'officer' },
+      ehsofficer:    { label: 'EHS Officer',         icon: '👷', tier: 'officer' },
+      ert:           { label: 'ERT Member',          icon: '🛡️', tier: 'officer' },
+      planthead:     { label: 'Plant Head',          icon: '💼', tier: 'officer' },
+      depthead:      { label: 'Department Head',    icon: '🏭', tier: 'officer' },
+      supervisor:    { label: 'Supervisor',          icon: '👨‍🔧', tier: 'officer' },
+      employee:      { label: 'Employee',            icon: '👷', tier: 'user' },
+      store:         { label: 'Store',               icon: '📦', tier: 'officer' },
+      security:      { label: 'Security Officer',    icon: '👮🏻‍♂️', tier: 'officer' },
+      auditor:       { label: 'Auditor',             icon: '👁️', tier: 'officer' },
+      topmanagement: { label: 'Top Management',      icon: '👨‍💼', tier: 'user' },
+      // Legacy values from before the role-structure update:
+      safetyofficer: { label: 'EHS Officer',         icon: '👷', tier: 'officer' },
+      user:          { label: 'Employee',            icon: '👷', tier: 'user' }
+    };
+    function getRoleMeta(roleValue) { return ROLE_META[roleValue] || { label: roleValue || 'Unknown', icon: '❔', tier: 'user' }; }
+    function getRoleLabel(roleValue) { const m = getRoleMeta(roleValue); return `${m.icon} ${m.label}`; }
+    function isAdminTier(user) { return !!(user && getRoleMeta(user.role).tier === 'admin'); }
+    function isOfficerTierUp(user) { return isAdminTier(user) || !!(user && getRoleMeta(user.role).tier === 'officer'); }
+
     let currentUser = JSON.parse(sessionStorage.getItem('hse_user')) || null;
     let myChart = null;
     let currentPhotoIndex = -1;
@@ -1574,10 +1612,12 @@
     function checkAuth() {
         const badge = document.getElementById('userBadge');
         const chip = document.getElementById('userChip');
-        const isAdmin = !!(currentUser && currentUser.role === 'admin');
-        // Safety Officers can add/view but not delete — everything below "admin"
-        // but above plain "user". Admins get this tier too since they're a superset.
-        const isOfficerUp = isAdmin || !!(currentUser && currentUser.role === 'safetyofficer');
+        const isAdmin = isAdminTier(currentUser);
+        // Officer-tier roles can add/view but not delete — everything below
+        // "admin" but above plain "user". Admins get this tier too since
+        // they're a superset. Which roles fall into which tier is defined
+        // once, in ROLE_META, above.
+        const isOfficerUp = isOfficerTierUp(currentUser);
         // Toggle a body class instead of forcing inline display:block on every
         // .admin-only element — the old approach broke table cells/rows/list
         // items by forcing block display on <td>/<li> elements. CSS now
@@ -1585,7 +1625,7 @@
         document.body.classList.toggle('is-admin', isAdmin);
         document.body.classList.toggle('is-officer-up', isOfficerUp);
         if (currentUser) {
-            badge.innerText = `${currentUser.role.toUpperCase()}: ${currentUser.username}`;
+            badge.innerText = `${getRoleLabel(currentUser.role)}: ${currentUser.username}`;
             document.getElementById('userAvatar').innerText = (currentUser.username || '?').trim().charAt(0).toUpperCase();
             chip.style.display = 'flex';
             document.getElementById('loginBtn').style.display = 'none';
@@ -1674,7 +1714,7 @@
         if (users[idx].password !== cur) { alert('Current password is incorrect'); return; }
         users[idx].password = next;
         LocalDB.set('users', users);
-        logActivity('Password changed', `${currentUser.username} (${currentUser.role})`);
+        logActivity('Password changed', `${currentUser.username} (${getRoleLabel(currentUser.role)})`);
         alert('Password updated successfully.');
         closeChangePassword();
     }
@@ -2128,7 +2168,7 @@
         return `
             <li style="display:flex; justify-content:space-between; align-items:center; padding:10px; border-bottom:1px solid #eee">
                 <div style="display:flex; flex-direction:column;">
-                    <span><b>${escapeHtml(u.user)}</b> (${escapeHtml(u.role)})</span>
+                    <span><b>${escapeHtml(u.user)}</b> (${escapeHtml(getRoleLabel(u.role))})</span>
                     <span style="font-size:11px; color:#666;">ID: ${escapeHtml(u.empId || '-')}</span>
                     ${passCol}
                 </div>
@@ -2152,7 +2192,7 @@
       }
       users.push({ id: Date.now() + Math.floor(Math.random()*1000), user: username, role, empId, password });
       LocalDB.set('users', users);
-      logActivity('User added', `${username} (${role})`);
+      logActivity('User added', `${username} (${getRoleLabel(role)})`);
       e.target.reset();
       renderUsers();
     }
@@ -2166,7 +2206,7 @@
     }
 
     function switchAdminTab(t) {
-        if ((t === 'activity' || t === 'users') && !(currentUser && currentUser.role === 'admin')) t = 'ext';
+        if ((t === 'activity' || t === 'users') && !isAdminTier(currentUser)) t = 'ext';
         const tabs = ['ext','capa','audit','complaints','activity','users'];
         const idMap = { ext:'tabExt', capa:'tabCapa', audit:'tabAudit', complaints:'tabComplaints', activity:'tabActivity', users:'tabUsers' };
         const containerMap = { ext:'extContainer', capa:'capaContainer', audit:'auditContainer', complaints:'complaintsContainer', activity:'activityContainer', users:'usersContainer' };
@@ -2319,8 +2359,8 @@
       const tbody = document.querySelector('#complaintsTable tbody');
       if (!tbody) return;
       const list = LocalDB.get('complaints', []);
-      const isAdmin = currentUser && currentUser.role === 'admin';
-      const isOfficerUp = isAdmin || (currentUser && currentUser.role === 'safetyofficer');
+      const isAdmin = isAdminTier(currentUser);
+      const isOfficerUp = isOfficerTierUp(currentUser);
       tbody.innerHTML = list.map(x => {
         const st = complaintStatusInfo(x);
         const statusCell = isOfficerUp ? `
@@ -3304,7 +3344,7 @@ TARSONS HSE Portal`;
     async function renderPolicies(){
       const list = LocalDB.get('policies', []);
       const gallery = document.getElementById('policyGallery');
-      const isAdmin = currentUser && currentUser.role==='admin';
+      const isAdmin = isAdminTier(currentUser);
       if(!gallery) return;
       gallery.innerHTML = list.map(p => {
         const rule = getPolicyIcon(p.title);
@@ -3356,7 +3396,7 @@ TARSONS HSE Portal`;
     async function renderGallery(){
       const photos = LocalDB.get('gallery', []);
       const grid = document.getElementById('galleryGrid');
-      const isAdmin = currentUser && currentUser.role==='admin';
+      const isAdmin = isAdminTier(currentUser);
       if(!grid) return;
       grid.innerHTML = photos.map((p, i)=>{
         const raw = p.url || p.data;
@@ -3425,7 +3465,7 @@ TARSONS HSE Portal`;
       const posts = LocalDB.get('blog', []).slice().sort((a,b) => new Date(b.date) - new Date(a.date));
       const grid = document.getElementById('blogGrid');
       if (!grid) return;
-      const isAdmin = currentUser && currentUser.role === 'admin';
+      const isAdmin = isAdminTier(currentUser);
       grid.innerHTML = posts.map(p => {
         const img = p.photo
           ? `<img class="blog-card-img" src="${driveImageSrc(p.photo)}" data-fallback="${driveImageFallbackSrc(p.photo)}" onerror="if(this.dataset.fallback && this.src!==this.dataset.fallback){this.src=this.dataset.fallback}" loading="lazy">`
