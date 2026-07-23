@@ -214,6 +214,21 @@
   .policy-card{background:white;border-radius:14px;overflow:hidden;border:1px solid var(--border);transition:transform .2s, box-shadow .2s;position:relative;cursor:pointer;display:flex;flex-direction:column;height:100%;box-shadow:var(--shadow-sm)}
   .policy-card:hover{transform:translateY(-5px);box-shadow:var(--shadow-md)}
   .policy-icon{height:100px;background:linear-gradient(135deg,#f4f8f7,#eaf3f1);display:flex;align-items:center;justify-content:center;font-size:40px}
+  .policy-icon.pol-fire{background:linear-gradient(135deg,#fff1ec,#ffe0d1)}
+  .policy-icon.pol-electrical{background:linear-gradient(135deg,#fff9e0,#fff0b8)}
+  .policy-icon.pol-chemical{background:linear-gradient(135deg,#f1ecff,#e3d9ff)}
+  .policy-icon.pol-ppe{background:linear-gradient(135deg,#e9f3ff,#d6e9ff)}
+  .policy-icon.pol-environment{background:linear-gradient(135deg,#eafff0,#d3f7de)}
+  .policy-icon.pol-waste{background:linear-gradient(135deg,#e9fff5,#d0f7e8)}
+  .policy-icon.pol-health{background:linear-gradient(135deg,#ffecf0,#ffd9e2)}
+  .policy-icon.pol-emergency{background:linear-gradient(135deg,#ffece9,#ffd4cd)}
+  .policy-icon.pol-vehicle{background:linear-gradient(135deg,#eef2ff,#dbe3ff)}
+  .policy-icon.pol-quality{background:linear-gradient(135deg,#e9fbff,#d3f4fb)}
+  .policy-icon.pol-training{background:linear-gradient(135deg,#f5f0ff,#e9dcff)}
+  .policy-icon.pol-hygiene{background:linear-gradient(135deg,#e6fbff,#c9f2fd)}
+  .policy-icon.pol-audit{background:linear-gradient(135deg,#f2f2f2,#e2e2e2)}
+  .policy-icon.pol-security{background:linear-gradient(135deg,#eef7ff,#d7ecff)}
+  .policy-icon.pol-hr{background:linear-gradient(135deg,#fff4e6,#ffe6c2)}
   .policy-content{padding:15px;flex-grow:1}
   .policy-title{font-weight:700;color:var(--accent-3);font-size:15px;margin-bottom:5px}
   .policy-sub{font-size:12px;color:var(--muted)}
@@ -236,13 +251,13 @@
   tbody tr:hover{background:rgba(18,183,106,.05)}
 
   /* ---------- Modals ---------- */
-  #loginOverlay, #fullscreenModal, #siteStatsModal, #noticeBoardModal, #ptwModal, #notificationModal, #ppeIssueModal, #qrModal, #emailComplaintModal, #blogReadModal, #mailVisitorPassModal{
+  #loginOverlay, #fullscreenModal, #siteStatsModal, #noticeBoardModal, #ptwModal, #notificationModal, #ppeIssueModal, #qrModal, #emailComplaintModal, #blogReadModal, #mailVisitorPassModal, #changePasswordModal, #resetUserPasswordModal{
     position:fixed;left:0;top:0;right:0;bottom:0;background:rgba(4,10,20,0.72);display:none;
     align-items:center;justify-content:center;z-index:9999;backdrop-filter:blur(4px);
     animation:overlayIn .18s ease both;padding:16px;
   }
   @keyframes overlayIn{from{opacity:0}to{opacity:1}}
-  #loginBox, #siteStatsBox, #noticeBox, #ptwBox, #notificationBox, #ppeIssueBox, #emailComplaintBox, #blogReadBox, #mailVisitorPassBox{
+  #loginBox, #siteStatsBox, #noticeBox, #ptwBox, #notificationBox, #ppeIssueBox, #emailComplaintBox, #blogReadBox, #mailVisitorPassBox, #changePasswordBox, #resetUserPasswordBox{
     width:100%;max-width:500px;background:white;padding:22px;border-radius:18px;color:var(--text-dark);
     max-height:90vh;overflow-y:auto;box-shadow:var(--shadow-lg);animation:modalIn .22s cubic-bezier(.2,.9,.3,1.2) both;
   }
@@ -416,6 +431,7 @@
           <div id="userBadge"></div>
         </div>
         <button class="ghost" id="loginBtn" onclick="showLogin()">Login</button>
+        <button class="ghost" id="changePasswordBtn" onclick="openChangePassword()" title="Change your password" style="display:none">🔑 Password</button>
         <button class="ghost" id="logoutBtn" onclick="doLogout()" style="display:none">Logout</button>
         <button class="ghost" id="mobileMenuBtn" onclick="toggleMobileMenu()" style="display:none">☰</button>
       </div>
@@ -1071,7 +1087,64 @@
         </div>
     </div>
   </div>
-  
+
+  <div id="changePasswordModal">
+    <div id="changePasswordBox">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <h3 style="margin:0">🔑 Change Password</h3>
+          <span style="cursor:pointer;font-size:20px" onclick="closeChangePassword()">×</span>
+        </div>
+        <p class="small" style="color:var(--muted);margin-top:6px">Change the password for your own account. This can be done any time you're logged in.</p>
+        <form onsubmit="submitChangePassword(event)">
+            <div style="margin-top:10px">
+                <label class="small">Current Password</label>
+                <div style="display:flex;gap:6px">
+                    <input id="cpCurrent" type="password" placeholder="Current password" required style="flex:1">
+                    <button type="button" class="ghost-dark btn-sm" onclick="togglePasswordVisibility('cpCurrent', this)">👁</button>
+                </div>
+            </div>
+            <div style="margin-top:10px">
+                <label class="small">New Password</label>
+                <div style="display:flex;gap:6px">
+                    <input id="cpNew" type="password" placeholder="New password (min 4 characters)" required style="flex:1">
+                    <button type="button" class="ghost-dark btn-sm" onclick="togglePasswordVisibility('cpNew', this)">👁</button>
+                </div>
+            </div>
+            <div style="margin-top:10px">
+                <label class="small">Confirm New Password</label>
+                <div style="display:flex;gap:6px">
+                    <input id="cpConfirm" type="password" placeholder="Re-enter new password" required style="flex:1">
+                    <button type="button" class="ghost-dark btn-sm" onclick="togglePasswordVisibility('cpConfirm', this)">👁</button>
+                </div>
+            </div>
+            <div style="text-align:right;margin-top:15px">
+                <button type="button" class="ghost-dark" onclick="closeChangePassword()">Cancel</button>
+                <button type="submit" class="primary">Update Password</button>
+            </div>
+        </form>
+    </div>
+  </div>
+
+  <div id="resetUserPasswordModal">
+    <div id="resetUserPasswordBox">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <h3 style="margin:0">✏️ Reset Password</h3>
+          <span style="cursor:pointer;font-size:20px" onclick="closeResetUserPassword()">×</span>
+        </div>
+        <p class="small" style="color:var(--muted);margin-top:6px">Set a new password for <b id="rupUsername"></b>. Only the default Admin (Employee ID 001) can do this — no need to know their current password.</p>
+        <form onsubmit="submitResetUserPassword(event)">
+            <div style="margin-top:10px">
+                <label class="small">New Password</label>
+                <input id="rupNew" type="text" placeholder="New password (min 4 characters)" required style="width:100%">
+            </div>
+            <div style="text-align:right;margin-top:15px">
+                <button type="button" class="ghost-dark" onclick="closeResetUserPassword()">Cancel</button>
+                <button type="submit" class="primary">Save New Password</button>
+            </div>
+        </form>
+    </div>
+  </div>
+
   <div id="noticeBoardModal">
     <div id="noticeBox">
         <div style="display:flex;justify-content:space-between"><h3>Manage Notices</h3><button class="ghost-dark" onclick="document.getElementById('noticeBoardModal').style.display='none'">X</button></div>
@@ -1516,11 +1589,13 @@
             document.getElementById('userAvatar').innerText = (currentUser.username || '?').trim().charAt(0).toUpperCase();
             chip.style.display = 'flex';
             document.getElementById('loginBtn').style.display = 'none';
+            document.getElementById('changePasswordBtn').style.display = 'block';
             document.getElementById('logoutBtn').style.display = 'block';
         } else {
             badge.innerText = '';
             chip.style.display = 'none';
             document.getElementById('loginBtn').style.display = 'block';
+            document.getElementById('changePasswordBtn').style.display = 'none';
             document.getElementById('logoutBtn').style.display = 'none';
         }
         updateBell();
@@ -1528,13 +1603,20 @@
 
     function showLogin() { document.getElementById('loginOverlay').style.display = 'flex'; }
     function doLogout() { sessionStorage.removeItem('hse_user'); location.reload(); }
-    
+
+    // --- Default/master admin credentials (Employee ID 001) ---
+    // Kept out of a hardcoded string so it can actually be changed via the
+    // "Change Password" flow below. Falls back to the original default
+    // ('admin123') the first time, before anyone has changed it.
+    function getMasterAdminPassword() { return LocalDB.get('masterAdminPassword', null) || 'admin123'; }
+    function setMasterAdminPassword(newPass) { LocalDB.set('masterAdminPassword', newPass); }
+
     function doLogin() {
         const u = document.getElementById('loginUser').value.trim();
         const p = document.getElementById('loginPass').value.trim();
-        
-        if (u === 'admin' && p === 'admin123') {
-            currentUser = { username: 'admin', role: 'admin' };
+
+        if ((u === 'admin' || u === '001') && p === getMasterAdminPassword()) {
+            currentUser = { username: 'admin', role: 'admin', empId: '001', isMaster: true };
             sessionStorage.setItem('hse_user', JSON.stringify(currentUser));
             location.reload();
             return;
@@ -1542,12 +1624,93 @@
         const users = LocalDB.get('users', []);
         const found = users.find(user => (user.user === u || user.empId === u) && (user.password === p));
         if (found) {
-             currentUser = { username: found.user, role: found.role };
+             currentUser = { username: found.user, role: found.role, empId: found.empId };
              sessionStorage.setItem('hse_user', JSON.stringify(currentUser));
              location.reload();
         } else {
             alert('Invalid credentials');
         }
+    }
+
+    // --- Change Password (any logged-in user: admin / safety officer / user) ---
+    function openChangePassword() {
+        if (!currentUser) { showLogin(); return; }
+        document.getElementById('cpCurrent').value = '';
+        document.getElementById('cpNew').value = '';
+        document.getElementById('cpConfirm').value = '';
+        document.getElementById('changePasswordModal').style.display = 'flex';
+    }
+    function closeChangePassword() { document.getElementById('changePasswordModal').style.display = 'none'; }
+
+    function togglePasswordVisibility(inputId, btn) {
+        const el = document.getElementById(inputId);
+        const show = el.type === 'password';
+        el.type = show ? 'text' : 'password';
+        if (btn) btn.innerText = show ? '🙈' : '👁';
+    }
+
+    function submitChangePassword(e) {
+        e.preventDefault();
+        if (!currentUser) { showLogin(); return; }
+        const cur = document.getElementById('cpCurrent').value;
+        const next = document.getElementById('cpNew').value;
+        const confirmPass = document.getElementById('cpConfirm').value;
+        if (!cur || !next || !confirmPass) { alert('All fields are required'); return; }
+        if (next.length < 4) { alert('New password should be at least 4 characters'); return; }
+        if (next !== confirmPass) { alert('New password and confirmation do not match'); return; }
+
+        if (currentUser.isMaster) {
+            if (cur !== getMasterAdminPassword()) { alert('Current password is incorrect'); return; }
+            setMasterAdminPassword(next);
+            logActivity('Password changed', 'admin (default 001)');
+            alert('Password updated successfully.');
+            closeChangePassword();
+            return;
+        }
+
+        const users = LocalDB.get('users', []);
+        const idx = users.findIndex(u => u.user === currentUser.username && u.empId === currentUser.empId);
+        if (idx === -1) { alert('Could not find your account record. Please contact the Admin.'); return; }
+        if (users[idx].password !== cur) { alert('Current password is incorrect'); return; }
+        users[idx].password = next;
+        LocalDB.set('users', users);
+        logActivity('Password changed', `${currentUser.username} (${currentUser.role})`);
+        alert('Password updated successfully.');
+        closeChangePassword();
+    }
+
+    // --- Default Admin (001) oversight: view / reset any user's password ---
+    let resetPasswordTargetId = null;
+    function toggleUserPasswordVisibility(id, btn) {
+        const span = document.getElementById('userPass_' + id);
+        if (!span) return;
+        const isMasked = span.dataset.masked !== 'false';
+        span.innerText = isMasked ? span.dataset.real : '••••••••';
+        span.dataset.masked = isMasked ? 'false' : 'true';
+        if (btn) btn.innerText = isMasked ? '🙈 Hide' : '👁 Show';
+    }
+    function openResetUserPassword(id, username) {
+        if (!(currentUser && currentUser.isMaster)) return;
+        resetPasswordTargetId = id;
+        document.getElementById('rupUsername').innerText = username;
+        document.getElementById('rupNew').value = '';
+        document.getElementById('resetUserPasswordModal').style.display = 'flex';
+    }
+    function closeResetUserPassword() { document.getElementById('resetUserPasswordModal').style.display = 'none'; }
+    function submitResetUserPassword(e) {
+        e.preventDefault();
+        if (!(currentUser && currentUser.isMaster) || resetPasswordTargetId == null) return;
+        const next = document.getElementById('rupNew').value;
+        if (!next || next.length < 4) { alert('New password should be at least 4 characters'); return; }
+        const users = LocalDB.get('users', []);
+        const idx = users.findIndex(u => u.id === resetPasswordTargetId);
+        if (idx === -1) { alert('User not found'); return; }
+        users[idx].password = next;
+        LocalDB.set('users', users);
+        logActivity('Password reset by Admin (001)', users[idx].user);
+        alert(`Password for ${users[idx].user} updated.`);
+        closeResetUserPassword();
+        renderUsers();
     }
 
     function safeCall(fn) { try { fn(); } catch (err) { console.error('Render error:', err); } }
@@ -1951,15 +2114,28 @@
         list = [{ id: 1, user: 'admin', role: 'admin', empId: '001' }];
         LocalDB.set('users', list);
       }
-      listEl.innerHTML = list.map(u => `
+      const isMaster = !!(currentUser && currentUser.isMaster);
+      listEl.innerHTML = list.map(u => {
+        const isMasterRow = u.user === 'admin' && u.empId === '001';
+        const realPass = isMasterRow ? getMasterAdminPassword() : (u.password || '');
+        // Only the default Admin (Employee ID 001) ever sees a password field here.
+        const passCol = isMaster ? `
+                <div style="display:flex; align-items:center; gap:6px; margin-top:4px;">
+                    <span id="userPass_${u.id}" data-real="${escapeHtml(realPass)}" data-masked="true" style="font-family:monospace; font-size:12px; color:#444;">••••••••</span>
+                    <button type="button" class="ghost-dark btn-sm" style="padding:2px 8px;font-size:11px" onclick="toggleUserPasswordVisibility(${u.id}, this)">👁 Show</button>
+                    ${isMasterRow ? '' : `<button type="button" class="ghost-dark btn-sm" style="padding:2px 8px;font-size:11px" onclick="openResetUserPassword(${u.id}, '${escapeHtml(u.user).replace(/'/g, "&#39;")}')">✏️ Edit</button>`}
+                </div>` : '';
+        return `
             <li style="display:flex; justify-content:space-between; align-items:center; padding:10px; border-bottom:1px solid #eee">
                 <div style="display:flex; flex-direction:column;">
                     <span><b>${escapeHtml(u.user)}</b> (${escapeHtml(u.role)})</span>
                     <span style="font-size:11px; color:#666;">ID: ${escapeHtml(u.empId || '-')}</span>
+                    ${passCol}
                 </div>
                 ${u.user === 'admin' ? '<span class="small">(Default)</span>' : `<button class="btn-danger btn-sm" onclick="deleteUser(${u.id})">Delete</button>`}
             </li>
-        `).join('');
+        `;
+      }).join('');
     }
     function addUser(e){
       e.preventDefault();
@@ -3098,17 +3274,47 @@ TARSONS HSE Portal`;
         }
     };
     // Gallery & Policies
+    // Picks a fitting icon + colour theme for a policy card based on
+    // keywords in its title, so the gallery looks curated/professional
+    // instead of every tile showing the same generic 📄 icon.
+    const POLICY_ICON_RULES = [
+      { cat: 'fire',        icon: '🔥', kw: ['fire', 'flammable', 'combustible'] },
+      { cat: 'electrical',  icon: '⚡', kw: ['electric', 'electrical', 'lockout', 'loto'] },
+      { cat: 'chemical',    icon: '🧪', kw: ['chemical', 'hazmat', 'msds', 'sds', 'spill'] },
+      { cat: 'ppe',         icon: '🦺', kw: ['ppe', 'protective equipment', 'helmet', 'safety gear'] },
+      { cat: 'environment', icon: '🌱', kw: ['environment', 'environmental', 'pollution', 'emission', 'carbon'] },
+      { cat: 'waste',       icon: '♻️', kw: ['waste', 'recycl', 'disposal', 'effluent'] },
+      { cat: 'health',      icon: '🏥', kw: ['health', 'medical', 'hygiene', 'first aid', 'wellness'] },
+      { cat: 'hygiene',     icon: '🧼', kw: ['hygiene', 'sanitation', 'cleanliness', 'housekeeping'] },
+      { cat: 'emergency',   icon: '🚨', kw: ['emergency', 'evacuation', 'disaster', 'crisis', 'response plan'] },
+      { cat: 'vehicle',     icon: '🚗', kw: ['vehicle', 'traffic', 'transport', 'driving', 'forklift'] },
+      { cat: 'security',    icon: '🛡️', kw: ['security', 'access control', 'visitor', 'gate'] },
+      { cat: 'quality',     icon: '✅', kw: ['quality', 'iso', 'standard operating', 'sop'] },
+      { cat: 'training',    icon: '🎓', kw: ['training', 'induction', 'competenc', 'awareness'] },
+      { cat: 'audit',       icon: '📋', kw: ['audit', 'inspection', 'checklist', 'compliance', 'legal'] },
+      { cat: 'hr',          icon: '🧑\u200d💼', kw: ['hr', 'human resource', 'leave', 'conduct', 'grievance', 'harassment'] }
+    ];
+    function getPolicyIcon(title) {
+      const t = String(title || '').toLowerCase();
+      for (const rule of POLICY_ICON_RULES) {
+        if (rule.kw.some(k => t.includes(k))) return rule;
+      }
+      return { cat: 'default', icon: '📄' };
+    }
     async function renderPolicies(){
       const list = LocalDB.get('policies', []);
       const gallery = document.getElementById('policyGallery');
       const isAdmin = currentUser && currentUser.role==='admin';
       if(!gallery) return;
-      gallery.innerHTML = list.map(p => `
+      gallery.innerHTML = list.map(p => {
+        const rule = getPolicyIcon(p.title);
+        return `
         <div class="policy-card" onclick="openPolicyFile('${p.data || p.url}')">
             ${isAdmin ? `<div class="policy-del" onclick="event.stopPropagation(); delPolicy(${p.id})">X</div>` : ''}
-            <div class="policy-icon">📄</div>
+            <div class="policy-icon pol-${rule.cat}">${rule.icon}</div>
             <div class="policy-content"><div class="policy-title">${escapeHtml(p.title)}</div><div class="policy-sub">Click to view</div></div>
-        </div>`).join('') ||
+        </div>`;
+      }).join('') ||
         '<p style="color:grey;grid-column:1/-1;text-align:center;">No policies uploaded yet.</p>';
     }
     
@@ -3549,6 +3755,15 @@ TARSONS HSE Portal`;
     window.openBlogPost = openBlogPost;
     window.deleteBlogPost = deleteBlogPost;
     window.deleteBlogPostFromModal = deleteBlogPostFromModal;
+    window.renderChart = renderChart; // BUGFIX: trend-range <select onchange="renderChart()"> was calling an undefined global before this
+    window.openChangePassword = openChangePassword;
+    window.closeChangePassword = closeChangePassword;
+    window.submitChangePassword = submitChangePassword;
+    window.togglePasswordVisibility = togglePasswordVisibility;
+    window.toggleUserPasswordVisibility = toggleUserPasswordVisibility;
+    window.openResetUserPassword = openResetUserPassword;
+    window.closeResetUserPassword = closeResetUserPassword;
+    window.submitResetUserPassword = submitResetUserPassword;
   </script>
   <script>
     // Installable/offline support — only works when served over http(s), not opened as a local file:// path.
