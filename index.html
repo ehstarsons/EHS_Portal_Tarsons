@@ -135,6 +135,17 @@
   .btn-action{background:linear-gradient(115deg,#3aa0e8,var(--accent-3));color:white;}
   .btn-action:hover{opacity:.92}
 
+  .login-logo{
+    width:78px;height:78px;border-radius:20px;margin:0 auto 14px;
+    background:linear-gradient(135deg,#ffffff,#d8fff2);
+    display:flex;align-items:center;justify-content:center;color:var(--accent-3);font-weight:900;
+    box-shadow:0 12px 28px rgba(11,125,191,.28);font-size:24px;letter-spacing:-.5px;
+  }
+  .login-links{display:flex;justify-content:space-between;margin-top:10px;font-size:12.5px;flex-wrap:wrap;gap:6px}
+  .login-links a{color:var(--accent-3);text-decoration:none;font-weight:700;cursor:pointer}
+  .login-links a:hover{text-decoration:underline}
+  body.dark-theme .login-links a{color:#5fc2ff}
+
   /* ---------- Admin-only visibility ---------- */
   /* NOTE: as of the role-structure update, "is-admin" now represents the
      "full system control" tier (Super Admin + EHS Manager) — the only roles
@@ -306,11 +317,30 @@
   /* ---------- Dark mode ---------- */
   body.dark-theme{--panel:#132234;--text-dark:#e8f0f2;--border:#24384a;--muted:#8fa3ad}
   body.dark-theme .card{background:linear-gradient(180deg,#101e2c,#0c1826);border-color:rgba(255,255,255,.08)}
-  body.dark-theme .factory-card,body.dark-theme .gallery-item,body.dark-theme .blog-card{background:#101e2c;border-color:#24384a}
+  body.dark-theme .factory-card,body.dark-theme .gallery-item,body.dark-theme .blog-card,body.dark-theme .policy-card{background:#101e2c;border-color:#24384a}
   body.dark-theme input,body.dark-theme select,body.dark-theme textarea{background:#0c1826;color:#e8f0f2;border-color:#24384a}
   body.dark-theme th{background:rgba(255,255,255,.04)}
   body.dark-theme .tile{background:linear-gradient(135deg,rgba(18,183,106,0.14),rgba(11,125,191,0.14))}
-  body.dark-theme #loginBox,body.dark-theme #fsBox,body.dark-theme .pdf-grid,body.dark-theme #auditFormBox{background:#101e2c !important;color:#e8f0f2}
+  /* Every modal's inner box, the AI chat panel, the statutory-alert card, and any
+     inline "light card" panel (form wrappers use inline background:#f9f9f9 all
+     over the app) previously kept a hardcoded light/white background while their
+     text switched to the light dark-mode color — i.e. near-white text on a
+     near-white background. This is the fix. */
+  body.dark-theme #loginBox,body.dark-theme #fsBox,body.dark-theme .pdf-grid,body.dark-theme #auditFormBox,
+  body.dark-theme #siteStatsBox,body.dark-theme #noticeBox,body.dark-theme #ptwBox,body.dark-theme #notificationBox,
+  body.dark-theme #ppeIssueBox,body.dark-theme #qrBox,body.dark-theme #emailComplaintBox,body.dark-theme #blogReadBox,
+  body.dark-theme #mailVisitorPassBox,body.dark-theme #changePasswordBox,body.dark-theme #resetUserPasswordBox
+  {background:#101e2c !important;color:#e8f0f2}
+  body.dark-theme .expiry-alert-card{background:#2a1414 !important}
+  body.dark-theme #aiMessages{background:#0c1826}
+  body.dark-theme [style*="background:#f9f9f9"]{background:#0c1826 !important;color:#e8f0f2 !important}
+  /* .ghost-dark (Cancel / Excel export / Refresh / etc. — used throughout the
+     whole app) had a hardcoded white background with the variable text color,
+     so it went invisible (light text on white) the moment dark mode changed
+     that variable. Same for the fixed-white "Manage" pill button on Home. */
+  body.dark-theme .ghost-dark{background:#0c1826;color:#e8f0f2;border-color:#24384a}
+  body.dark-theme .ghost-dark:hover{background:#16283a}
+  body.dark-theme button[style*="background:white"]{background:#0c1826 !important;color:#e8f0f2 !important}
   tbody tr{transition:background .15s}
   tbody tr:hover{background:rgba(18,183,106,.05)}
 
@@ -327,6 +357,32 @@
   }
   @keyframes modalIn{from{opacity:0;transform:translateY(14px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
 
+  #loginOverlay{
+    background:
+      radial-gradient(circle at 15% 20%, rgba(18,183,106,.28), transparent 45%),
+      radial-gradient(circle at 85% 15%, rgba(11,125,191,.28), transparent 40%),
+      radial-gradient(circle at 50% 95%, rgba(18,183,106,.16), transparent 50%),
+      rgba(4,10,20,0.90);
+    overflow:hidden;
+  }
+  #loginOverlay::before{
+    content:'';position:absolute;inset:0;pointer-events:none;opacity:.5;
+    background-image:
+      repeating-linear-gradient(120deg, rgba(255,255,255,.035) 0 2px, transparent 2px 60px),
+      repeating-linear-gradient(60deg, rgba(255,255,255,.035) 0 2px, transparent 2px 60px);
+  }
+  #loginBox{position:relative;z-index:1}
+  .login-logo{
+    width:78px;height:78px;border-radius:20px;margin:0 auto 14px;
+    background:linear-gradient(135deg,#ffffff,#d8fff2);
+    display:flex;align-items:center;justify-content:center;color:var(--accent-3);font-weight:900;
+    box-shadow:0 12px 28px rgba(11,125,191,.28);font-size:24px;letter-spacing:-.5px;
+  }
+  .login-links{display:flex;justify-content:space-between;margin-top:12px;font-size:12.5px;flex-wrap:wrap;gap:6px;text-align:left}
+  .login-links a{color:var(--accent-3);text-decoration:none;font-weight:700;cursor:pointer}
+  .login-links a:hover{text-decoration:underline}
+  body.dark-theme .login-links a{color:#5fc2ff}
+
   .status-pill{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11.5px;font-weight:700;white-space:nowrap}
   .status-pill.status-ok{background:rgba(18,183,106,.15);color:#0d8a51}
   .status-pill.status-due-soon{background:rgba(245,165,36,.18);color:#9a6300}
@@ -341,6 +397,44 @@
 
   .notice-board-banner{background:linear-gradient(100deg,#f7931e,#e6672c);color:white;padding:14px 16px;border-radius:14px;margin-bottom:16px;box-shadow:0 8px 22px rgba(230,90,30,.3)}
   .notice-item{background:rgba(255,255,255,.15);padding:8px 10px;border-radius:8px;margin-top:6px;font-size:13.5px}
+
+  /* ---------- Collapsible module cards (Training) ---------- */
+  .module-card{display:flex;justify-content:space-between;align-items:center;gap:10px;background:var(--panel);
+    border:1px solid var(--border);border-radius:12px;padding:13px 16px;margin-bottom:8px;cursor:pointer;
+    transition:box-shadow .15s ease, transform .15s ease}
+  .module-card:hover{box-shadow:0 4px 14px rgba(15,40,60,.10);transform:translateY(-1px)}
+  .module-card-main{display:flex;align-items:center;gap:12px}
+  .module-card-icon{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,var(--accent-3),var(--accent-2));
+    color:white;display:flex;align-items:center;justify-content:center;font-size:17px;flex:0 0 auto}
+  .module-card-title{font-weight:700;font-size:14.5px}
+  .module-card-sub{font-size:12px;color:var(--muted);margin-top:2px}
+  .module-card-caret{font-size:14px;color:var(--muted);transition:transform .2s ease}
+  .module-records-panel{padding:4px 6px 10px 50px;margin:-4px 0 10px}
+  .training-batch{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:10px 14px;margin-bottom:8px}
+  .training-batch-head{display:flex;align-items:center;gap:10px;font-weight:700;font-size:13px}
+  .training-batch table td{padding:6px 4px;font-size:13px;border-bottom:1px solid var(--border)}
+  .training-batch table tr:last-child td{border-bottom:none}
+
+  /* ---------- Location filter bar (Legal / Incident / PPE / others) ---------- */
+  .location-filter-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--panel);
+    border:1px solid var(--border);border-radius:12px;padding:9px 12px;margin-bottom:14px}
+  .location-filter-bar label{font-weight:700;font-size:12.5px;color:var(--muted);white-space:nowrap}
+  .location-filter-bar select{width:auto;min-width:160px;padding:7px 10px;font-size:13px}
+
+  /* ---------- Contact grid (graphical) ---------- */
+  .contact-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px;margin-top:12px}
+  .contact-card{display:flex;align-items:center;gap:12px;background:var(--panel);border:1px solid var(--border);
+    border-radius:14px;padding:14px 16px;box-shadow:var(--shadow-sm);transition:transform .15s ease, box-shadow .15s ease;position:relative}
+  .contact-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-md)}
+  .contact-card-icon{width:46px;height:46px;border-radius:12px;background:linear-gradient(135deg,var(--accent-3),var(--accent-2));
+    color:white;display:flex;align-items:center;justify-content:center;font-size:21px;flex:0 0 auto;box-shadow:0 6px 14px rgba(11,125,191,.25)}
+  .contact-card-name{font-weight:700;font-size:14px;margin-bottom:2px}
+  .contact-card-sub{font-size:11.5px;color:var(--muted)}
+  .contact-card a.contact-card-number{font-weight:700;color:var(--accent-3);text-decoration:none;font-size:13.5px}
+  .contact-card a.contact-card-number:hover{text-decoration:underline}
+  .contact-card .cc-del{position:absolute;top:8px;right:8px;background:rgba(0,0,0,.06);color:var(--muted);width:20px;height:20px;
+    border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;cursor:pointer}
+  .contact-card .cc-del:hover{background:var(--danger);color:white}
   .status-badge{padding:4px 10px;border-radius:20px;font-size:10.5px;font-weight:800;color:white;letter-spacing:.3px;text-transform:uppercase}
   .status-safe{background:var(--accent)}
   .status-warning{background:var(--warning)}
@@ -462,14 +556,19 @@
 
   <div id="loginOverlay">
     <div id="loginBox">
-      <h3 style="color: #0056A6;">WELCOME TO THE TARSONS E.H.S DIGITAL PORTAL</h3>
-      <p class="small">Empowering a safer workplace through proactive reporting, compliance management, environmental stewardship, and continuous improvement. Sign in to access EHS tools, resources, and real-time safety information.</p>
+      <div class="login-logo">TPL</div>
+      <h3 style="color: #0056A6; text-align:center;">WELCOME TO THE TARSONS E.H.S DIGITAL PORTAL</h3>
+      <p class="small" style="text-align:center;">Empowering a safer workplace through proactive reporting, compliance management, environmental stewardship, and continuous improvement. Sign in to access EHS tools, resources, and real-time safety information.</p>
       <h2 style="color: #28A745;">Sign in:</h2>
       <input id="loginUser" placeholder="Username or Employee ID" style="margin-bottom:10px">
       <input id="loginPass" type="password" placeholder="Password" style="margin-bottom:10px">
       <div style="text-align:right">
         <button class="ghost-dark" onclick="document.getElementById('loginOverlay').style.display='none'">Cancel</button>
         <button class="primary" onclick="doLogin()">Sign In</button>
+      </div>
+      <div class="login-links">
+        <a onclick="showForgotPasswordHelp()">🔒 Forgot Password?</a>
+        <a href="tel:+917980326735">🆘 Need Help? Call HSE Manager</a>
       </div>
     </div>
   </div>
@@ -735,7 +834,10 @@
         <div id="activityContainer" style="display:none">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
                 <h3>Recent Activity</h3>
-                <span class="small" style="color:var(--muted)">Last 200 actions across the portal, most recent first.</span>
+                <div style="display:flex;align-items:center;gap:10px">
+                  <span class="small" style="color:var(--muted)">Last 200 actions across the portal, most recent first.</span>
+                  <button class="btn-danger btn-sm admin-only" onclick="clearActivityLog()">🗑 Clear Log</button>
+                </div>
             </div>
             <div style="overflow-x:auto"><table id="activityTable"><thead><tr><th>Time</th><th>User</th><th>Action</th><th>Detail</th></tr></thead><tbody></tbody></table></div>
         </div>
@@ -865,6 +967,10 @@
           </form>
         </div>
 
+        <div class="location-filter-bar">
+          <label>📍 Filter by Location:</label>
+          <select id="dashFilter" onchange="renderDashboard()"><option value="">All Locations</option></select>
+        </div>
         <div style="overflow-x:auto; margin-top:10px">
           <table id="dashTable"><thead><tr><th>Date</th><th>Type</th><th>Reporter</th><th>Unit/Factory</th><th>Location</th><th>Severity</th><th>Injured Person</th><th>Description</th><th class="admin-only">Action</th></tr></thead><tbody></tbody></table>
         </div>
@@ -877,20 +983,29 @@
         <h2>PPE Inventory</h2>
         <div class="ppe-add-only" style="background:#f9f9f9;padding:15px;border-radius:8px;margin-bottom:15px;border-left:4px solid var(--accent);">
               <h4>Add / Restock Item</h4>
-              <p class="small" style="text-transform:none;font-weight:500;margin:-4px 0 8px;">If the item name already exists, the quantity below is <b>added to its current stock</b> instead of creating a duplicate row.</p>
+              <p class="small" style="text-transform:none;font-weight:500;margin:-4px 0 8px;">If the item name already exists <b>at the same location</b>, the quantity below is added to its current stock instead of creating a duplicate row.</p>
             <form onsubmit="addPPEItem(event)">
                 <div class="two-cols"><input id="ppeName" placeholder="Item Name" required><input id="ppeUnit" placeholder="Unit (e.g. Pairs)" required></div>
                 <div class="two-cols" style="margin-top:5px"><input id="ppeInitialQty" type="number" min="1" placeholder="Quantity to Add" required><input id="ppeReorder" type="number" min="0" placeholder="Reorder Alert Level" required></div>
+                <select id="ppeFactory" required style="margin-top:5px"><option value="">Select Location</option></select>
                 <button type="submit" class="primary" style="margin-top:5px">Save Item</button>
             </form>
         </div>
         <h3>Current Stock</h3>
+        <div class="location-filter-bar">
+          <label>📍 Filter by Location:</label>
+          <select id="ppeFilter" onchange="renderPPE()"><option value="">All Locations</option></select>
+        </div>
         <div style="overflow-x:auto; margin-bottom: 20px;">
-            <table id="ppeTable"><thead><tr><th>Item</th><th>Present Stock</th><th>Unit</th><th>Status</th><th class="ppe-add-only admin-only">Actions</th></tr></thead><tbody></tbody></table>
+            <table id="ppeTable"><thead><tr><th>Item</th><th>Location</th><th>Present Stock</th><th>Unit</th><th>Status</th><th class="ppe-add-only admin-only">Actions</th></tr></thead><tbody></tbody></table>
         </div>
         <button class="ghost-dark btn-sm" onclick="exportTableToExcel('ppeTable','PPE_Inventory')" style="margin-bottom:10px">⬇ Excel</button>
         
         <h3 style="border-top:1px solid #eee; padding-top:15px;">PPE Issue Log</h3>
+        <div class="location-filter-bar">
+          <label>📍 Filter by Location:</label>
+          <select id="ppeLogFilter" onchange="renderPPELogs()"><option value="">All Locations</option></select>
+        </div>
         <div style="overflow-x:auto; max-height:250px;">
              <table id="ppeLogTable"><thead><tr><th>Date</th><th>Employee</th><th>Emp ID</th><th>Item</th><th>Qty</th><th>Location</th><th class="admin-only">Action</th></tr></thead><tbody></tbody></table>
         </div>
@@ -900,32 +1015,43 @@
 
     <section id="training" style="display:none" class="container">
       <div class="card">
-        <h2>Safety Training</h2>
-        <div class="training-add-only" style="background:#f9f9f9;padding:15px;border-radius:8px;margin-bottom:15px">
-            <h4>Define Module</h4>
-            <form onsubmit="addModule(event)">
-                 <div class="two-cols"><input id="modName" placeholder="Module Name" required><input id="modFreq" type="number" placeholder="Frequency (Months)" required></div>
-                <button type="submit" class="primary" style="margin-top:5px">Save Module</button>
-            </form>
+        <h2>🎓 Safety Training</h2>
+        <div class="admin-tabs">
+          <div class="admin-tab-btn active" id="tabTrainingMain" onclick="switchTrainingTab('main')">🎓 Safety Training</div>
+          <div class="admin-tab-btn" id="tabTrainingVisitor" onclick="switchTrainingTab('visitor')">🪪 Visitor Safety Induction</div>
         </div>
-        <h3>Modules</h3>
-        <table id="modTable" style="margin-bottom:10px"><thead><tr><th>Module</th><th>Frequency</th><th class="admin-only">Actions</th></tr></thead><tbody></tbody></table>
-        <button class="ghost-dark btn-sm" onclick="exportTableToExcel('modTable','Training_Modules')" style="margin-bottom:15px">⬇ Excel</button>
-        
-        <div class="training-add-only" style="background:#f9f9f9;padding:15px;border-radius:8px;margin-bottom:15px">
-             <h4>Record Completion</h4>
-            <form onsubmit="addRecord(event)">
-                <div class="two-cols"><input id="recName" placeholder="Employee Name" required><select id="recMod" required><option value="">Select Module</option></select></div>
-                <div class="two-cols" style="margin-top:5px"><input id="recDate" type="date" required><button type="submit" class="primary">Record</button></div>
-            </form>
-        </div>
-        <h3>Records</h3>
-         <table id="recTable"><thead><tr><th>Employee</th><th>Module</th><th>Date</th><th>Next Due</th><th class="admin-only">Actions</th></tr></thead><tbody></tbody></table>
-        <button class="ghost-dark btn-sm" onclick="exportTableToExcel('recTable','Training_Records')" style="margin-top:10px">⬇ Excel</button>
 
-        <div class="visitor-card" style="margin-top:30px; border-top: 2px solid #eee; padding-top:20px;">
-          <h3>Visitor Safety Induction</h3>
-          <p style="margin:6px 0 12px;color:var(--muted)">Record visitor induction, issue PPE and generate visitor induction certificate.</p>
+        <div id="trainingMainContainer">
+          <div class="training-add-only" style="background:#f9f9f9;padding:15px;border-radius:8px;margin-bottom:15px">
+              <h4>Define Module</h4>
+              <form onsubmit="addModule(event)">
+                   <div class="two-cols"><input id="modName" placeholder="Module Name" required><input id="modFreq" type="number" placeholder="Frequency (Months)" required></div>
+                  <button type="submit" class="primary" style="margin-top:5px">Save Module</button>
+              </form>
+          </div>
+
+          <div class="training-add-only" style="background:#f9f9f9;padding:15px;border-radius:8px;margin-bottom:18px">
+               <h4>Record Completion — Group Entry</h4>
+               <p class="small" style="text-transform:none;font-weight:500;margin:-4px 0 8px;">Pick the module and date once, then list everyone who was trained together — one name per line (or comma-separated).</p>
+              <form onsubmit="addRecord(event)">
+                  <div class="two-cols"><select id="recMod" required><option value="">Select Module</option></select><input id="recDate" type="date" required></div>
+                  <textarea id="recNames" placeholder="Employee names — one per line, e.g.&#10;Ramesh Kumar&#10;Sita Devi&#10;Anil Singh" required style="margin-top:8px;min-height:80px"></textarea>
+                  <div style="text-align:right;margin-top:6px"><button type="submit" class="primary">Record Batch</button></div>
+              </form>
+          </div>
+
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+            <h3 style="margin:0">Training Modules <span class="small" style="color:var(--muted);font-weight:500;text-transform:none">— click a module to view its training batches</span></h3>
+            <button class="ghost-dark btn-sm" onclick="exportTableToExcel('recTable','Training_Records')">⬇ Excel (all records)</button>
+          </div>
+          <div id="moduleList"></div>
+          <!-- Hidden flat tables kept only so the Excel export helper (which reads a real <table>) has something to read from -->
+          <table id="modTable" style="display:none"><thead><tr><th>Module</th><th>Frequency</th><th class="admin-only">Actions</th></tr></thead><tbody></tbody></table>
+          <table id="recTable" style="display:none"><thead><tr><th>Employee</th><th>Module</th><th>Date</th><th>Next Due</th><th class="admin-only">Actions</th></tr></thead><tbody></tbody></table>
+        </div>
+
+        <div id="trainingVisitorContainer" style="display:none">
+          <p style="margin:6px 0 16px;color:var(--muted)">Record visitor induction, issue PPE and generate visitor induction certificate.</p>
           <div style="display:grid; gap:8px; margin-bottom:12px;">
             <form id="visitorForm" class="visitor-add-only" onsubmit="addVisitor(event)">
               <div class="two-cols">
@@ -1024,6 +1150,10 @@
                 <button type="submit" class="primary" style="margin-top:10px">Add to Register</button>
             </form>
         </div>
+        <div class="location-filter-bar">
+          <label>📍 Filter by Location:</label>
+          <select id="legFilter" onchange="renderLegalRegister()"><option value="">All Locations</option></select>
+        </div>
         <table id="legalTable"><thead><tr><th>Act/Rule</th><th>License/Permit No.</th><th>Factory</th><th>Issue date</th><th>Expiry</th><th>Status</th><th class="admin-only">Action</th></tr></thead><tbody></tbody></table>
       </div>
     </section>
@@ -1101,16 +1231,10 @@
         </div>
 
         <h1>☎ Emergency Contacts</h1>
-        <table style="width:100%">
-          <thead><tr><th>Name</th><th>Number</th><th class="admin-only">Action</th></tr></thead>
-          <tbody id="emergencyContactsBody"></tbody>
-        </table>
+        <div class="contact-grid" id="emergencyContactsGrid"></div>
 
-        <h1 style="margin-top:20px">Factory ERT Members</h1>
-        <table style="width:100%">
-          <thead><tr><th>Name</th><th>Factory</th><th>Number</th><th class="admin-only">Action</th></tr></thead>
-          <tbody id="ertContactsBody"></tbody>
-        </table>
+        <h1 style="margin-top:26px">🛡️ Factory ERT Members</h1>
+        <div class="contact-grid" id="ertContactsGrid"></div>
       </div>
     </section>
   </main>
@@ -1797,6 +1921,10 @@
         }
     }
 
+    function showForgotPasswordHelp() {
+        alert('Forgotten passwords can only be reset by the default Admin (Employee ID 001).\n\nPlease contact your Admin or the Tarsons HSE Manager (+91 79803 26735) with your Employee ID, and they will reset it for you from Manage Users.');
+    }
+
     // --- Change Password (any logged-in user: admin / safety officer / user) ---
     function openChangePassword() {
         if (!currentUser) { showLogin(); return; }
@@ -2233,7 +2361,8 @@
         const selectIds = [
             'factorySelect', 'extFactory', 'extFilter', 'auditFactory', 'rFactory',
             'visFactory', 'ptwFactory', 'ptwFactoryFilter', 'legFactorySelect', 'issueLocation',
-            'hiraFactory', 'wasteFactory', 'capaFactory', 'contFactory'
+            'hiraFactory', 'wasteFactory', 'capaFactory', 'contFactory',
+            'legFilter', 'dashFilter', 'ppeFactory', 'ppeFilter', 'ppeLogFilter'
         ];
 
         selectIds.forEach(id => {
@@ -2366,6 +2495,12 @@
       document.querySelector('#activityTable tbody').innerHTML = log.map(e => `
         <tr><td>${new Date(e.ts).toLocaleString()}</td><td>${escapeHtml(e.user)}</td><td>${escapeHtml(e.action)}</td><td>${escapeHtml(e.detail)}</td></tr>
       `).join('') || '<tr><td colspan="4" style="text-align:center;color:grey">No activity recorded yet.</td></tr>';
+    }
+    function clearActivityLog() {
+      if (!isAdminTier(currentUser)) return;
+      if (!confirm('Clear the entire activity log? This cannot be undone.')) return;
+      LocalDB.set('auditLog', []);
+      renderActivityLog();
     }
 
     // --- CAPA Tracker ---
@@ -2718,7 +2853,9 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
       if (wrap) wrap.style.display = (t === 'Incident' || t === 'Accident') ? 'block' : 'none';
     }
     function renderDashboard() {
-        const list = LocalDB.get('reports', []);
+        const filter = document.getElementById('dashFilter') ? document.getElementById('dashFilter').value : '';
+        let list = LocalDB.get('reports', []);
+        if (filter) list = list.filter(r => r.factory === filter);
         document.querySelector('#dashTable tbody').innerHTML = list.map((r) => `
             <tr><td>${r.date}</td><td>${reportTypeBadge(r.type)}</td><td>${escapeHtml(r.name)}</td><td>${escapeHtml(r.factory || '-')}</td><td>${escapeHtml(r.loc || '-')}</td><td>${escapeHtml(r.sev)}</td><td>${escapeHtml(r.injured || '-')}</td><td>${escapeHtml(r.desc)}</td>
             <td class="admin-only"><button class="btn-danger btn-sm" onclick="deleteReport(${r.id})">Delete</button></td></tr>
@@ -2760,27 +2897,33 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
         const unit = document.getElementById('ppeUnit').value.trim();
         const addQty = parseInt(document.getElementById('ppeInitialQty').value) || 0;
         const reorder = parseInt(document.getElementById('ppeReorder').value) || 0;
+        const factory = document.getElementById('ppeFactory').value;
         if (!name || addQty <= 0) { alert('Enter a valid item name and quantity'); return; }
+        if (!factory) { alert('Select a location'); return; }
 
         const list = LocalDB.get('ppe', []);
-        const existing = list.find(p => p.name.trim().toLowerCase() === name.toLowerCase());
+        const existing = list.find(p => p.name.trim().toLowerCase() === name.toLowerCase() && (p.factory || '') === factory);
         if (existing) {
             existing.qty = (existing.qty || 0) + addQty;
             existing.reorder = reorder;
             existing.unit = unit || existing.unit;
         } else {
-            list.push({ id: Date.now(), name, unit, qty: addQty, reorder });
+            list.push({ id: Date.now(), name, unit, qty: addQty, reorder, factory });
         }
         LocalDB.set('ppe', list);
+        logActivity('PPE stock updated', `${name} — +${addQty} ${unit} at ${factory}`);
         e.target.reset();
         renderPPE();
     }
 
     function renderPPE() {
-        const list = LocalDB.get('ppe', [{id:1, name:'Helmet', qty:10, unit:'Pcs', reorder:5}]);
+        const filter = document.getElementById('ppeFilter') ? document.getElementById('ppeFilter').value : '';
+        let list = LocalDB.get('ppe', [{id:1, name:'Helmet', qty:10, unit:'Pcs', reorder:5, factory:''}]);
+        if (filter) list = list.filter(p => (p.factory || '') === filter);
         document.querySelector('#ppeTable tbody').innerHTML = list.map(p => `
             <tr>
                 <td>${escapeHtml(p.name)}</td>
+                <td>${escapeHtml(p.factory || 'Unassigned')}</td>
                 <td>${p.qty}</td>
                 <td>${escapeHtml(p.unit)}</td>
                 <td><span class="status-badge ${p.qty <= p.reorder ? 'status-expired' : 'status-safe'}">${p.qty <= p.reorder ? 'Low' : 'OK'}</span></td>
@@ -2858,7 +3001,9 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
     }
     
     function renderPPELogs(){
-        const logs = LocalDB.get('ppe_logs', []);
+        const filter = document.getElementById('ppeLogFilter') ? document.getElementById('ppeLogFilter').value : '';
+        let logs = LocalDB.get('ppe_logs', []);
+        if (filter) logs = logs.filter(l => l.location === filter);
         document.querySelector('#ppeLogTable tbody').innerHTML = logs.map(l => `
             <tr>
                 <td>${l.date}</td><td>${escapeHtml(l.empName)}</td><td>${escapeHtml(l.empID)}</td><td>${escapeHtml(l.item)}</td><td>${l.qty}</td><td>${escapeHtml(l.location)}</td>
@@ -2874,14 +3019,106 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
         renderPPELogs();
     }
 
+    function switchTrainingTab(t) {
+      const tabs = ['main','visitor'];
+      const idMap = { main:'tabTrainingMain', visitor:'tabTrainingVisitor' };
+      const containerMap = { main:'trainingMainContainer', visitor:'trainingVisitorContainer' };
+      tabs.forEach(id => {
+        document.getElementById(idMap[id]).className = t === id ? 'admin-tab-btn active' : 'admin-tab-btn';
+        document.getElementById(containerMap[id]).style.display = t === id ? 'block' : 'none';
+      });
+    }
+
     function renderModules(){
       const mods = LocalDB.get('modules', []);
+      // Hidden flat table kept only for the Excel export helper
       const tbody = document.querySelector('#modTable tbody');
-      const recMod = document.getElementById('recMod');
       if(tbody) tbody.innerHTML = mods.map(m => `<tr><td>${escapeHtml(m.name)}</td><td>${m.freq} months</td><td class="admin-only"><button class="btn-danger btn-sm" onclick="deleteModule(${m.id})">Delete</button></td></tr>`).join('');
+      const recMod = document.getElementById('recMod');
       if(recMod) recMod.innerHTML = '<option value="">Select Module</option>' + mods.map(m => `<option value="${m.id}">${escapeHtml(m.name)}</option>`).join('');
+      renderModuleList(mods);
     }
-    
+
+    function renderModuleList(mods){
+      const wrap = document.getElementById('moduleList');
+      if(!wrap) return;
+      const recs = LocalDB.get('records', []);
+      wrap.innerHTML = mods.map(m => {
+        const modRecs = recs.filter(r => String(r.moduleId) === String(m.id));
+        const count = modRecs.length;
+        const open = wrap.dataset.openModule === String(m.id);
+        return `<div>
+          <div class="module-card" onclick="toggleModuleRecords(${m.id})">
+            <div class="module-card-main">
+              <div class="module-card-icon">🎓</div>
+              <div>
+                <div class="module-card-title">${escapeHtml(m.name)}</div>
+                <div class="module-card-sub">Every ${m.freq} month${m.freq === 1 ? '' : 's'} • ${count} employee record${count === 1 ? '' : 's'}</div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px">
+              <button type="button" class="btn-danger btn-sm admin-only" onclick="event.stopPropagation();deleteModule(${m.id})">Delete</button>
+              <span class="module-card-caret" id="moduleCaret_${m.id}">${open ? '▾' : '▸'}</span>
+            </div>
+          </div>
+          <div class="module-records-panel" id="moduleRecords_${m.id}" style="display:${open ? 'block' : 'none'}"></div>
+        </div>`;
+      }).join('') || '<p style="color:grey;text-align:center;padding:20px 0">No training modules defined yet — add one above.</p>';
+      if (wrap.dataset.openModule) renderModuleRecordGroups(wrap.dataset.openModule);
+    }
+
+    function toggleModuleRecords(modId){
+      const wrap = document.getElementById('moduleList');
+      const panel = document.getElementById('moduleRecords_' + modId);
+      const caret = document.getElementById('moduleCaret_' + modId);
+      if(!panel) return;
+      const opening = panel.style.display === 'none';
+      // Collapse any previously-open module first (accordion-style, keeps the list tidy)
+      if (wrap.dataset.openModule && wrap.dataset.openModule !== String(modId)) {
+        const prevPanel = document.getElementById('moduleRecords_' + wrap.dataset.openModule);
+        const prevCaret = document.getElementById('moduleCaret_' + wrap.dataset.openModule);
+        if (prevPanel) prevPanel.style.display = 'none';
+        if (prevCaret) prevCaret.innerText = '▸';
+      }
+      panel.style.display = opening ? 'block' : 'none';
+      if (caret) caret.innerText = opening ? '▾' : '▸';
+      wrap.dataset.openModule = opening ? String(modId) : '';
+      if (opening) renderModuleRecordGroups(modId);
+    }
+
+    function renderModuleRecordGroups(modId){
+      const panel = document.getElementById('moduleRecords_' + modId);
+      if (!panel) return;
+      const recs = LocalDB.get('records', []).filter(r => String(r.moduleId) === String(modId));
+      const today = new Date();
+      const groups = {};
+      recs.forEach(r => { if (!groups[r.date]) groups[r.date] = []; groups[r.date].push(r); });
+      const dates = Object.keys(groups).sort((a, b) => new Date(b) - new Date(a));
+      panel.innerHTML = dates.map(date => {
+        const items = groups[date];
+        let worstDays = Infinity;
+        items.forEach(r => { const next = new Date(r.nextDue); const days = Math.ceil((next - today) / (1000*60*60*24)); if (days < worstDays) worstDays = days; });
+        const status = worstDays < 0 ? 'Overdue' : 'Pending';
+        const cls = worstDays < 0 ? 'status-expired' : (worstDays <= 30 ? 'status-warning' : 'status-safe');
+        return `<div class="training-batch">
+          <div class="training-batch-head">
+            <span>📅 ${date}</span>
+            <span class="status-badge ${cls}">${status}</span>
+            <span class="small" style="color:var(--muted);font-weight:500;text-transform:none">${items.length} employee${items.length === 1 ? '' : 's'}</span>
+          </div>
+          <table style="width:100%;margin-top:4px">
+            <tbody>
+            ${items.map(r => {
+              const next = new Date(r.nextDue); const days = Math.ceil((next - today) / (1000*60*60*24));
+              const s = days < 0 ? 'Overdue' : 'Pending'; const c = days < 0 ? 'status-expired' : (days <= 30 ? 'status-warning' : 'status-safe');
+              return `<tr><td>${escapeHtml(r.name)}</td><td>Next due: ${r.nextDue} <span class="status-badge ${c}">${s}</span></td><td class="admin-only" style="text-align:right"><button class="btn-danger btn-sm" onclick="deleteRecord(${r.id})">Delete</button></td></tr>`;
+            }).join('')}
+            </tbody>
+          </table>
+        </div>`;
+      }).join('') || '<p style="color:grey;padding:8px 0">No training batches recorded for this module yet.</p>';
+    }
+
     async function addModule(e){
       e.preventDefault();
       const modObj = { id: Date.now(), name: document.getElementById('modName').value, freq: parseInt(document.getElementById('modFreq').value)||0 };
@@ -2889,14 +3126,19 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
       const mods = LocalDB.get('modules', []);
       mods.push(modObj);
       LocalDB.set('modules', mods);
+      logActivity('Training module added', modObj.name);
 
       e.target.reset(); renderModules();
     }
     
-    function deleteModule(id){ LocalDB.set('modules', LocalDB.get('modules', []).filter(m => m.id !== id));
-    renderModules(); }
+    function deleteModule(id){
+      if(!confirm('Delete this training module? Its training records will remain but will no longer be linked to a module card.')) return;
+      LocalDB.set('modules', LocalDB.get('modules', []).filter(m => m.id !== id));
+      renderModules();
+    }
     
     function renderRecords(){
+      // Hidden flat table kept only for the Excel export helper
       const recs = LocalDB.get('records', []);
       const today = new Date();
       document.querySelector('#recTable tbody').innerHTML = recs.map(r => {
@@ -2906,6 +3148,7 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
         const cls = days < 0 ? 'status-expired' : (days <= 30 ? 'status-warning' : 'status-safe');
         return `<tr><td>${escapeHtml(r.name)}</td><td>${escapeHtml(r.moduleName)}</td><td>${r.date}</td><td>${r.nextDue} <span class="status-badge ${cls}">${status}</span></td><td class="admin-only"><button class="btn-danger btn-sm" onclick="deleteRecord(${r.id})">Delete</button></td></tr>`;
       }).join('');
+      renderModuleList(LocalDB.get('modules', []));
     }
     
     async function addRecord(e){
@@ -2914,18 +3157,27 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
       const mods = LocalDB.get('modules', []);
       const mod = mods.find(m => String(m.id) === String(modId));
       if(!mod){ alert('Select a valid module'); return; }
-      
-      const date = new Date(document.getElementById('recDate').value);
+
+      const dateStr = document.getElementById('recDate').value;
+      const date = new Date(dateStr);
       const next = new Date(date); next.setMonth(next.getMonth() + (mod.freq || 0));
-      const recObj = { id: Date.now(), name: document.getElementById('recName').value, moduleId: mod.id, moduleName: mod.name, date: document.getElementById('recDate').value, nextDue: next.toISOString().slice(0,10) };
+      const names = (document.getElementById('recNames').value || '')
+        .split(/[\n,]/).map(s => s.trim()).filter(Boolean);
+      if (!names.length) { alert('Enter at least one employee name'); return; }
+
       const recs = LocalDB.get('records', []);
-      recs.unshift(recObj);
-      LocalDB.set('records', recs); 
-      
+      names.forEach((nm, i) => {
+        recs.unshift({ id: Date.now() + i, name: nm, moduleId: mod.id, moduleName: mod.name, date: dateStr, nextDue: next.toISOString().slice(0,10) });
+      });
+      LocalDB.set('records', recs);
+      logActivity('Training recorded', `${mod.name} — ${names.length} employee(s) on ${dateStr}`);
+
       e.target.reset(); renderRecords();
     }
     
-    function deleteRecord(id){ LocalDB.set('records', LocalDB.get('records', []).filter(r => r.id !== id)); renderRecords();
+    function deleteRecord(id){
+      LocalDB.set('records', LocalDB.get('records', []).filter(r => r.id !== id));
+      renderRecords();
     }
 
     async function addVisitor(e) {
@@ -3036,19 +3288,51 @@ TARSONS HSE Portal`;
       { id: 11, name: 'Ali Hapej', number: '+919876543210', category: 'ERT', factory: 'Panchla' },
       { id: 12, name: 'SK Rafikul', number: '+919876543211', category: 'ERT', factory: 'Amta' }
     ];
+    // Picks a fitting icon for a contact based on keywords in its name, so
+    // Fire/Ambulance/Security/Control Room/Panic Button etc. each get a
+    // recognisable graphic instead of one generic phone icon for everyone.
+    const CONTACT_ICON_RULES = [
+      { icon: '🔥', kw: ['fire', 'flammable'] },
+      { icon: '🚑', kw: ['ambulance', 'medical', 'hospital', 'health', 'first aid'] },
+      { icon: '👮', kw: ['police', 'security', 'guard'] },
+      { icon: '☎', kw: ['control room', 'head office', '(h.o)', 'ho)', 'reception'] },
+      { icon: '🆘', kw: ['panic', 'emergency', 'sos', 'helpline'] },
+      { icon: '⛑️', kw: ['hse', 'safety officer', 'safety manager', 'ehs'] },
+      { icon: '🛡️', kw: ['ert', 'response team', 'rescue'] },
+      { icon: '👶', kw: ['child'] },
+      { icon: '🚻', kw: ['women'] },
+      { icon: '⚡', kw: ['electric'] },
+      { icon: '💧', kw: ['water', 'plumb'] },
+      { icon: '🏭', kw: ['plant head', 'factory head', 'unit head'] },
+      { icon: '🚗', kw: ['transport', 'vehicle', 'driver'] }
+    ];
+    function getContactIcon(name) {
+      const n = String(name || '').toLowerCase();
+      for (const rule of CONTACT_ICON_RULES) {
+        if (rule.kw.some(k => n.includes(k))) return rule.icon;
+      }
+      return '📞';
+    }
+    function contactCard(c, showFactory) {
+      return `<div class="contact-card">
+        ${isAdminTier(currentUser) ? `<div class="cc-del" onclick="deleteContact(${c.id})">X</div>` : ''}
+        <div class="contact-card-icon">${getContactIcon(c.name)}</div>
+        <div>
+          <div class="contact-card-name">${escapeHtml(c.name)}</div>
+          ${showFactory ? `<div class="contact-card-sub">${escapeHtml(c.factory || '-')}</div>` : ''}
+          <a class="contact-card-number" href="tel:${escapeHtml(c.number)}">☎ ${escapeHtml(c.number)}</a>
+        </div>
+      </div>`;
+    }
     function renderContacts() {
       let contacts = LocalDB.get('contacts', null);
       if (!contacts) { contacts = DEFAULT_CONTACTS.slice(); LocalDB.set('contacts', contacts); }
       const emergency = contacts.filter(c => c.category === 'Emergency');
       const ert = contacts.filter(c => c.category === 'ERT');
-      document.getElementById('emergencyContactsBody').innerHTML = emergency.map(c => `
-        <tr><td>${escapeHtml(c.name)}</td><td><a href="tel:${escapeHtml(c.number)}">☎ ${escapeHtml(c.number)}</a></td>
-        <td class="admin-only"><button class="btn-danger btn-sm" onclick="deleteContact(${c.id})">Delete</button></td></tr>
-      `).join('') || '<tr><td colspan="3" style="text-align:center;color:grey">No emergency contacts yet.</td></tr>';
-      document.getElementById('ertContactsBody').innerHTML = ert.map(c => `
-        <tr><td>${escapeHtml(c.name)}</td><td>${escapeHtml(c.factory || '-')}</td><td><a href="tel:${escapeHtml(c.number)}">☎ ${escapeHtml(c.number)}</a></td>
-        <td class="admin-only"><button class="btn-danger btn-sm" onclick="deleteContact(${c.id})">Delete</button></td></tr>
-      `).join('') || '<tr><td colspan="4" style="text-align:center;color:grey">No ERT members yet.</td></tr>';
+      document.getElementById('emergencyContactsGrid').innerHTML = emergency.map(c => contactCard(c, false)).join('') ||
+        '<p style="color:grey;grid-column:1/-1;text-align:center;padding:16px 0">No emergency contacts yet.</p>';
+      document.getElementById('ertContactsGrid').innerHTML = ert.map(c => contactCard(c, true)).join('') ||
+        '<p style="color:grey;grid-column:1/-1;text-align:center;padding:16px 0">No ERT members yet.</p>';
     }
     function addContact(e) {
       e.preventDefault();
@@ -3186,7 +3470,9 @@ TARSONS HSE Portal`;
 
     // --- LEGAL REGISTER LOGIC ---
     function renderLegalRegister() {
-        const list = LocalDB.get('legal', []);
+        const filter = document.getElementById('legFilter') ? document.getElementById('legFilter').value : '';
+        let list = LocalDB.get('legal', []);
+        if (filter) list = list.filter(item => item.factory === filter);
         const tbody = document.querySelector('#legalTable tbody');
         if(!tbody) return;
 
@@ -3838,6 +4124,10 @@ TARSONS HSE Portal`;
     window.addUser = addUser;
     window.deleteUser = deleteUser;
     window.switchAdminTab = switchAdminTab;
+    window.showForgotPasswordHelp = showForgotPasswordHelp;
+    window.clearActivityLog = clearActivityLog;
+    window.switchTrainingTab = switchTrainingTab;
+    window.toggleModuleRecords = toggleModuleRecords;
     window.addExtinguisher = addExtinguisher;
     window.renderExtinguisherList = renderExtinguisherList;
     window.deleteExtinguisher = deleteExtinguisher;
@@ -3904,6 +4194,10 @@ TARSONS HSE Portal`;
     window.deleteBlogPost = deleteBlogPost;
     window.deleteBlogPostFromModal = deleteBlogPostFromModal;
     window.renderChart = renderChart; // BUGFIX: trend-range <select onchange="renderChart()"> was calling an undefined global before this
+    window.renderDashboard = renderDashboard; // now called from the Incident register's location filter
+    window.renderLegalRegister = renderLegalRegister; // now called from the Legal register's location filter
+    window.renderPPE = renderPPE; // now called from the PPE stock location filter
+    window.renderPPELogs = renderPPELogs; // now called from the PPE Issue Log location filter
     window.openChangePassword = openChangePassword;
     window.closeChangePassword = closeChangePassword;
     window.submitChangePassword = submitChangePassword;
