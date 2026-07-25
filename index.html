@@ -1745,6 +1745,19 @@
     // second or two instead of waiting for a 15s poll like the old Sheets setup.
     // A slow poll stays on underneath as a safety net in case a realtime
     // event is dropped (e.g. a brief network blip).
+    //
+    // Realtime events can arrive in quick bursts (e.g. several users saving
+    // PPE/PTW/incident data at once) — each one used to call refreshCurrentView()
+    // immediately, which fully rebuilds whatever section is on screen. On the
+    // Training page that rebuild replaces every filter <select>, so a burst
+    // landing mid-click could silently cancel a location filter pick (looked
+    // "not working") and repeated rebuilds made the UI feel sluggish while
+    // filtering ("very slow"). Debouncing collapses a burst into one refresh.
+    let refreshDebounceTimer = null;
+    function scheduleRefresh() {
+      clearTimeout(refreshDebounceTimer);
+      refreshDebounceTimer = setTimeout(refreshCurrentView, 600);
+    }
     function startCloudPolling() {
       if (!CLOUD_SYNC_ENABLED || cloudSyncTimer) return;
       realtimeChannel = supabase
@@ -1758,12 +1771,12 @@
             localStorage.setItem('hse_' + row.key, JSON.stringify(row.value));
           }
           setCloudStatus(true);
-          refreshCurrentView();
+          scheduleRefresh();
         })
         .subscribe();
       cloudSyncTimer = setInterval(async () => {
         const ok = await loadFromCloud();
-        if (ok) refreshCurrentView();
+        if (ok) scheduleRefresh();
       }, CLOUD_POLL_MS);
     }
 
@@ -3160,7 +3173,22 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
     const moduleLocFilter = {};
     function setModuleLocFilter(modId, value){
       moduleLocFilter[modId] = value;
-      renderModuleList(LocalDB.get('modules', []));
+      // Update only this module's own summary text + (if open) its batch panel —
+      // deliberately NOT a full renderModuleList() rebuild. Rebuilding every
+      // module card here would recreate the very <select> the user just picked
+      // from, and do it on every single change, which was both wasteful and,
+      // if a background refresh landed at the same moment, could cancel the
+      // pick before it visibly took effect.
+      const mods = LocalDB.get('modules', []);
+      const mod = mods.find(m => String(m.id) === String(modId));
+      const subEl = document.querySelector(`[data-mod-sub="${modId}"]`);
+      if (mod && subEl) {
+        const locFilter = moduleLocFilter[modId] || '';
+        const count = LocalDB.get('records', []).filter(r => String(r.moduleId) === String(modId) && (!locFilter || r.location === locFilter)).length;
+        subEl.textContent = `Every ${mod.freq} month${mod.freq === 1 ? '' : 's'} • ${count} employee record${count === 1 ? '' : 's'}`;
+      }
+      const wrap = document.getElementById('moduleList');
+      if (wrap && wrap.dataset.openModule === String(modId)) renderModuleRecordGroups(modId);
     }
 
     function renderModules(){
@@ -3188,7 +3216,7 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
               <div class="module-card-icon">🎓</div>
               <div>
                 <div class="module-card-title">${escapeHtml(m.name)}</div>
-                <div class="module-card-sub">Every ${m.freq} month${m.freq === 1 ? '' : 's'} • ${count} employee record${count === 1 ? '' : 's'}</div>
+                <div class="module-card-sub" data-mod-sub="${m.id}">Every ${m.freq} month${m.freq === 1 ? '' : 's'} • ${count} employee record${count === 1 ? '' : 's'}</div>
               </div>
             </div>
             <div style="display:flex;align-items:center;gap:10px">
@@ -4498,6 +4526,7 @@ TARSONS HSE Portal`;
     window.deleteModule = deleteModule;
     window.addRecord = addRecord;
     window.deleteRecord = deleteRecord;
+    window.setModuleLocFilter = setModuleLocFilter;
     window.addVisitor = addVisitor;
     window.deleteVisitor = deleteVisitor;
     window.reprintVisitorCertificate = reprintVisitorCertificate;
@@ -4516,6 +4545,7 @@ TARSONS HSE Portal`;
     window.printHIRA = printHIRA;
     window.addWaste = addWaste;
     window.deleteWaste = deleteWaste;
+    window.renderWaste = renderWaste; // Waste Mgmt's location filter calls this via onchange — was missing, so the filter silently did nothing
     window.toggleMobileMenu = toggleMobileMenu;
     window.openPolicyFile = openPolicyFile;
     window.openFullscreen = openFullscreen;
@@ -4551,6 +4581,7 @@ TARSONS HSE Portal`;
     window.renderPPELogs = renderPPELogs; // now called from the PPE Issue Log location filter
     window.renderHIRA = renderHIRA; // now called from the HIRA (hazardous log) location filter
     window.populateEvalBatchSelect = populateEvalBatchSelect;
+    window.renderTrainingEvals = renderTrainingEvals;
     window.renderEvalTraineeRows = renderEvalTraineeRows;
     window.saveTrainingEval = saveTrainingEval;
     window.deleteTrainingEval = deleteTrainingEval;
