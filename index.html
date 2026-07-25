@@ -1085,19 +1085,20 @@
                <p class="small" style="text-transform:none;font-weight:500;margin:-4px 0 8px;">Pick the module and date once, then list everyone who was trained together — one name per line (or comma-separated).</p>
               <form onsubmit="addRecord(event)">
                   <div class="two-cols"><select id="recMod" required><option value="">Select Module</option></select><input id="recDate" type="date" required></div>
+                  <select id="recLocation" required style="margin-top:8px"><option value="">Select Location</option></select>
                   <textarea id="recNames" placeholder="Employee names — one per line, e.g.&#10;Ramesh Kumar&#10;Sita Devi&#10;Anil Singh" required style="margin-top:8px;min-height:80px"></textarea>
                   <div style="text-align:right;margin-top:6px"><button type="submit" class="primary">Record Batch</button></div>
               </form>
           </div>
 
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-            <h3 style="margin:0">Training Modules <span class="small" style="color:var(--muted);font-weight:500;text-transform:none">— click a module to view its training batches</span></h3>
+            <h3 style="margin:0">Training Modules <span class="small" style="color:var(--muted);font-weight:500;text-transform:none">— click a module to view its training batches; use each module's own location dropdown to filter its batches</span></h3>
             <button class="ghost-dark btn-sm" onclick="exportTableToExcel('recTable','Training_Records')">⬇ Excel (all records)</button>
           </div>
           <div id="moduleList"></div>
           <!-- Hidden flat tables kept only so the Excel export helper (which reads a real <table>) has something to read from -->
           <table id="modTable" style="display:none"><thead><tr><th>Module</th><th>Frequency</th><th class="admin-only">Actions</th></tr></thead><tbody></tbody></table>
-          <table id="recTable" style="display:none"><thead><tr><th>Employee</th><th>Module</th><th>Date</th><th>Next Due</th><th class="admin-only">Actions</th></tr></thead><tbody></tbody></table>
+          <table id="recTable" style="display:none"><thead><tr><th>Employee</th><th>Module</th><th>Location</th><th>Date</th><th>Next Due</th><th class="admin-only">Actions</th></tr></thead><tbody></tbody></table>
         </div>
 
         <div id="trainingVisitorContainer" style="display:none">
@@ -1165,19 +1166,32 @@
               <select id="evalBatchSelect" onchange="renderEvalTraineeRows()"><option value="">Select Training Date / Topic</option></select>
               <input id="evalTrainer" placeholder="Trainer Name">
             </div>
-            <input id="evalDate" type="date" style="margin-top:8px;max-width:220px" title="Evaluation date (defaults to the training date)">
+            <div class="two-cols" style="margin-top:8px;max-width:460px">
+              <div>
+                <label class="small" style="display:block;color:var(--muted);font-weight:600;margin-bottom:3px;text-transform:none">Training Date</label>
+                <input id="evalTrainingDate" type="date" readonly style="width:100%;background:#eee" title="Training date (from the selected batch)">
+              </div>
+              <div>
+                <label class="small" style="display:block;color:var(--muted);font-weight:600;margin-bottom:3px;text-transform:none">Evaluation Date</label>
+                <input id="evalDate" type="date" style="width:100%" title="Evaluation date (defaults to the training date)">
+              </div>
+            </div>
             <div id="evalTraineeRows" style="margin-top:12px">
               <p style="color:grey;text-align:center;padding:12px 0">Select a training date / topic above to list its trainees.</p>
             </div>
             <div style="text-align:right;margin-top:10px"><button type="button" class="primary" onclick="saveTrainingEval()">Save Evaluations</button></div>
           </div>
 
+          <div class="location-filter-bar">
+            <label>📍 Filter by Location:</label>
+            <select id="evalLocFilter" onchange="renderTrainingEvals()"><option value="">All Locations</option></select>
+          </div>
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
             <h3 style="margin:0">Trainee Evaluations</h3>
             <button class="ghost-dark btn-sm" onclick="exportTableToExcel('evalTable','Training_Evaluations')">⬇ Excel</button>
           </div>
           <div style="overflow-x:auto;margin-bottom:20px">
-            <table id="evalTable"><thead><tr><th>Trainee</th><th>Module / Topic</th><th>Date</th><th>Trainer</th><th>Score</th><th>Status</th><th>Retraining</th><th class="admin-only">Action</th></tr></thead><tbody></tbody></table>
+            <table id="evalTable"><thead><tr><th>Trainee</th><th>Module / Topic</th><th>Location</th><th>Training Date</th><th>Evaluation Date</th><th>Trainer</th><th>Score</th><th>Status</th><th>Retraining</th><th class="admin-only">Action</th></tr></thead><tbody></tbody></table>
           </div>
         </div>
       </div>
@@ -2448,21 +2462,38 @@
         }
     }
 
+    // Shared factory/location list — used by populateFactorySelects and by the
+    // per-module location filter dropdowns rendered inside Training Modules.
+    const FACTORY_LIST = ["Jangalpur", "Dhulagarh", "Panchla", "Amta"];
+
+    // Builds the <option> list for a standalone location-filter select (not
+    // registered in populateFactorySelects), preserving the currently chosen value.
+    function factoryOptionsHtml(selected) {
+        return '<option value="">All Locations</option>' +
+            FACTORY_LIST.map(f => `<option value="${f}"${f === selected ? ' selected' : ''}>${f}</option>`).join('');
+    }
+
     function populateFactorySelects() {
-        const factories = ["Jangalpur", "Dhulagarh", "Panchla", "Amta"];
+        const factories = FACTORY_LIST;
         const selectIds = [
             'factorySelect', 'extFactory', 'extFilter', 'auditFactory', 'rFactory',
             'visFactory', 'ptwFactory', 'ptwFactoryFilter', 'legFactorySelect', 'issueLocation',
             'hiraFactory', 'wasteFactory', 'capaFactory', 'contFactory',
-            'legFilter', 'dashFilter', 'ppeFactory', 'ppeFilter', 'ppeLogFilter', 'hiraFilter', 'wasteFilter'
+            'legFilter', 'dashFilter', 'ppeFactory', 'ppeFilter', 'ppeLogFilter', 'hiraFilter', 'wasteFilter',
+            'recLocation', 'evalLocFilter'
         ];
 
         selectIds.forEach(id => {
             const el = document.getElementById(id);
             if (!el) return;
+            // Preserve whatever is currently selected (e.g. a location filter the
+            // user picked) — this function gets re-run often (nav, cloud sync,
+            // realtime updates) and used to silently reset every filter to blank.
+            const current = el.value;
             const firstOption = (el.options[0] && (el.options[0].value === "" || el.options[0].text.includes("All"))) 
                 ? el.options[0].outerHTML : "";
             el.innerHTML = firstOption + factories.map(f => `<option value="${f}">${f}</option>`).join('');
+            if (current && factories.includes(current)) el.value = current;
         });
     }
 
@@ -3124,6 +3155,14 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
       if (t === 'evaluation') { populateEvalBatchSelect(); renderTrainingEvals(); }
     }
 
+    // Per-module location filter selections (in-memory only — resets on reload,
+    // which is fine since it's just a viewing convenience). Keyed by module id.
+    const moduleLocFilter = {};
+    function setModuleLocFilter(modId, value){
+      moduleLocFilter[modId] = value;
+      renderModuleList(LocalDB.get('modules', []));
+    }
+
     function renderModules(){
       const mods = LocalDB.get('modules', []);
       // Hidden flat table kept only for the Excel export helper
@@ -3137,9 +3176,10 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
     function renderModuleList(mods){
       const wrap = document.getElementById('moduleList');
       if(!wrap) return;
-      const recs = LocalDB.get('records', []);
+      const allRecs = LocalDB.get('records', []);
       wrap.innerHTML = mods.map(m => {
-        const modRecs = recs.filter(r => String(r.moduleId) === String(m.id));
+        const locFilter = moduleLocFilter[m.id] || '';
+        const modRecs = allRecs.filter(r => String(r.moduleId) === String(m.id) && (!locFilter || r.location === locFilter));
         const count = modRecs.length;
         const open = wrap.dataset.openModule === String(m.id);
         return `<div>
@@ -3152,6 +3192,7 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
               </div>
             </div>
             <div style="display:flex;align-items:center;gap:10px">
+              <select onclick="event.stopPropagation()" onchange="event.stopPropagation();setModuleLocFilter(${m.id}, this.value)" title="Filter this module's batches by location" style="padding:5px 8px;font-size:12px;border-radius:6px;border:1px solid var(--border);max-width:150px">${factoryOptionsHtml(locFilter)}</select>
               <button type="button" class="btn-danger btn-sm admin-only" onclick="event.stopPropagation();deleteModule(${m.id})">Delete</button>
               <span class="module-card-caret" id="moduleCaret_${m.id}">${open ? '▾' : '▸'}</span>
             </div>
@@ -3184,22 +3225,32 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
     function renderModuleRecordGroups(modId){
       const panel = document.getElementById('moduleRecords_' + modId);
       if (!panel) return;
-      const recs = LocalDB.get('records', []).filter(r => String(r.moduleId) === String(modId));
+      const locFilter = moduleLocFilter[modId] || '';
+      const recs = LocalDB.get('records', []).filter(r => String(r.moduleId) === String(modId) && (!locFilter || r.location === locFilter));
       const today = new Date();
+      // Group by date AND location together — a different training date, or the
+      // same date recorded at a different location, is always kept as its own
+      // batch instead of being merged with another batch in this module.
       const groups = {};
-      recs.forEach(r => { if (!groups[r.date]) groups[r.date] = []; groups[r.date].push(r); });
-      const dates = Object.keys(groups).sort((a, b) => new Date(b) - new Date(a));
-      panel.innerHTML = dates.map(date => {
-        const items = groups[date];
+      recs.forEach(r => {
+        const loc = r.location || '';
+        const key = `${r.date}||${loc}`;
+        if (!groups[key]) groups[key] = { date: r.date, location: loc, items: [] };
+        groups[key].items.push(r);
+      });
+      const batches = Object.values(groups).sort((a, b) => new Date(b.date) - new Date(a.date) || a.location.localeCompare(b.location));
+      panel.innerHTML = batches.map(batch => {
+        const items = batch.items;
         let worstDays = Infinity;
         items.forEach(r => { const next = new Date(r.nextDue); const days = Math.ceil((next - today) / (1000*60*60*24)); if (days < worstDays) worstDays = days; });
         const status = worstDays < 0 ? 'Overdue' : 'Pending';
         const cls = worstDays < 0 ? 'status-expired' : (worstDays <= 30 ? 'status-warning' : 'status-safe');
+        const loc = batch.location ? ` • 📍 ${escapeHtml(batch.location)}` : '';
         return `<div class="training-batch">
           <div class="training-batch-head">
-            <span>📅 ${date}</span>
+            <span>📅 ${batch.date}</span>
             <span class="status-badge ${cls}">${status}</span>
-            <span class="small" style="color:var(--muted);font-weight:500;text-transform:none">${items.length} employee${items.length === 1 ? '' : 's'}</span>
+            <span class="small" style="color:var(--muted);font-weight:500;text-transform:none">${items.length} employee${items.length === 1 ? '' : 's'}${loc}</span>
           </div>
           <table style="width:100%;margin-top:4px">
             <tbody>
@@ -3241,7 +3292,7 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
         const days = Math.ceil((next - today) / (1000*60*60*24));
         const status = days < 0 ? 'Overdue' : 'Pending';
         const cls = days < 0 ? 'status-expired' : (days <= 30 ? 'status-warning' : 'status-safe');
-        return `<tr><td>${escapeHtml(r.name)}</td><td>${escapeHtml(r.moduleName)}</td><td>${r.date}</td><td>${r.nextDue} <span class="status-badge ${cls}">${status}</span></td><td class="admin-only"><button class="btn-danger btn-sm" onclick="deleteRecord(${r.id})">Delete</button></td></tr>`;
+        return `<tr><td>${escapeHtml(r.name)}</td><td>${escapeHtml(r.moduleName)}</td><td>${escapeHtml(r.location || '')}</td><td>${r.date}</td><td>${r.nextDue} <span class="status-badge ${cls}">${status}</span></td><td class="admin-only"><button class="btn-danger btn-sm" onclick="deleteRecord(${r.id})">Delete</button></td></tr>`;
       }).join('');
       renderModuleList(LocalDB.get('modules', []));
       safeCall(populateEvalBatchSelect);
@@ -3254,6 +3305,9 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
       const mod = mods.find(m => String(m.id) === String(modId));
       if(!mod){ alert('Select a valid module'); return; }
 
+      const location = document.getElementById('recLocation').value;
+      if (!location) { alert('Select a location'); return; }
+
       const dateStr = document.getElementById('recDate').value;
       const date = new Date(dateStr);
       const next = new Date(date); next.setMonth(next.getMonth() + (mod.freq || 0));
@@ -3263,10 +3317,10 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
 
       const recs = LocalDB.get('records', []);
       names.forEach((nm, i) => {
-        recs.unshift({ id: Date.now() + i, name: nm, moduleId: mod.id, moduleName: mod.name, date: dateStr, nextDue: next.toISOString().slice(0,10) });
+        recs.unshift({ id: Date.now() + i, name: nm, moduleId: mod.id, moduleName: mod.name, location, date: dateStr, nextDue: next.toISOString().slice(0,10) });
       });
       LocalDB.set('records', recs);
-      logActivity('Training recorded', `${mod.name} — ${names.length} employee(s) on ${dateStr}`);
+      logActivity('Training recorded', `${mod.name} — ${names.length} employee(s) on ${dateStr} at ${location}`);
 
       e.target.reset(); renderRecords();
     }
@@ -3298,15 +3352,16 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
       if (!sel) return;
       const prev = sel.value;
       const recs = LocalDB.get('records', []);
-      const groups = {}; // key: "moduleId||date"
+      const groups = {}; // key: "moduleId||date||location"
       recs.forEach(r => {
-        const key = `${r.moduleId}||${r.date}`;
-        if (!groups[key]) groups[key] = { moduleId: r.moduleId, moduleName: r.moduleName, date: r.date, count: 0 };
+        const loc = r.location || '';
+        const key = `${r.moduleId}||${r.date}||${loc}`;
+        if (!groups[key]) groups[key] = { moduleId: r.moduleId, moduleName: r.moduleName, date: r.date, location: loc, count: 0 };
         groups[key].count++;
       });
       const batches = Object.keys(groups).map(k => groups[k]).sort((a, b) => new Date(b.date) - new Date(a.date));
       sel.innerHTML = '<option value="">Select Training Date / Topic</option>' +
-        batches.map(b => `<option value="${b.moduleId}||${b.date}">${escapeHtml(b.moduleName)} — ${b.date} (${b.count} trainee${b.count === 1 ? '' : 's'})</option>`).join('');
+        batches.map(b => `<option value="${b.moduleId}||${b.date}||${b.location}">${escapeHtml(b.moduleName)} — ${b.date}${b.location ? ' — 📍 ' + escapeHtml(b.location) : ''} (${b.count} trainee${b.count === 1 ? '' : 's'})</option>`).join('');
       if (prev && sel.querySelector(`option[value="${CSS.escape(prev)}"]`)) sel.value = prev;
     }
     function renderEvalTraineeRows() {
@@ -3316,10 +3371,14 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
       const val = sel.value;
       if (!val) {
         wrap.innerHTML = '<p style="color:grey;text-align:center;padding:12px 0">Select a training date / topic above to list its trainees.</p>';
+        const trainingDateField = document.getElementById('evalTrainingDate');
+        if (trainingDateField) trainingDateField.value = '';
         return;
       }
-      const [modId, date] = val.split('||');
-      const trainees = LocalDB.get('records', []).filter(r => String(r.moduleId) === String(modId) && r.date === date);
+      const [modId, date, location] = val.split('||');
+      const trainees = LocalDB.get('records', []).filter(r => String(r.moduleId) === String(modId) && r.date === date && (r.location || '') === (location || ''));
+      const trainingDateField = document.getElementById('evalTrainingDate');
+      if (trainingDateField) trainingDateField.value = date;
       const dateField = document.getElementById('evalDate');
       if (dateField && !dateField.value) dateField.value = date;
       if (!trainees.length) {
@@ -3337,8 +3396,8 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
       const sel = document.getElementById('evalBatchSelect');
       const val = sel ? sel.value : '';
       if (!val) { alert('Select a training date / topic first'); return; }
-      const [modId, date] = val.split('||');
-      const trainees = LocalDB.get('records', []).filter(r => String(r.moduleId) === String(modId) && r.date === date);
+      const [modId, date, location] = val.split('||');
+      const trainees = LocalDB.get('records', []).filter(r => String(r.moduleId) === String(modId) && r.date === date && (r.location || '') === (location || ''));
       if (!trainees.length) { alert('Select a valid training date / topic'); return; }
       const moduleName = trainees[0].moduleName; // read from the record itself so this still works if the module was later deleted
 
@@ -3359,6 +3418,8 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
           id: Date.now() + i,
           employee: row.dataset.name,
           moduleId: modId, moduleName,
+          location,
+          trainingDate: date,
           date: evalDate,
           trainer,
           score,
@@ -3376,7 +3437,8 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
       renderTrainingEvals();
     }
     function renderTrainingEvals() {
-      const evals = LocalDB.get('trainingEvals', []);
+      const locFilter = document.getElementById('evalLocFilter') ? document.getElementById('evalLocFilter').value : '';
+      const evals = LocalDB.get('trainingEvals', []).filter(ev => !locFilter || ev.location === locFilter);
       const tbody = document.querySelector('#evalTable tbody');
       if (!tbody) return;
       tbody.innerHTML = evals.map(ev => {
@@ -3385,6 +3447,8 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
         <tr>
           <td>${escapeHtml(ev.employee)}</td>
           <td>${escapeHtml(ev.moduleName)}</td>
+          <td>${escapeHtml(ev.location || '')}</td>
+          <td>${ev.trainingDate || ev.date}</td>
           <td>${ev.date}</td>
           <td>${escapeHtml(ev.trainer)}</td>
           <td><b>${score}</b></td>
@@ -3392,7 +3456,7 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
           <td><span class="status-badge ${ev.retrain ? 'status-expired' : 'status-safe'}">${ev.retrain ? 'Yes' : 'No'}</span></td>
           <td class="admin-only"><button class="btn-danger btn-sm" onclick="deleteTrainingEval(${ev.id})">Delete</button></td>
         </tr>`;
-      }).join('') || '<tr><td colspan="8" style="text-align:center;color:grey">No evaluations recorded yet.</td></tr>';
+      }).join('') || '<tr><td colspan="10" style="text-align:center;color:grey">No evaluations recorded yet.</td></tr>';
     }
     function deleteTrainingEval(id) {
       if (!confirm('Delete this evaluation?')) return;
