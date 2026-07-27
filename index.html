@@ -1295,7 +1295,10 @@
             <h4>Training Evaluation — Trainer Assessment</h4>
             <p class="small" style="text-transform:none;font-weight:500;margin:-4px 0 8px;">Select the training date / topic below — everyone recorded for that batch appears automatically. Rate each trainee 0–10 and save. <b>0</b> = Poor, <b>1–4</b> = Needs Improvement, <b>5–7</b> = Good, <b>8–9</b> = Very Good, <b>10</b> = Excellent. Retraining is flagged automatically for a score of 5 or below.</p>
             <div class="two-cols">
-              <select id="evalBatchSelect" onchange="renderEvalTraineeRows()"><option value="">Select Training Date / Topic</option></select>
+              <div style="display:flex;gap:8px;align-items:stretch">
+                <select id="evalBatchSelect" onchange="renderEvalTraineeRows()" style="flex:1"><option value="">Select Training Date / Topic</option></select>
+                <button type="button" class="btn-danger btn-sm admin-only" style="flex:0 0 auto" title="Permanently delete the selected batch — removes it from this list, its trainee records and any saved evaluations" onclick="deleteSelectedEvalBatch()">🗑 Delete Batch</button>
+              </div>
               <input id="evalTrainer" placeholder="Trainer Name">
             </div>
             <div class="two-cols" style="margin-top:8px;max-width:460px">
@@ -1464,10 +1467,10 @@
           </form>
         </div>
 
-        <h2>☎️ Emergency Contacts</h2>
+        <h1>☎ Emergency Contacts</h1>
         <div class="contact-grid" id="emergencyContactsGrid"></div>
 
-        <h2 style="margin-top:26px">🦸🏻‍♂️ Factory ERT Members</h2>
+        <h1 style="margin-top:26px">🛡️ Factory ERT Members</h1>
         <div class="contact-grid" id="ertContactsGrid"></div>
       </div>
     </section>
@@ -2254,13 +2257,13 @@
     }
 
     function showForgotPasswordHelp() {
-        alert('Forgotten passwords can only be reset by the Admin/EHS Manager.\n\nPlease contact with the Admin or Sayan Saha (+91 7980 326735) with your Employee ID, and they will reset it for you from Manage Users.');
+        alert('Forgotten passwords can only be reset by the default Admin (Employee ID 001).\n\nPlease contact your Admin or the Tarsons HSE Manager (+91 79803 26735) with your Employee ID, and they will reset it for you from Manage Users.');
     }
 
     // --- Change Password (any logged-in user: admin / safety officer / user) ---
     function openChangePassword() {
         if (!currentUser) { showLogin(); return; }
-        if (!canChangeOwnPassword(currentUser)) { alert('Your role cannot change its own password. Please contact the Admin (+91 7980 326735) to have it reset.'); return; }
+        if (!canChangeOwnPassword(currentUser)) { alert('Your role cannot change its own password. Please contact the default Admin (Employee ID 001) to have it reset.'); return; }
         document.getElementById('cpCurrent').value = '';
         document.getElementById('cpNew').value = '';
         document.getElementById('cpConfirm').value = '';
@@ -3680,6 +3683,18 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
       safeCall(renderTrainingEvals);
     }
 
+    // Lets an admin clear an old/stale entry straight from the "Select Training
+    // Date / Topic" dropdown on the Training Evaluation screen, instead of
+    // having to go find the matching batch under Record Completion first.
+    function deleteSelectedEvalBatch(){
+      const sel = document.getElementById('evalBatchSelect');
+      if (!sel || !sel.value) { alert('Select a training date / topic first.'); return; }
+      const [modId, date, location] = sel.value.split('||');
+      deleteRecordBatch(modId, date, location); // re-populates the dropdown itself via renderRecords()
+      sel.value = '';
+      renderEvalTraineeRows();
+    }
+
     // --- Training Evaluation (trainer assessment of a trainee) ---
     // Evaluation is now done per training-date/topic batch instead of typing a name:
     // pick a batch (module + date, pulled from the "Record Completion" log), every
@@ -4885,6 +4900,7 @@ TARSONS HSE Portal`;
     window.addRecord = addRecord;
     window.deleteRecord = deleteRecord;
     window.deleteRecordBatch = deleteRecordBatch; // BUGFIX: "Delete Batch" button in Training Modules called this via inline onclick, but it was never attached to window — since the app script is type="module", top-level functions aren't global by default, so every click silently threw "deleteRecordBatch is not defined" and nothing was ever removed from storage (hence old batches/records kept lingering under the module and under Select Training Date / Topic).
+    window.deleteSelectedEvalBatch = deleteSelectedEvalBatch;
     window.setModuleLocFilter = setModuleLocFilter;
     window.addVisitor = addVisitor;
     window.deleteVisitor = deleteVisitor;
