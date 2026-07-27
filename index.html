@@ -1464,10 +1464,10 @@
           </form>
         </div>
 
-        <h1>☎ Emergency Contacts</h1>
+        <h2>☎️ Emergency Contacts</h2>
         <div class="contact-grid" id="emergencyContactsGrid"></div>
 
-        <h1 style="margin-top:26px">🛡️ Factory ERT Members</h1>
+        <h2 style="margin-top:26px">🦸🏻‍♂️ Factory ERT Members</h2>
         <div class="contact-grid" id="ertContactsGrid"></div>
       </div>
     </section>
@@ -2254,13 +2254,13 @@
     }
 
     function showForgotPasswordHelp() {
-        alert('Forgotten passwords can only be reset by the default Admin (Employee ID 001).\n\nPlease contact your Admin or the Tarsons HSE Manager (+91 79803 26735) with your Employee ID, and they will reset it for you from Manage Users.');
+        alert('Forgotten passwords can only be reset by the Admin/EHS Manager.\n\nPlease contact with the Admin or Sayan Saha (+91 7980 326735) with your Employee ID, and they will reset it for you from Manage Users.');
     }
 
     // --- Change Password (any logged-in user: admin / safety officer / user) ---
     function openChangePassword() {
         if (!currentUser) { showLogin(); return; }
-        if (!canChangeOwnPassword(currentUser)) { alert('Your role cannot change its own password. Please contact the default Admin (Employee ID 001) to have it reset.'); return; }
+        if (!canChangeOwnPassword(currentUser)) { alert('Your role cannot change its own password. Please contact the Admin (+91 7980 326735) to have it reset.'); return; }
         document.getElementById('cpCurrent').value = '';
         document.getElementById('cpNew').value = '';
         document.getElementById('cpConfirm').value = '';
