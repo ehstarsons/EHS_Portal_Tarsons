@@ -457,6 +457,29 @@
   .eval-score-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
   .eval-score-grid input{padding:9px 10px}
   @media(max-width:640px){.eval-score-grid{grid-template-columns:repeat(2,1fr)}}
+
+  /* ---------- Safety Audit checklist ---------- */
+  .audit-checklist{display:grid;grid-template-columns:1fr 1fr;gap:2px 16px}
+  @media (max-width:760px){.audit-checklist{grid-template-columns:1fr}}
+  .audit-item-row{
+    display:flex;align-items:flex-start;gap:10px;padding:8px 9px;border-radius:9px;
+    cursor:pointer;transition:background .15s ease;
+  }
+  .audit-item-row:hover{background:rgba(11,125,191,.06)}
+  body.dark-theme .audit-item-row:hover{background:rgba(255,255,255,.06)}
+  .audit-item-row input.audit-item{
+    -webkit-appearance:none;appearance:none;width:19px;height:19px;flex:0 0 19px;margin:1px 0 0;
+    border:2px solid var(--border);border-radius:6px;background:white;cursor:pointer;position:relative;
+    transition:background .15s ease, border-color .15s ease;
+  }
+  .audit-item-row input.audit-item:checked{background:var(--accent);border-color:var(--accent)}
+  .audit-item-row input.audit-item:checked::after{
+    content:'';position:absolute;left:5px;top:1px;width:5px;height:10px;
+    border:solid white;border-width:0 2px 2px 0;transform:rotate(45deg);
+  }
+  .audit-item-row input.audit-item:focus-visible{box-shadow:0 0 0 3px rgba(14,201,176,.25)}
+  .audit-item-row span{font-size:13.2px;line-height:1.45;color:var(--text-dark)}
+  .audit-item-row .audit-q-num{font-weight:800;color:var(--accent-3);margin-right:2px}
   .eval-trainee-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 4px;border-bottom:1px solid var(--border)}
   .eval-trainee-row:last-child{border-bottom:none}
   .eval-trainee-row .eval-trainee-name{font-weight:600;font-size:13.5px}
@@ -512,6 +535,36 @@
     button{font-size:13px}
     .btn-sm{padding:6px 10px;font-size:11.5px;margin-left:3px}
     td button, td .btn-sm{margin:2px 2px 2px 0}
+    .gallery{grid-template-columns:repeat(2,1fr);gap:10px}
+    .contact-grid{grid-template-columns:1fr}
+    .factory-grid{grid-template-columns:1fr}
+    .eval-score-grid{grid-template-columns:repeat(2,1fr)}
+    .location-filter-bar{flex-direction:column;align-items:stretch}
+    .location-filter-bar select,.location-filter-bar input{width:100%;min-width:0}
+    #loginBox,#siteStatsBox,#noticeBox,#ptwBox,#notificationBox,#ppeIssueBox,#emailComplaintBox,#blogReadBox,#mailVisitorPassBox,#changePasswordBox,#resetUserPasswordBox{padding:16px;border-radius:14px}
+    /* Several search/filter inputs and selects carry an inline fixed width
+       (e.g. width:220px) for desktop layouts; inline styles beat the default
+       width:100% rule, so on narrow screens they overflow or crowd their row.
+       Force them full-width here instead. */
+    input[style*="width"],select[style*="width"]{width:100% !important}
+  }
+  /* Extra-small phones (older/budget devices, small foldables closed) */
+  @media (max-width:380px){
+    .container{padding:8px}
+    .card{padding:12px}
+    .tile{padding:10px 12px}
+    .big{font-size:20px}
+    .gallery{grid-template-columns:1fr 1fr;gap:8px}
+    button{padding:8px 12px;font-size:12.5px}
+    .admin-tab-btn{padding:7px 12px;font-size:12px}
+    h2{font-size:17px} h3{font-size:14.5px}
+  }
+  /* Large desktop monitors: let the grid layouts use the extra breathing room
+     instead of stretching a fixed 1200px column arrangement */
+  @media (min-width:1500px){
+    .container,.hero{max-width:1400px}
+    .factory-grid{grid-template-columns:repeat(4,1fr)}
+    .contact-grid{grid-template-columns:repeat(auto-fill,minmax(260px,1fr))}
   }
   #mobileMenu{
     display:none;position:fixed;left:0;top:0;right:0;bottom:0;
@@ -527,6 +580,14 @@
   #mobileMenuBtn{
     display:none;width:38px;height:38px;border-radius:10px;align-items:center;justify-content:center;
     font-size:18px;background:rgba(255,255,255,.12);
+  }
+  /* Below this width the horizontally-scrolling nav-strip gets cramped, so
+     swap it for the hamburger + full-screen menu instead. (The button carries
+     an inline style="display:none" in the markup, so this needs !important
+     to take over once the viewport is narrow enough.) */
+  @media (max-width:760px){
+    #desktopNav{display:none !important}
+    #mobileMenuBtn{display:flex !important}
   }
 
   /* ---------- AI assistant ---------- */
@@ -968,18 +1029,28 @@
                   <input id="auditScore" type="number" min="0" max="100" placeholder="Score (0-100)" required readonly>
                 </div>
                 <div style="margin-top:10px; border-top:1px solid #eee; padding-top:10px;">
-                  <h5 style="margin:6px 0">Safety Checklist (10 items)</h5>
-                  <div id="auditChecklist" style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
-                    <label><input type="checkbox" class="audit-item"> Housekeeping adequate</label>
-                    <label><input type="checkbox" class="audit-item"> PPE availability</label>
-                    <label><input type="checkbox" class="audit-item"> Machine guards in place</label>
-                    <label><input type="checkbox" class="audit-item"> Electrical panels labeled</label>
-                    <label><input type="checkbox" class="audit-item"> Fire exits unobstructed</label>
-                    <label><input type="checkbox" class="audit-item"> Emergency lighting functional</label>
-                    <label><input type="checkbox" class="audit-item"> First aid kits stocked</label>
-                    <label><input type="checkbox" class="audit-item"> LOTO procedures followed</label>
-                    <label><input type="checkbox" class="audit-item"> Chemical storage compliant</label>
-                    <label><input type="checkbox" class="audit-item"> Spill kits available</label>
+                  <h5 style="margin:6px 0">Safety Checklist (20 items · 100 points)</h5>
+                  <div id="auditChecklist" class="audit-checklist">
+                    <label class="audit-item-row"><input type="checkbox" class="audit-item" data-points="5"><span><span class="audit-q-num">1.</span> Are employees wearing the required PPE correctly?</span></label>
+                    <label class="audit-item-row"><input type="checkbox" class="audit-item" data-points="5"><span><span class="audit-q-num">2.</span> Are all emergency exits and escape routes unobstructed?</span></label>
+                    <label class="audit-item-row"><input type="checkbox" class="audit-item" data-points="5"><span><span class="audit-q-num">3.</span> Are fire extinguishers accessible, inspected, and within the validity period?</span></label>
+                    <label class="audit-item-row"><input type="checkbox" class="audit-item" data-points="5"><span><span class="audit-q-num">4.</span> Are machines fitted with proper guards and emergency stop buttons?</span></label>
+                    <label class="audit-item-row"><input type="checkbox" class="audit-item" data-points="5"><span><span class="audit-q-num">5.</span> Is good housekeeping maintained (no oil spills, waste, or trip hazards)?</span></label>
+                    <label class="audit-item-row"><input type="checkbox" class="audit-item" data-points="5"><span><span class="audit-q-num">6.</span> Are chemicals properly labeled, and are SDS/MSDS available at the point of use?</span></label>
+                    <label class="audit-item-row"><input type="checkbox" class="audit-item" data-points="5"><span><span class="audit-q-num">7.</span> Is hazardous waste stored, labeled, and managed correctly?</span></label>
+                    <label class="audit-item-row"><input type="checkbox" class="audit-item" data-points="5"><span><span class="audit-q-num">8.</span> Are electrical panels safe, labeled, and free from exposed wiring?</span></label>
+                    <label class="audit-item-row"><input type="checkbox" class="audit-item" data-points="5"><span><span class="audit-q-num">9.</span> Are emergency contact numbers and evacuation maps displayed?</span></label>
+                    <label class="audit-item-row"><input type="checkbox" class="audit-item" data-points="5"><span><span class="audit-q-num">10.</span> Are first aid boxes available, stocked, and easily accessible?</span></label>
+                    <label class="audit-item-row"><input type="checkbox" class="audit-item" data-points="5"><span><span class="audit-q-num">11.</span> Are permits available and valid for hot work, confined space, work at height, or electrical work (where applicable)?</span></label>
+                    <label class="audit-item-row"><input type="checkbox" class="audit-item" data-points="5"><span><span class="audit-q-num">12.</span> Are unsafe conditions, near misses, and incidents reported and corrective actions implemented?</span></label>
+                    <label class="audit-item-row"><input type="checkbox" class="audit-item" data-points="5"><span><span class="audit-q-num">13.</span> Are employees aware of emergency procedures and the assembly point?</span></label>
+                    <label class="audit-item-row"><input type="checkbox" class="audit-item" data-points="5"><span><span class="audit-q-num">14.</span> Are air, water, oil, or chemical leaks observed during the site visit?</span></label>
+                    <label class="audit-item-row"><input type="checkbox" class="audit-item" data-points="5"><span><span class="audit-q-num">15.</span> Is waste segregation being followed according to the company's procedure?</span></label>
+                    <label class="audit-item-row"><input type="checkbox" class="audit-item" data-points="5"><span><span class="audit-q-num">16.</span> Are forklifts, material handling equipment, and storage racks being used safely?</span></label>
+                    <label class="audit-item-row"><input type="checkbox" class="audit-item" data-points="5"><span><span class="audit-q-num">17.</span> Are safety signs, warning labels, and floor markings visible and maintained?</span></label>
+                    <label class="audit-item-row"><input type="checkbox" class="audit-item" data-points="5"><span><span class="audit-q-num">18.</span> Are SOPs/Work Instructions available and being followed by operators?</span></label>
+                    <label class="audit-item-row"><input type="checkbox" class="audit-item" data-points="5"><span><span class="audit-q-num">19.</span> Are legal and environmental requirements (CTO, hazardous waste, emissions, etc.) being complied with?</span></label>
+                    <label class="audit-item-row"><input type="checkbox" class="audit-item" data-points="5"><span><span class="audit-q-num">20.</span> Are there any unsafe acts or unsafe conditions that require immediate corrective action?</span></label>
                   </div>
                 </div>
                  <div style="text-align:right;margin-top:8px">
@@ -988,7 +1059,7 @@
                 </div>
               </form>
             </div>
-            <div style="overflow-x:auto"><table id="auditTable"><thead><tr><th>Date</th><th>Factory</th><th>Auditor</th><th>Score</th><th class="admin-only">Action</th></tr></thead><tbody></tbody></table></div>
+            <div style="overflow-x:auto"><table id="auditTable"><thead><tr><th>Date</th><th>Factory</th><th>Auditor</th><th>Score (/100)</th><th class="admin-only">Action</th></tr></thead><tbody></tbody></table></div>
             <button class="ghost-dark btn-sm" onclick="exportTableToExcel('auditTable','Audit_Register')" style="margin-top:10px">⬇ Excel</button>
         </div>
 
@@ -996,7 +1067,7 @@
             <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
                 <div>
                   <h3 style="margin:0">Complaint / Suggestion Register</h3>
-                  <p class="small" style="margin:4px 0 0;color:var(--muted);text-transform:none;font-weight:500;">Visible to every user. Status, target date and responsible person/department can be updated by Safety Officers and Admin. Only Admin can email or delete an entry.</p>
+                  <p class="small" style="margin:4px 0 0;color:var(--muted);text-transform:none;font-weight:500;">Visible to every user. Status, target date and responsible person/department can only be updated by Admin, EHS Manager, Plant Head or Department Head. Only Admin can email or delete an entry.</p>
                 </div>
                 <div style="display:flex; gap:8px; flex-wrap:wrap;">
                     <button class="primary btn-sm" onclick="toggleComplaintBox()">📢 New Entry</button>
@@ -2062,6 +2133,11 @@
       return Array.isArray(mail) && mail.includes(mod);
     }
     function canChangeOwnPassword(user) { return !!getRolePerms(user).changePassword; }
+    // Restricted-field editors: only these roles may change the PTW "Status"/
+    // "Actions" (approve/reject) and the Complaints/Suggestions "Status",
+    // "Target Date" and "Responsible Person/Dept." fields.
+    const STATUS_EDITOR_ROLES = ['admin', 'ehsmanager', 'planthead', 'depthead'];
+    function canEditStatusFields(user) { return !!(user && STATUS_EDITOR_ROLES.includes(user.role)); }
 
     let currentUser = JSON.parse(sessionStorage.getItem('hse_user')) || null;
     let myChart = null;
@@ -2079,16 +2155,29 @@
       "Panchla":{manpower:90,fire:40,firstAid:10}
     };
     
-    // Merge defaults with existing so we don't lose updates but ensure all keys exist
+    // Merge defaults with existing so we don't lose updates but ensure all keys exist.
+    // IMPORTANT: this only fills gaps in the *local* cache so the page has something
+    // to show before loadFromCloud() finishes (see window.onload, which runs later).
+    // It must NOT call LocalDB.set()/syncToCloud() here — this code runs synchronously
+    // at script-parse time, before the real data has ever been pulled from Supabase.
+    // Calling LocalDB.set() at this point used to push these hardcoded placeholder
+    // numbers (manpower:100, fire:50, firstAid:10, etc.) up to the shared cloud table
+    // on ANY fresh browser/device (cleared cache, private window, first-ever visit,
+    // a colleague opening the portal for the first time) — silently overwriting real
+    // admin-entered data as soon as that device (or any other) synced. That's what
+    // made "Update Factory Stats" edits appear to reset themselves. Now we only ever
+    // write this fallback into localStorage directly, never to the cloud.
     let currentFactories = LocalDB.get('factories', {});
-    let needsUpdate = false;
+    let needsLocalFill = false;
     for (const [key, value] of Object.entries(DEFAULT_FACTORIES)) {
       if (!currentFactories[key]) {
         currentFactories[key] = value;
-        needsUpdate = true;
+        needsLocalFill = true;
       }
     }
-    if(needsUpdate) LocalDB.set('factories', currentFactories);
+    if (needsLocalFill) {
+      try { localStorage.setItem('hse_factories', JSON.stringify(currentFactories)); } catch(e) {}
+    }
 
 
     function checkAuth() {
@@ -2933,19 +3022,21 @@
       if (!tbody) return;
       const list = LocalDB.get('complaints', []);
       const isAdmin = isAdminTier(currentUser);
-      const isOfficerUp = isOfficerTierUp(currentUser);
+      // Status, Target Date and Responsible Person/Dept may only be edited by
+      // Admin, EHS Manager, Plant Head or Department Head.
+      const canEditStatus = canEditStatusFields(currentUser);
       tbody.innerHTML = list.map(x => {
         const st = complaintStatusInfo(x);
-        const statusCell = isOfficerUp ? `
+        const statusCell = canEditStatus ? `
           <select onchange="updateComplaintField(${x.id},'status',this.value)" style="width:auto;padding:4px 8px;font-size:12px">
             <option ${x.status==='Pending'?'selected':''}>Pending</option>
             <option ${x.status==='Ongoing'?'selected':''}>Ongoing</option>
             <option ${x.status==='Done'?'selected':''}>Done</option>
           </select>` : `<span class="status-pill ${st.cls}">${st.label}</span>`;
-        const targetCell = isOfficerUp
+        const targetCell = canEditStatus
           ? `<input type="date" value="${x.targetDate||''}" onchange="updateComplaintField(${x.id},'targetDate',this.value)" style="width:145px;padding:6px 8px;font-size:12px">`
           : (x.targetDate || '-');
-        const respCell = isOfficerUp
+        const respCell = canEditStatus
           ? `<input type="text" value="${escapeHtml(x.responsible||'')}" placeholder="Assign to..." onchange="updateComplaintField(${x.id},'responsible',this.value)" style="width:150px;padding:6px 8px;font-size:12px">`
           : escapeHtml(x.responsible || '-');
         return `<tr class="${st.cls}">
@@ -2965,6 +3056,7 @@
       }).join('') || `<tr><td colspan="9" style="text-align:center;color:grey">No complaints or suggestions submitted yet.</td></tr>`;
     }
     function updateComplaintField(id, field, value) {
+      if (!canEditStatusFields(currentUser)) { alert('Only Admin, EHS Manager, Plant Head or Department Head can update this field.'); return; }
       const list = LocalDB.get('complaints', []);
       const item = list.find(x => x.id === id);
       if (!item) return;
@@ -3122,14 +3214,16 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
     }
     async function addAudit(e){
       e.preventDefault();
-      const items = Array.from(document.querySelectorAll('#auditChecklist .audit-item'));
-      const yesCount = items.filter(i => i.checked).length;
+      // 20 checklist questions, each carrying data-points="5" (100 max), so the
+      // score is a straight sum of the checked items' points.
+      const items = Array.from(document.querySelectorAll('.audit-item'));
+      const score = items.reduce((sum, i) => sum + (i.checked ? (parseInt(i.dataset.points, 10) || 0) : 0), 0);
       const audit = {
           id: Date.now(),
           date: document.getElementById('auditDate').value,
           factory: document.getElementById('auditFactory').value,
           auditor: document.getElementById('auditAuditor').value,
-          score: Math.round((yesCount / 10) * 100)
+          score: score
       };
       document.getElementById('auditScore').value = audit.score;
       const list = LocalDB.get('audits', []);
@@ -4042,15 +4136,21 @@ TARSONS HSE Portal`;
         if (filterFactory) list = list.filter(x => x.factory === filterFactory);
         if (statusFilter && statusFilter!=='all') list = list.filter(x => x.status && x.status.toLowerCase() === statusFilter.toLowerCase());
         if (keyword) list = list.filter(x => [x.requester, x.location, x.type].some(v => (v||'').toLowerCase().includes(keyword)));
+        // Status/Actions (approve, reject) may only be changed by Admin, EHS
+        // Manager, Plant Head or Department Head — everyone else sees a
+        // read-only status pill instead of the action buttons.
+        const canEditStatus = canEditStatusFields(currentUser);
         document.querySelector('#ptwTable tbody').innerHTML = list.map(p => `
             <tr><td>${escapeHtml(p.id)}</td><td>${escapeHtml(p.date)}</td><td>${escapeHtml(p.type)}</td><td>${escapeHtml(p.factory)}</td><td>${escapeHtml(p.location||'')}</td><td>${escapeHtml(p.requester||'')}</td><td>${escapeHtml(p.status||'Pending')}</td>
-              <td><button class="btn-action btn-sm ptw-add-only" onclick="updatePTWStatus('${p.id}','Approved')">Approve</button>
-              <button class="btn-danger btn-sm ptw-add-only" onclick="updatePTWStatus('${p.id}','Rejected')">Reject</button>
+              <td class="ptw-add-only">${canEditStatus ? `
+              <button class="btn-action btn-sm" onclick="updatePTWStatus('${p.id}','Approved')">Approve</button>
+              <button class="btn-danger btn-sm" onclick="updatePTWStatus('${p.id}','Rejected')">Reject</button>` : ''}
               <button class="btn-danger btn-sm admin-only" onclick="deletePTW('${p.id}')" style="margin-left:4px">X</button></td></tr>
         `).join('');
         refreshStats();
     }
     function updatePTWStatus(id, status){
+      if (!canEditStatusFields(currentUser)) { alert('Only Admin, EHS Manager, Plant Head or Department Head can change PTW status.'); return; }
       const list = LocalDB.get('ptw', []);
       const idx = list.findIndex(p => p.id === id);
       if(idx>-1){ list[idx].status = status; LocalDB.set('ptw', list); renderPTWList(); updateBell();
