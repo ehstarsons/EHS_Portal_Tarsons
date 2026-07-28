@@ -413,6 +413,17 @@
   .admin-tab-btn{padding:10px 20px;cursor:pointer;font-weight:700;border-radius:999px;font-size:13.5px;color:var(--muted);transition:all .15s;white-space:nowrap;flex:0 0 auto;background:rgba(0,0,0,.03)}
   .admin-tab-btn:hover{color:var(--text-dark);background:rgba(0,0,0,.06)}
   .admin-tab-btn.active{background:linear-gradient(115deg,var(--accent-3),var(--accent-2));color:white;box-shadow:0 6px 16px rgba(11,125,191,.3)}
+  .account-card{
+    max-width:420px;padding:24px;border-radius:16px;text-align:center;
+    background:var(--panel);border:1px solid var(--border);
+    box-shadow:0 8px 24px rgba(11,125,191,.08);
+  }
+  .account-card-icon{
+    width:56px;height:56px;margin:0 auto 10px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-size:26px;background:linear-gradient(135deg,var(--accent-3),var(--accent-2));color:white;
+    box-shadow:0 6px 16px rgba(11,125,191,.3);
+  }
+  .account-card button{width:100%;padding:11px}
 
   .notice-board-banner{background:linear-gradient(100deg,#f7931e,#e6672c);color:white;padding:14px 16px;border-radius:14px;margin-bottom:16px;box-shadow:0 8px 22px rgba(230,90,30,.3)}
   .notice-item{background:rgba(255,255,255,.15);padding:8px 10px;border-radius:8px;margin-top:6px;font-size:13.5px}
@@ -566,17 +577,60 @@
     .factory-grid{grid-template-columns:repeat(4,1fr)}
     .contact-grid{grid-template-columns:repeat(auto-fill,minmax(260px,1fr))}
   }
-  #mobileMenu{
-    display:none;position:fixed;left:0;top:0;right:0;bottom:0;
-    background:linear-gradient(180deg,var(--bg-dark),var(--bg-dark-2));z-index:998;padding-top:80px;
-    flex-direction:column;animation:overlayIn .2s ease both;
+  #mobileMenu{display:none;position:fixed;inset:0;z-index:998}
+  #mobileMenuBackdrop{
+    position:absolute;inset:0;background:rgba(6,20,30,.55);
+    -webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px);animation:overlayIn .2s ease both;
   }
-  #mobileNavList{list-style:none;padding:0;width:100%;max-width:420px;margin:0 auto}
+  #mobileMenuPanel{
+    position:absolute;top:0;right:0;bottom:0;width:82%;max-width:340px;
+    background:linear-gradient(180deg,var(--bg-dark),var(--bg-dark-2));
+    box-shadow:-14px 0 34px rgba(0,0,0,.35);
+    display:flex;flex-direction:column;padding:16px 12px 20px;overflow-y:auto;
+    animation:mnavSlideIn .28s cubic-bezier(.16,1,.3,1) both;
+  }
+  @keyframes mnavSlideIn{from{transform:translateX(100%)}to{transform:translateX(0)}}
+  #mobileMenuHeader{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:2px 4px 14px;margin-bottom:8px;border-bottom:1px solid rgba(255,255,255,.14);
+  }
+  .mobile-menu-brand{display:flex;align-items:center;gap:10px}
+  .mobile-menu-brand .logo{
+    width:38px;height:38px;flex:0 0 38px;border-radius:11px;background:rgba(255,255,255,.14);
+    color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;
+  }
+  .mobile-menu-brand .name{color:#fff;font-weight:800;font-size:14.5px;letter-spacing:.3px;line-height:1.25}
+  .mobile-menu-brand .subtitle{color:rgba(255,255,255,.65);font-size:11px;font-weight:600}
+  .mobile-menu-close{
+    width:34px;height:34px;flex:0 0 34px;border-radius:10px;background:rgba(255,255,255,.1);
+    color:#fff;border:none;font-size:15px;cursor:pointer;transition:background .15s;
+  }
+  .mobile-menu-close:hover{background:rgba(255,255,255,.2)}
+  #mobileNavList{list-style:none;margin:0;padding:2px 2px 0;display:flex;flex-direction:column;gap:5px}
+  #mobileNavList li{opacity:0;transform:translateX(16px);animation:mnavItemIn .32s ease forwards}
+  @keyframes mnavItemIn{to{opacity:1;transform:translateX(0)}}
+  #mobileNavList li:nth-child(1){animation-delay:.03s} #mobileNavList li:nth-child(2){animation-delay:.06s}
+  #mobileNavList li:nth-child(3){animation-delay:.09s} #mobileNavList li:nth-child(4){animation-delay:.12s}
+  #mobileNavList li:nth-child(5){animation-delay:.15s} #mobileNavList li:nth-child(6){animation-delay:.18s}
+  #mobileNavList li:nth-child(7){animation-delay:.21s} #mobileNavList li:nth-child(8){animation-delay:.24s}
+  #mobileNavList li:nth-child(9){animation-delay:.27s} #mobileNavList li:nth-child(10){animation-delay:.30s}
+  #mobileNavList li:nth-child(11){animation-delay:.33s} #mobileNavList li:nth-child(12){animation-delay:.36s}
+  #mobileNavList li:nth-child(n+13){animation-delay:.38s}
   #mobileNavList a{
-    display:block;color:white;padding:16px;margin:4px 14px;border-radius:12px;text-decoration:none;
-    text-align:center;font-weight:700;font-size:15px;background:rgba(255,255,255,.05);transition:background .15s;
+    display:flex;align-items:center;gap:12px;color:#fff;text-decoration:none;
+    padding:10px 10px;border-radius:13px;background:rgba(255,255,255,.045);
+    font-weight:700;font-size:13.5px;transition:background .15s ease,transform .1s ease;
   }
-  #mobileNavList a:hover{background:rgba(255,255,255,.14)}
+  #mobileNavList a:hover{background:rgba(255,255,255,.13)}
+  #mobileNavList a:active{transform:scale(.98)}
+  #mobileNavList a.active{background:linear-gradient(115deg,var(--accent-3),var(--accent-2));box-shadow:0 6px 16px rgba(11,125,191,.35)}
+  #mobileNavList a .mnav-icon{
+    width:34px;height:34px;flex:0 0 34px;border-radius:10px;
+    background:rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;font-size:16px;
+  }
+  #mobileNavList a.active .mnav-icon{background:rgba(255,255,255,.22)}
+  #mobileNavList a .mnav-label{flex:1;text-align:left}
+  #mobileNavList a .mnav-chevron{opacity:.45;font-size:14px;flex:0 0 auto}
   #mobileMenuBtn{
     display:none;width:38px;height:38px;border-radius:10px;align-items:center;justify-content:center;
     font-size:18px;background:rgba(255,255,255,.12);
@@ -734,7 +788,19 @@
     </div>
   </div>
 
-  <div id="mobileMenu"><ul id="mobileNavList"></ul></div>
+  <div id="mobileMenu">
+    <div id="mobileMenuBackdrop" onclick="toggleMobileMenu()"></div>
+    <div id="mobileMenuPanel">
+      <div id="mobileMenuHeader">
+        <div class="mobile-menu-brand">
+          <div class="logo">TPL</div>
+          <div><div class="name">TARSONS</div><div class="subtitle">HSE Portal</div></div>
+        </div>
+        <button type="button" class="mobile-menu-close" onclick="toggleMobileMenu()" aria-label="Close menu">✕</button>
+      </div>
+      <ul id="mobileNavList"></ul>
+    </div>
+  </div>
 
   <header>
     <div class="container header-top">
@@ -755,7 +821,6 @@
           <div id="userBadge"></div>
         </div>
         <button class="ghost" id="loginBtn" onclick="showLogin()">Login</button>
-        <button class="ghost" id="changePasswordBtn" onclick="openChangePassword()" title="Change your password" style="display:none">🔑 Password</button>
         <button class="ghost" id="logoutBtn" onclick="doLogout()" style="display:none">Logout</button>
         <button class="ghost" id="mobileMenuBtn" onclick="toggleMobileMenu()" style="display:none">☰</button>
       </div>
@@ -932,6 +997,7 @@
       <div class="card">
         <h2>Admin Management</h2>
         <div class="admin-tabs">
+            <div class="admin-tab-btn" id="tabAccount" onclick="switchAdminTab('account')">🔑 My Account</div>
             <div class="admin-tab-btn active" id="tabExt" onclick="switchAdminTab('ext')">Fire Extinguishers</div>
             <div class="admin-tab-btn" id="tabCapa" onclick="switchAdminTab('capa')">CAPA Tracker</div>
             <div class="admin-tab-btn" id="tabAudit" onclick="switchAdminTab('audit')">Safety Audits</div>
@@ -1113,6 +1179,20 @@
             <h3>Users</h3>
             <div style="max-height: 400px; overflow-y: auto;">
                 <ul id="usersList" style="list-style: none; padding: 0;"></ul>
+            </div>
+        </div>
+        <div id="accountContainer" style="display:none">
+            <div class="account-card">
+              <div class="account-card-icon">🔐</div>
+              <h3 style="margin:2px 0 4px">My Account</h3>
+              <p class="small" style="text-transform:none;font-weight:500;color:var(--muted);margin:0 0 16px">
+  Update the password you use to sign in to the portal. If you're locked out, contact the default Admin
+  📞 <a href="tel:+917980326735" style="color:#007bff; font-weight:600;">
+    Call Admin
+  </a>
+  to have it reset.
+</p>
+              <button class="primary" id="changePasswordBtn" onclick="openChangePassword()" title="Change your password" style="display:none">🔑 Change Password</button>
             </div>
         </div>
       </div>
@@ -2866,9 +2946,9 @@
 
     function switchAdminTab(t) {
         if ((t === 'activity' || t === 'users') && !isAdminTier(currentUser)) t = 'ext';
-        const tabs = ['ext','capa','audit','complaints','activity','users'];
-        const idMap = { ext:'tabExt', capa:'tabCapa', audit:'tabAudit', complaints:'tabComplaints', activity:'tabActivity', users:'tabUsers' };
-        const containerMap = { ext:'extContainer', capa:'capaContainer', audit:'auditContainer', complaints:'complaintsContainer', activity:'activityContainer', users:'usersContainer' };
+        const tabs = ['account','ext','capa','audit','complaints','activity','users'];
+        const idMap = { account:'tabAccount', ext:'tabExt', capa:'tabCapa', audit:'tabAudit', complaints:'tabComplaints', activity:'tabActivity', users:'tabUsers' };
+        const containerMap = { account:'accountContainer', ext:'extContainer', capa:'capaContainer', audit:'auditContainer', complaints:'complaintsContainer', activity:'activityContainer', users:'usersContainer' };
         const adminOnlyTabs = ['activity', 'users'];
         tabs.forEach(id => {
             const base = t === id ? 'admin-tab-btn active' : 'admin-tab-btn';
@@ -4354,8 +4434,29 @@ TARSONS HSE Portal`;
         m.style.display = opening ? 'flex' : 'none';
         if (btn) btn.innerText = opening ? '✕' : '☰';
         if (opening) {
-            document.getElementById('mobileNavList').innerHTML = document.querySelector('#desktopNav ul').innerHTML;
-            document.getElementById('mobileNavList').addEventListener('click', function(ev){ if(ev.target.closest('a')) { ev.preventDefault(); m.style.display = 'none'; if (btn) btn.innerText = '☰'; try { new Function(ev.target.closest('a').getAttribute('onclick'))(); } catch(e){} } }, { once:true });
+            const links = Array.from(document.querySelectorAll('#desktopNav ul a'));
+            const list = document.getElementById('mobileNavList');
+            list.innerHTML = links.map(a => {
+                // Desktop nav labels are "<emoji> Label" (e.g. "🏠 Home") — split
+                // that into a proper icon badge + label instead of one plain
+                // block of text, so the mobile drawer reads as a real nav list.
+                const raw = a.textContent.trim();
+                const match = raw.match(/^(\S+)\s+(.*)$/);
+                const icon = match ? match[1] : '📌';
+                const label = match ? match[2] : raw;
+                const activeCls = a.classList.contains('active') ? ' active' : '';
+                const onclickCode = (a.getAttribute('onclick') || '').replace(/"/g, '&quot;');
+                return `<li><a href="#" class="mnav-link${activeCls}" data-onclick="${onclickCode}">` +
+                       `<span class="mnav-icon">${icon}</span><span class="mnav-label">${escapeHtml(label)}</span><span class="mnav-chevron">›</span></a></li>`;
+            }).join('');
+            list.addEventListener('click', function(ev){
+                const a = ev.target.closest('a');
+                if (!a) return;
+                ev.preventDefault();
+                m.style.display = 'none';
+                if (btn) btn.innerText = '☰';
+                try { new Function(a.getAttribute('data-onclick'))(); } catch(e){}
+            }, { once:true });
         }
     }
 
