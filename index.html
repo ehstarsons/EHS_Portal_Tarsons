@@ -90,7 +90,8 @@
   .header-actions{display:flex;gap:9px;align-items:center;flex-wrap:wrap;justify-content:flex-end;margin-left:auto}
   .user-chip{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.12);padding:5px 12px 5px 6px;border-radius:999px}
   .user-chip .avatar{width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,.9);color:var(--accent-3);
-    display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;flex:0 0 auto}
+    display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;flex:0 0 auto;overflow:hidden}
+  .user-chip .avatar img{width:100%;height:100%;object-fit:cover;display:block}
   #userBadge{font-size:12.5px;font-weight:600;color:white;line-height:1.2}
 
   /* Nav strip: single-line, horizontally scrollable, never wraps regardless of item count or screen width */
@@ -413,17 +414,43 @@
   .admin-tab-btn{padding:10px 20px;cursor:pointer;font-weight:700;border-radius:999px;font-size:13.5px;color:var(--muted);transition:all .15s;white-space:nowrap;flex:0 0 auto;background:rgba(0,0,0,.03)}
   .admin-tab-btn:hover{color:var(--text-dark);background:rgba(0,0,0,.06)}
   .admin-tab-btn.active{background:linear-gradient(115deg,var(--accent-3),var(--accent-2));color:white;box-shadow:0 6px 16px rgba(11,125,191,.3)}
-  .account-card{
-    max-width:420px;padding:24px;border-radius:16px;text-align:center;
-    background:var(--panel);border:1px solid var(--border);
-    box-shadow:0 8px 24px rgba(11,125,191,.08);
-  }
-  .account-card-icon{
-    width:56px;height:56px;margin:0 auto 10px;border-radius:50%;display:flex;align-items:center;justify-content:center;
-    font-size:26px;background:linear-gradient(135deg,var(--accent-3),var(--accent-2));color:white;
+
+  /* ---------- My Account ---------- */
+  .account-grid{display:grid;grid-template-columns:300px 1fr;gap:16px;align-items:start;max-width:820px}
+  @media (max-width:760px){.account-grid{grid-template-columns:1fr}}
+  .account-card{padding:22px 20px;border-radius:16px;background:var(--panel);border:1px solid var(--border);box-shadow:0 8px 24px rgba(11,125,191,.08)}
+  .account-profile{text-align:center}
+  .account-avatar-wrap{position:relative;width:84px;height:84px;margin:0 auto}
+  .account-avatar{
+    width:84px;height:84px;border-radius:50%;overflow:hidden;
+    background:linear-gradient(135deg,var(--accent-3),var(--accent-2));color:#fff;
+    display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:800;
     box-shadow:0 6px 16px rgba(11,125,191,.3);
   }
-  .account-card button{width:100%;padding:11px}
+  .account-avatar img{width:100%;height:100%;object-fit:cover;display:block}
+  .account-avatar-edit{
+    position:absolute;right:-2px;bottom:-2px;width:28px;height:28px;border-radius:50%;
+    background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;
+    font-size:13px;cursor:pointer;border:2px solid var(--panel);box-shadow:0 2px 6px rgba(0,0,0,.25);
+  }
+  .account-role-pill{display:inline-block;margin-top:2px;padding:3px 12px;border-radius:999px;background:rgba(11,125,191,.12);color:var(--accent-3);font-weight:700;font-size:12px}
+  .account-meta{color:var(--muted);font-size:12.5px;margin-top:6px;font-weight:600}
+  .account-divider{height:1px;background:var(--border);margin:16px 0}
+  .account-setting-row{display:flex;align-items:center;justify-content:space-between;gap:10px;text-align:left}
+  .account-setting-title{font-weight:700;font-size:13.5px}
+  .account-setting-sub{font-size:11.5px;color:var(--muted);font-weight:500}
+  .account-switch{position:relative;display:inline-block;width:42px;height:24px;flex:0 0 auto;cursor:pointer}
+  .account-switch input{opacity:0;width:0;height:0;position:absolute}
+  .account-switch-track{position:absolute;inset:0;background:var(--border);border-radius:999px;transition:background .15s}
+  .account-switch-track::before{content:'';position:absolute;left:3px;top:3px;width:18px;height:18px;background:#fff;border-radius:50%;transition:transform .15s;box-shadow:0 1px 3px rgba(0,0,0,.3)}
+  .account-switch input:checked + .account-switch-track{background:var(--accent-3)}
+  .account-switch input:checked + .account-switch-track::before{transform:translateX(18px)}
+  .account-card .primary{width:100%;padding:11px}
+  .my-activity-item{display:flex;gap:10px;align-items:flex-start;padding:9px 4px;border-bottom:1px solid var(--border);text-align:left}
+  .my-activity-item:last-child{border-bottom:none}
+  .my-activity-icon{width:30px;height:30px;flex:0 0 30px;border-radius:9px;background:rgba(11,125,191,.1);display:flex;align-items:center;justify-content:center;font-size:14px}
+  .my-activity-text{flex:1;font-size:13px}
+  .my-activity-time{font-size:11px;color:var(--muted);font-weight:600;white-space:nowrap}
 
   .notice-board-banner{background:linear-gradient(100deg,#f7931e,#e6672c);color:white;padding:14px 16px;border-radius:14px;margin-bottom:16px;box-shadow:0 8px 22px rgba(230,90,30,.3)}
   .notice-item{background:rgba(255,255,255,.15);padding:8px 10px;border-radius:8px;margin-top:6px;font-size:13.5px}
@@ -1182,17 +1209,49 @@
             </div>
         </div>
         <div id="accountContainer" style="display:none">
-            <div class="account-card">
-              <div class="account-card-icon">🔐</div>
-              <h3 style="margin:2px 0 4px">My Account</h3>
-              <p class="small" style="text-transform:none;font-weight:500;color:var(--muted);margin:0 0 16px">
+            <div class="account-grid">
+              <div class="account-card account-profile">
+                <div class="account-avatar-wrap">
+                  <div class="account-avatar" id="accountAvatar">?</div>
+                  <label class="account-avatar-edit" title="Change photo">
+                    📷
+                    <input type="file" id="avatarFileInput" accept="image/*" style="display:none" onchange="uploadMyAvatar(event)">
+                  </label>
+                </div>
+                <h3 id="accountName" style="margin:10px 0 2px">—</h3>
+                <div class="account-role-pill" id="accountRolePill">—</div>
+                <div class="account-meta" id="accountEmpId">Employee ID: —</div>
+                <button type="button" class="ghost-dark btn-sm" id="removeAvatarBtn" style="display:none;margin-top:8px" onclick="removeMyAvatar()">Remove Photo</button>
+
+                <div class="account-divider"></div>
+
+                <div class="account-setting-row">
+                  <div>
+                    <div class="account-setting-title">🌙 Dark Mode</div>
+                    <div class="account-setting-sub">Switch the portal's color theme</div>
+                  </div>
+                  <label class="account-switch">
+                    <input type="checkbox" id="accountThemeSwitch" onchange="toggleTheme()">
+                    <span class="account-switch-track"></span>
+                  </label>
+                </div>
+
+                <div class="account-divider"></div>
+
+                <p class="small" style="text-transform:none;font-weight:500;color:var(--muted);margin:0 0 16px">
   Update the password you use to sign in to the portal. If you're locked out, contact the default Admin
   📞 <a href="tel:+917980326735" style="color:#007bff; font-weight:600;">
     Call Admin
   </a>
   to have it reset.
 </p>
-              <button class="primary" id="changePasswordBtn" onclick="openChangePassword()" title="Change your password" style="display:none">🔑 Change Password</button>
+                <button class="primary" id="changePasswordBtn" onclick="openChangePassword()" title="Change your password" style="display:none">🔑 Change Password</button>
+              </div>
+
+              <div class="account-card">
+                <h3 style="margin-top:0">🕘 My Recent Activity</h3>
+                <div id="myActivityList"><p class="small" style="color:grey;text-align:center;padding:12px 0">No recent activity yet.</p></div>
+              </div>
             </div>
         </div>
       </div>
@@ -2289,7 +2348,7 @@
         document.body.classList.toggle('is-mail-visitor', canMailModule(currentUser, 'visitor'));
         if (currentUser) {
             badge.innerText = `${getRoleLabel(currentUser.role)}: ${currentUser.username}`;
-            document.getElementById('userAvatar').innerText = (currentUser.username || '?').trim().charAt(0).toUpperCase();
+            renderMyAvatarEls();
             chip.style.display = 'flex';
             document.getElementById('loginBtn').style.display = 'none';
             document.getElementById('changePasswordBtn').style.display = canChangeOwnPassword(currentUser) ? 'block' : 'none';
@@ -2955,6 +3014,7 @@
             document.getElementById(idMap[id]).className = adminOnlyTabs.includes(id) ? base + ' admin-only' : base;
             document.getElementById(containerMap[id]).style.display = t === id ? 'block' : 'none';
         });
+        if (t === 'account') renderMyAccount();
         if (t === 'users') renderUsers();
         if (t === 'capa') { populateFactorySelects(); renderCAPA(); }
         if (t === 'activity') renderActivityLog();
@@ -3223,6 +3283,10 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
       const isDark = document.body.classList.toggle('dark-theme');
       localStorage.setItem('hse_theme', isDark ? 'dark' : 'light');
       document.getElementById('themeToggleBtn').innerText = isDark ? '☀️' : '🌙';
+      // Keep the switch on the My Account screen in sync even when the theme
+      // was actually flipped from the header button (or vice versa).
+      const sw = document.getElementById('accountThemeSwitch');
+      if (sw) sw.checked = isDark;
       if (myChart) renderChart();
     }
     (function initTheme(){
@@ -3234,7 +3298,91 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
         });
       }
     })();
-    
+
+    // --- My Account: profile photo, summary & recent activity ---
+    // Avatars are stored keyed by Employee ID (the login ID, unique per user)
+    // in one small shared LocalDB record — not per-user records — since it's
+    // just a url/base64 string per person, not worth its own module.
+    function getMyAvatarKey(user) { return user ? String(user.empId || user.username || '') : ''; }
+    function getUserAvatar(user) {
+      const key = getMyAvatarKey(user);
+      if (!key) return null;
+      return LocalDB.get('userAvatars', {})[key] || null;
+    }
+    function setUserAvatar(user, url) {
+      const key = getMyAvatarKey(user);
+      if (!key) return;
+      const avatars = LocalDB.get('userAvatars', {});
+      if (url) avatars[key] = url; else delete avatars[key];
+      LocalDB.set('userAvatars', avatars);
+    }
+    function renderMyAvatarEls() {
+      if (!currentUser) return;
+      const url = getUserAvatar(currentUser);
+      const initial = (currentUser.username || '?').trim().charAt(0).toUpperCase();
+      const headerAv = document.getElementById('userAvatar');
+      if (headerAv) headerAv.innerHTML = url ? `<img src="${url}" alt="">` : initial;
+      const accAv = document.getElementById('accountAvatar');
+      if (accAv) accAv.innerHTML = url ? `<img src="${url}" alt="">` : initial;
+      const removeBtn = document.getElementById('removeAvatarBtn');
+      if (removeBtn) removeBtn.style.display = url ? 'inline-block' : 'none';
+    }
+    window.uploadMyAvatar = async function(ev) {
+      const file = ev.target.files && ev.target.files[0];
+      if (!file) return;
+      if (!currentUser) { alert('Please log in first.'); ev.target.value = ''; return; }
+      if (!file.type || !file.type.startsWith('image/')) { alert('Please choose an image file.'); ev.target.value = ''; return; }
+      try {
+        const base64 = await readFileAsDataURL(file);
+        const cloudUrl = await uploadImageToCloud(base64, `avatar_${getMyAvatarKey(currentUser)}_${Date.now()}`, file.type);
+        let url = cloudUrl;
+        if (!url) {
+          if (base64.length > 50000) {
+            alert('Cloud storage isn\'t available right now, so this photo will only show on this device (not shared with other users) because it\'s too large to store otherwise.');
+          }
+          url = base64;
+        }
+        setUserAvatar(currentUser, url);
+        renderMyAvatarEls();
+        logActivity('Profile photo updated', currentUser.username);
+      } catch (e) {
+        alert('Could not upload that photo. Please try a different image.');
+      } finally {
+        ev.target.value = '';
+      }
+    };
+    window.removeMyAvatar = function() {
+      if (!currentUser) return;
+      if (!confirm('Remove your profile photo?')) return;
+      setUserAvatar(currentUser, null);
+      renderMyAvatarEls();
+      logActivity('Profile photo removed', currentUser.username);
+    };
+    function renderMyActivity() {
+      const wrap = document.getElementById('myActivityList');
+      if (!wrap || !currentUser) return;
+      const log = LocalDB.get('auditLog', []).filter(e => e.user === currentUser.username).slice(0, 8);
+      wrap.innerHTML = log.map(e => `
+        <div class="my-activity-item">
+          <div class="my-activity-icon">📌</div>
+          <div class="my-activity-text"><b>${escapeHtml(e.action)}</b>${e.detail ? ' — ' + escapeHtml(e.detail) : ''}</div>
+          <div class="my-activity-time">${formatKolkataDateTime(e.ts)}</div>
+        </div>`).join('') || '<p class="small" style="color:grey;text-align:center;padding:12px 0">No recent activity yet.</p>';
+    }
+    function renderMyAccount() {
+      if (!currentUser) return;
+      const nameEl = document.getElementById('accountName');
+      const roleEl = document.getElementById('accountRolePill');
+      const idEl = document.getElementById('accountEmpId');
+      if (nameEl) nameEl.innerText = currentUser.username || '—';
+      if (roleEl) roleEl.innerText = getRoleLabel(currentUser.role);
+      if (idEl) idEl.innerText = 'Employee ID: ' + (currentUser.empId || '—');
+      renderMyAvatarEls();
+      const sw = document.getElementById('accountThemeSwitch');
+      if (sw) sw.checked = document.body.classList.contains('dark-theme');
+      renderMyActivity();
+    }
+
     async function addExtinguisher(e) {
         e.preventDefault();
         const obj = {
