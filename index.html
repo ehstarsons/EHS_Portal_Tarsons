@@ -3354,6 +3354,21 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
     // intercepts that first Back press and shows a Close/Continue dialog
     // instead, the way a native app confirms before exiting.
     (function initBackGuard(){
+      // BUGFIX: every nav item in this app is `<a href="#" onclick="...">` —
+      // the onclick does the real in-app navigation, but nothing ever called
+      // preventDefault(), so the browser ALSO performed the native "#" link
+      // navigation underneath. A real, user-initiated fragment navigation
+      // (unlike a programmatic history.pushState()) fires a genuine 'popstate'
+      // event — so simply opening any section was tripping the exact same
+      // listener meant only for the real Back button, popping the exit dialog
+      // on ordinary navigation. Silently cancel that native "#" navigation
+      // (the onclick handler still runs and switches sections exactly as
+      // before) so only actual Back/Forward traversal reaches popstate.
+      document.addEventListener('click', function(e){
+        const a = e.target.closest('a[href="#"]');
+        if (a) e.preventDefault();
+      }, true);
+
       let guardActive = true;
       function armGuard(){ try { history.pushState({ hseGuard: true }, '', location.href); } catch(e){} }
       document.addEventListener('DOMContentLoaded', armGuard); // one extra entry to absorb the first Back press
