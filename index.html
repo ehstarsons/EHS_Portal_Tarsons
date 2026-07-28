@@ -131,6 +131,14 @@
   .ghost:hover{background:rgba(255,255,255,0.18)}
   .ghost-dark{background:#fff;border:1px solid var(--border);color:var(--text-dark);}
   .ghost-dark:hover{background:#f4f6f7}
+  /* Buttons that show full text on desktop but collapse to an icon-only
+     circle on mobile (used for Logout in the crowded mobile header row). */
+  .icon-text-btn .btn-icon-only{display:none}
+  @media (max-width:760px){
+    .icon-text-btn{width:38px;padding:0;display:flex;align-items:center;justify-content:center}
+    .icon-text-btn .btn-text-full{display:none}
+    .icon-text-btn .btn-icon-only{display:inline;font-size:16px}
+  }
   .btn-sm{padding:6px 11px;font-size:12px;border-radius:7px;margin-left:4px;}
   .btn-danger{background:linear-gradient(115deg,#ff6b6b,var(--danger));color:white;}
   .btn-danger:hover{opacity:.9}
@@ -341,7 +349,7 @@
   tbody tr:hover{background:rgba(18,183,106,.05)}
 
   /* ---------- Modals ---------- */
-  #loginOverlay, #fullscreenModal, #siteStatsModal, #noticeBoardModal, #ptwModal, #notificationModal, #ppeIssueModal, #qrModal, #emailComplaintModal, #blogReadModal, #mailVisitorPassModal, #changePasswordModal, #resetUserPasswordModal{
+  #loginOverlay, #fullscreenModal, #siteStatsModal, #noticeBoardModal, #ptwModal, #notificationModal, #ppeIssueModal, #qrModal, #emailComplaintModal, #blogReadModal, #mailVisitorPassModal, #changePasswordModal, #resetUserPasswordModal, #exitConfirmModal{
     position:fixed;left:0;top:0;right:0;bottom:0;background:rgba(4,10,20,0.72);display:none;
     align-items:center;justify-content:center;z-index:9999;backdrop-filter:blur(4px);
     animation:overlayIn .18s ease both;padding:16px;
@@ -352,6 +360,16 @@
     max-height:90vh;overflow-y:auto;box-shadow:var(--shadow-lg);animation:modalIn .22s cubic-bezier(.2,.9,.3,1.2) both;
   }
   @keyframes modalIn{from{opacity:0;transform:translateY(14px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+  #exitConfirmBox{
+    width:100%;max-width:340px;background:var(--panel);color:var(--text-dark);padding:26px 22px;border-radius:18px;
+    text-align:center;box-shadow:var(--shadow-lg);animation:modalIn .22s cubic-bezier(.2,.9,.3,1.2) both;
+  }
+  .exit-confirm-icon{
+    width:52px;height:52px;margin:0 auto;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-size:24px;background:linear-gradient(135deg,var(--accent-3),var(--accent-2));color:white;
+    box-shadow:0 6px 16px rgba(11,125,191,.3);
+  }
+  #exitConfirmBox button{min-width:120px}
 
   #loginOverlay{
     background:
@@ -569,6 +587,15 @@
     .logo{width:40px;height:40px;font-size:12px}
     #userBadge{display:none}
     .user-chip{padding:5px}
+    /* Keep logo + dark-mode + bell + avatar + logout + hamburger on one row
+       instead of wrapping into a second, "broad" header line. */
+    .header-top{flex-wrap:nowrap;gap:6px}
+    .header-actions{flex-wrap:nowrap;gap:5px}
+    .bell-wrapper{width:32px;height:32px}
+    .bell-icon{font-size:17px}
+    #themeToggleBtn{width:32px !important;padding:0 !important}
+    #mobileMenuBtn{width:32px;height:32px;padding:0}
+    .icon-text-btn{width:32px !important}
     nav a{padding:8px 13px;font-size:12.5px}
     button{font-size:13px}
     .btn-sm{padding:6px 10px;font-size:11.5px;margin-left:3px}
@@ -596,6 +623,11 @@
     button{padding:8px 12px;font-size:12.5px}
     .admin-tab-btn{padding:7px 12px;font-size:12px}
     h2{font-size:17px} h3{font-size:14.5px}
+    /* Below this width even the tightened header can run out of room —
+       keep the TPL logo (brand recognition) and drop the text beside it. */
+    .header-top .site-title{display:none}
+    .header-top .brand{gap:0}
+    .header-actions{gap:4px}
   }
   /* Large desktop monitors: let the grid layouts use the extra breathing room
      instead of stretching a fixed 1200px column arrangement */
@@ -848,7 +880,10 @@
           <div id="userBadge"></div>
         </div>
         <button class="ghost" id="loginBtn" onclick="showLogin()">Login</button>
-        <button class="ghost" id="logoutBtn" onclick="doLogout()" style="display:none">Logout</button>
+        <button class="ghost icon-text-btn" id="logoutBtn" onclick="doLogout()" style="display:none" title="Logout">
+          <span class="btn-text-full">Logout</span>
+          <span class="btn-icon-only">⏻</span>
+        </button>
         <button class="ghost" id="mobileMenuBtn" onclick="toggleMobileMenu()" style="display:none">☰</button>
       </div>
     </div>
@@ -1704,6 +1739,20 @@
                 <button type="submit" class="primary">Update Password</button>
             </div>
         </form>
+    </div>
+  </div>
+
+  <div id="exitConfirmModal">
+    <div id="exitConfirmBox">
+      <div class="exit-confirm-icon">↩️</div>
+      <h3 style="margin:10px 0 4px">Leave the HSE Portal?</h3>
+      <p class="small" style="color:var(--muted);text-transform:none;font-weight:500;margin:0 0 18px">
+        Going back will close the portal. You can continue working instead.
+      </p>
+      <div style="display:flex;gap:10px;justify-content:center">
+        <button type="button" class="ghost-dark" onclick="exitConfirmClose()">Close Portal</button>
+        <button type="button" class="primary" onclick="exitConfirmContinue()">Continue</button>
+      </div>
     </div>
   </div>
 
@@ -3297,6 +3346,34 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
           if (btn) btn.innerText = '☀️';
         });
       }
+    })();
+
+    // --- Browser-back exit guard ---
+    // Pressing the device/browser Back button used to leave the portal
+    // immediately (back to whatever page opened it, or a blank tab). This
+    // intercepts that first Back press and shows a Close/Continue dialog
+    // instead, the way a native app confirms before exiting.
+    (function initBackGuard(){
+      let guardActive = true;
+      function armGuard(){ try { history.pushState({ hseGuard: true }, '', location.href); } catch(e){} }
+      document.addEventListener('DOMContentLoaded', armGuard); // one extra entry to absorb the first Back press
+      window.addEventListener('popstate', function(){
+        if (!guardActive) return; // Close Portal is actively navigating away — let it through
+        armGuard(); // re-arm immediately so the URL/page never actually changes
+        document.getElementById('exitConfirmModal').style.display = 'flex';
+      });
+      window.exitConfirmContinue = function(){
+        document.getElementById('exitConfirmModal').style.display = 'none';
+      };
+      window.exitConfirmClose = function(){
+        guardActive = false;
+        document.getElementById('exitConfirmModal').style.display = 'none';
+        history.go(-2); // undo the guard entry, then the real previous page
+        // If there's nowhere further back (this was the first page in the
+        // tab), history.go() silently does nothing — fall back to trying to
+        // close the tab (only works for windows/tabs opened via script).
+        setTimeout(function(){ try { window.close(); } catch(e){} }, 250);
+      };
     })();
 
     // --- My Account: profile photo, summary & recent activity ---
