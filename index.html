@@ -1611,7 +1611,6 @@
               <h3 style="margin:0" id="ehsFormRecordsTitle">Saved Entries</h3>
               <div>
                 <button class="ghost-dark btn-sm" id="ehsFormExportBtn">⬇ Excel</button>
-                <button class="ghost-dark btn-sm" id="ehsFormExportPdfBtn">📄 Export PDF</button>
               </div>
             </div>
             <div style="overflow-x:auto"><table id="ehsFormTable"></table></div>
@@ -2709,6 +2708,10 @@
         if (id === 'training') {
           safeCall(populateFactorySelects); safeCall(renderModules); safeCall(renderRecords); safeCall(renderVisitors); safeCall(renderTrainingEvals); safeCall(populateEvalBatchSelect);
           if (document.getElementById('trainingMaterialsContainer') && document.getElementById('trainingMaterialsContainer').style.display !== 'none') safeCall(renderTrainingMaterials);
+          if (document.getElementById('trainingEHSContainer') && document.getElementById('trainingEHSContainer').style.display !== 'none') {
+            safeCall(renderEHSFormsGrid);
+            if (activeEHSFormId) safeCall(() => renderEHSFormTable(ehsFormCfg(activeEHSFormId)));
+          }
         }
         if (id === 'ptw') { safeCall(populateFactorySelects); safeCall(renderPTWList); }
         if (id === 'gallery') safeCall(renderGallery);
@@ -3879,7 +3882,6 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
       { id:'firePump', icon:'🔥', title:'Fire Pump Monthly Inspection Checklist', docNo:'ESF-EHS-06', style:'inspection',
         meta:[
           {key:'manufacturer',label:'Manufacturer'}, {key:'pumpNo',label:'Pump No'},
-          {key:'month',label:'Month'}, {key:'location',label:'Location'},
           {key:'date',label:'Date',inputType:'date'}, {key:'inspector',label:'Inspector'}
         ],
         questions:[
@@ -3903,7 +3905,7 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
       { id:'firstAid', icon:'🩹', title:'First Aid Register', docNo:'ESF-EHS-01', style:'register',
         columns:[
           {key:'date',label:'Date',inputType:'date'}, {key:'name',label:'Name Of Injured Person'},
-          {key:'location',label:'Location'}, {key:'injuryType',label:'Type of Injury'},
+          {key:'injuryType',label:'Type of Injury'},
           {key:'bodyPart',label:'Body Part Affected'}, {key:'details',label:'Details of Incident'},
           {key:'action',label:'Immediate Action'}, {key:'doctor',label:'Doctor/Clinic Name'},
           {key:'responsibility',label:'Responsibility'}
@@ -3912,7 +3914,7 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
       { id:'monthlyData', icon:'📊', title:'Monthly Consumption Data Tracker', docNo:'', style:'register',
         columns:[
           {key:'description',label:'Description'}, {key:'uom',label:'UOM'},
-          {key:'month',label:'Month (e.g. Apr26)'}, {key:'quantity',label:'Quantity',inputType:'number'}
+          {key:'quantity',label:'Quantity',inputType:'number'}
         ]
       },
       { id:'groundwater', icon:'💧', title:'Monthly Groundwater Consumption Record', docNo:'ESF-EHS-10', style:'matrix',
@@ -3933,7 +3935,7 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
         rows:['Check all Pressure Gauge','Check TDS Value','Antiscalant Dosing','Sodium Bicarbonate Dosing','Sodium Chloride Dosing']
       },
       { id:'fireSystemQtr', icon:'🧯', title:'Quarterly Fire System Inspection Checklist', docNo:'ESF-EHS-12', style:'inspection',
-        meta:[{key:'date',label:'Inspection Date',inputType:'date'}, {key:'unit',label:'Unit'}, {key:'location',label:'Location'}],
+        meta:[{key:'date',label:'Inspection Date',inputType:'date'}, {key:'unit',label:'Unit'}],
         questions:[
           'Are evacuation signs/diagrams displayed and fully visible?',
           'Are evacuation routes clear of obstructions?',
@@ -4046,8 +4048,8 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
     // inspection / matrix style) always carries top-level `location` and
     // `month` fields (captured via the two common fields added to every
     // add-form below) so filtering works identically across all 13 forms.
-    let ehsFilterState = { month: '', location: '' };
-    function currentMonthValue() { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); }
+    let ehsFilterState = { month: currentMonthValue(), location: '' };
+    function currentMonthValue() { const d = nowInKolkata(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); }
     function monthValueLabel(v) {
       if (!v) return '';
       const [y, m] = v.split('-');
@@ -4061,13 +4063,26 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
       if (monthSel && !monthSel.dataset.filled) {
         // Last 12 months (current month first) plus "All Months".
         const opts = ['<option value="">All Months</option>'];
-        const d = new Date();
-        for (let i = 0; i < 12; i++) {
-          const y = d.getFullYear(), m = d.getMonth() + 1;
-          const v = y + '-' + String(m).padStart(2, '0');
-          opts.push(`<option value="${v}">${escapeHtml(monthValueLabel(v))}</option>`);
-          d.setMonth(d.getMonth() - 1);
-        }
+        // Walk backward using plain year/month integers (not Date.setMonth on a
+        // real Date) — setMonth on a day-of-month of 29/30/31 rolls over into
+        // the following month whenever the target month is shorter (e.g. on
+        // the 31st, stepping back from July lands back on July 1 instead of
+        // June), which duplicated/skipped months and made the list look
+        // "unorganised". Pure integer math has no day-of-month to roll over.
+        const today = nowInKolkata();
+let y = today.getFullYear();
+let m = today.getMonth() + 1;
+
+for (let i = 0; i < 14; i++) {   // 14 months
+    const v = y + '-' + String(m).padStart(2, '0');
+    opts.push(`<option value="${v}">${escapeHtml(monthValueLabel(v))}</option>`);
+
+    m++;
+    if (m > 12) {
+        m = 1;
+        y++;
+    }
+}
         monthSel.innerHTML = opts.join('');
         monthSel.dataset.filled = '1';
       }
@@ -4210,7 +4225,6 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
       document.getElementById('ehsFormDetail').style.display = 'block';
       document.getElementById('ehsFormRecordsTitle').innerText = cfg.title + ' — Saved Entries';
       document.getElementById('ehsFormExportBtn').setAttribute('onclick', `exportTableToExcel('ehsFormTable','${cfg.id}')`);
-      document.getElementById('ehsFormExportPdfBtn').setAttribute('onclick', `exportEHSTableToPDF('${cfg.id}')`);
       if (cfg.style === 'register') renderEHSRegisterForm(cfg);
       else if (cfg.style === 'inspection') renderEHSInspectionForm(cfg);
       else if (cfg.style === 'matrix') renderEHSMatrixForm(cfg);
@@ -4239,7 +4253,9 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
     // is what makes the month/location filters and dashboard above work
     // uniformly across all 13 very differently-shaped forms.
     function ehsCommonFieldsHtml() {
-      return `<div class="ehs-required-field"><label>Location</label><select id="ehsCommonLocation">${factoryOptionsHtml('')}</select></div>
+      const locOptions = '<option value="">— Select Location —</option>' +
+        FACTORY_LIST.map(f => `<option value="${f}">${f}</option>`).join('');
+      return `<div class="ehs-required-field"><label>Location</label><select id="ehsCommonLocation">${locOptions}</select></div>
         <div class="ehs-required-field"><label>Report Month</label><input id="ehsCommonMonth" type="month" value="${currentMonthValue()}"></div>`;
     }
     function readEhsCommonFields() {
@@ -4294,7 +4310,7 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
         `<thead><tr><th>Location</th><th>Month</th>${cfg.columns.map(c => `<th>${escapeHtml(c.label)}</th>`).join('')}<th>Submitted By</th><th>PDF</th><th class="admin-only">Action</th></tr></thead>
         <tbody>${list.map(r => `<tr><td>${escapeHtml(r.location || '')}</td><td>${escapeHtml(monthValueLabel(r.month))}</td>${cfg.columns.map(c => `<td>${escapeHtml(r[c.key] || '')}</td>`).join('')}
           <td>${escapeHtml(r.submittedBy || '')}</td>
-          <td><button class="ghost-dark btn-sm" onclick="generateEHSRecordPDF(ehsFormCfg('${cfg.id}'), ${JSON.stringify(r).replace(/&/g, '&amp;').replace(/"/g, '&quot;')})">📄</button></td>
+          <td><button class="ghost-dark btn-sm" onclick="downloadEHSRecordPDF('${cfg.id}',${r.id})">📄</button></td>
           <td class="admin-only"><button class="btn-danger btn-sm" onclick="deleteEHSRow('${cfg.id}',${r.id})">✕</button></td></tr>`).join('') ||
           `<tr><td colspan="${cfg.columns.length + 5}" style="text-align:center;color:grey;padding:14px">No entries match the current filter.</td></tr>`}</tbody>`;
     }
@@ -4357,7 +4373,7 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
           return `<tr><td>${escapeHtml(r.location || '')}</td><td>${escapeHtml(monthValueLabel(r.month))}</td>${cfg.meta.map(m => `<td>${escapeHtml(r.meta[m.key] || '')}</td>`).join('')}
             <td>${noCount ? `<b style="color:#c0392b">${noCount}</b>` : '0'}</td>
             <td>${escapeHtml(r.submittedBy || '')}</td>
-            <td><button class="ghost-dark btn-sm" onclick='generateEHSRecordPDF(ehsFormCfg("${cfg.id}"), ${JSON.stringify(r).replace(/&/g, "&amp;").replace(/'/g, "&#39;")})'>📄</button></td>
+            <td><button class="ghost-dark btn-sm" onclick="downloadEHSRecordPDF('${cfg.id}',${r.id})">📄</button></td>
             <td class="admin-only"><button class="btn-danger btn-sm" onclick="deleteEHSRow('${cfg.id}',${r.id})">✕</button></td></tr>`;
         }).join('') || `<tr><td colspan="${cfg.meta.length + 6}" style="text-align:center;color:grey;padding:14px">No inspections match the current filter.</td></tr>`}</tbody>`;
     }
@@ -4413,39 +4429,191 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
         `<thead><tr><th>Location</th><th>Month</th>${metaCols.map(m => `<th>${escapeHtml(m.label)}</th>`).join('')}<th>Submitted By</th><th>PDF</th><th class="admin-only">Action</th></tr></thead>
         <tbody>${list.map(r => `<tr><td>${escapeHtml(r.location || '')}</td><td>${escapeHtml(monthValueLabel(r.month))}</td>${metaCols.map(m => `<td>${escapeHtml(r.meta[m.key] || '')}</td>`).join('')}
           <td>${escapeHtml(r.submittedBy || '')}</td>
-          <td><button class="ghost-dark btn-sm" onclick='generateEHSRecordPDF(ehsFormCfg("${cfg.id}"), ${JSON.stringify(r).replace(/&/g, "&amp;").replace(/'/g, "&#39;")})'>📄</button></td>
+          <td><button class="ghost-dark btn-sm" onclick="downloadEHSRecordPDF('${cfg.id}',${r.id})">📄</button></td>
           <td class="admin-only"><button class="btn-danger btn-sm" onclick="deleteEHSRow('${cfg.id}',${r.id})">✕</button></td></tr>`).join('') ||
           `<tr><td colspan="${metaCols.length + 5}" style="text-align:center;color:grey;padding:14px">No monthly records match the current filter.</td></tr>`}</tbody>`;
     }
 
     // ---- PDF generation (jsPDF) ----
-    // Draws a table using the jspdf-autotable plugin when it's available; if
-    // that plugin failed to load (from both the primary and fallback CDN —
-    // see loadWithFallback in <head>), falls back to a plain manual text
-    // grid so the PDF still contains the data instead of throwing
-    // "doc.autoTable is not a function" and producing nothing at all.
+    // Draws a table using the jspdf-autotable plugin when it's available.
+    // If that plugin failed to load (blocked/unreachable CDN — both the
+    // primary and fallback source in <head> — a real possibility on a
+    // locked-down factory network), this draws an equivalent bordered,
+    // shaded table by hand instead of a plain pipe-separated text dump, so
+    // the PDF looks like a proper document either way. It supports the
+    // subset of autotable options this app actually uses: head, body,
+    // startY, margin, styles, headStyles, alternateRowStyles, columnStyles
+    // (cellWidth/fontStyle/halign) and didParseCell (for the YES/NO colour
+    // coding on inspection forms).
     function pdfTable(doc, opts) {
       if (typeof doc.autoTable === 'function') { doc.autoTable(opts); return; }
-      let y = opts.startY || 20;
-      const lineH = 6;
-      doc.setFontSize(8);
-      if (opts.head && opts.head[0]) {
-        doc.setFont(undefined, 'bold');
-        doc.text(opts.head[0].join('   |   '), 14, y);
-        doc.setFont(undefined, 'normal');
-        y += lineH;
+      const margin = Object.assign({ left: 14, right: 14, bottom: 20 }, opts.margin || {});
+      const pageW = doc.internal.pageSize.getWidth();
+      const pageH = doc.internal.pageSize.getHeight();
+      const usableW = pageW - margin.left - margin.right;
+      const base = Object.assign({ fontSize: 9, textColor: [11,32,39], lineColor: [200,200,200], lineWidth: 0.15 }, opts.styles || {});
+      const headSty = Object.assign({ fillColor: [11,125,191], textColor: [255,255,255], fontStyle: 'bold' }, opts.headStyles || {});
+      const altFill = opts.alternateRowStyles && opts.alternateRowStyles.fillColor;
+      const colStyles = opts.columnStyles || {};
+      const head = (opts.head && opts.head[0]) || [];
+      const body = opts.body || [];
+      const nCols = head.length || (body[0] || []).length;
+      const pad = 2, lineH = 4.2;
+      if (!nCols) { doc.lastAutoTable = { finalY: opts.startY || 20 }; return; }
+
+      // Column widths: any explicit cellWidth wins; remaining space splits evenly.
+      let explicitTotal = 0, flexCount = 0;
+      const explicit = {};
+      for (let i = 0; i < nCols; i++) {
+        const cw = colStyles[i] && colStyles[i].cellWidth;
+        if (typeof cw === 'number') { explicit[i] = cw; explicitTotal += cw; } else flexCount++;
       }
-      (opts.body || []).forEach(row => {
-        const line = row.map(c => String(c == null ? '' : c)).join('   |   ');
-        const wrapped = doc.splitTextToSize(line, doc.internal.pageSize.getWidth() - 28);
-        wrapped.forEach(w => {
-          if (y > doc.internal.pageSize.getHeight() - 20) { doc.addPage(); y = 20; }
-          doc.text(w, 14, y);
-          y += lineH;
+      const flexW = flexCount ? Math.max(15, (usableW - explicitTotal) / flexCount) : 0;
+      const colW = []; for (let i = 0; i < nCols; i++) colW.push(explicit[i] != null ? explicit[i] : flexW);
+      const colX = [margin.left]; for (let i = 0; i < nCols; i++) colX.push(colX[i] + colW[i]);
+
+      let y = opts.startY || 20;
+      function drawHeader() {
+        const rowH = 8;
+        doc.setFontSize(base.fontSize); doc.setFont(undefined, headSty.fontStyle || 'bold');
+        doc.setFillColor(...headSty.fillColor);
+        doc.rect(margin.left, y, usableW, rowH, 'F');
+        doc.setTextColor(...headSty.textColor);
+        head.forEach((h, i) => doc.text(String(h), colX[i] + pad, y + rowH - 2.6));
+        doc.setDrawColor(...base.lineColor); doc.setLineWidth(base.lineWidth);
+        doc.rect(margin.left, y, usableW, rowH);
+        for (let i = 1; i < nCols; i++) doc.line(colX[i], y, colX[i], y + rowH);
+        y += rowH;
+      }
+      if (head.length) drawHeader();
+
+      body.forEach((row, rIdx) => {
+        doc.setFontSize(base.fontSize);
+        const wrapped = row.map((c, i) => doc.splitTextToSize(String(c == null ? '' : c), Math.max(6, colW[i] - pad * 2)));
+        const lines = Math.max(1, ...wrapped.map(w => w.length));
+        const rowH = lines * lineH + pad * 2;
+        if (y + rowH > pageH - margin.bottom) { doc.addPage(); y = 20; if (head.length) drawHeader(); }
+        if (altFill && rIdx % 2 === 1) { doc.setFillColor(...altFill); doc.rect(margin.left, y, usableW, rowH, 'F'); }
+        row.forEach((c, i) => {
+          const cs = colStyles[i] || {};
+          const cellData = { section: 'body', row: { index: rIdx }, column: { index: i },
+            cell: { raw: c, styles: { textColor: base.textColor, fontStyle: cs.fontStyle || 'normal', halign: cs.halign || 'left' } } };
+          if (typeof opts.didParseCell === 'function') opts.didParseCell(cellData);
+          doc.setTextColor(...cellData.cell.styles.textColor);
+          doc.setFont(undefined, cellData.cell.styles.fontStyle || 'normal');
+          const align = cellData.cell.styles.halign || 'left';
+          const textX = align === 'center' ? colX[i] + colW[i] / 2 : colX[i] + pad;
+          wrapped[i].forEach((line, li) => doc.text(line, textX, y + pad + 3 + li * lineH, align === 'center' ? { align: 'center' } : undefined));
         });
+        doc.setDrawColor(...base.lineColor); doc.setLineWidth(base.lineWidth);
+        doc.rect(margin.left, y, usableW, rowH);
+        for (let i = 1; i < nCols; i++) doc.line(colX[i], y, colX[i], y + rowH);
+        y += rowH;
       });
       doc.lastAutoTable = { finalY: y };
     }
+    // Regenerates the PDF for an already-saved entry from the 📄 button in a
+    // form's records table. Looks the record up fresh by id from storage
+    // rather than passing the record through the HTML onclick attribute as a
+    // raw JSON blob — a saved field containing a quote, ampersand, or other
+    // special character could break that attribute and make the button
+    // silently do nothing, which is what "PDF not downloaded from records" was.
+    function downloadEHSRecordPDF(formId, recordId) {
+      const cfg = ehsFormCfg(formId);
+      const record = cfg ? ehsRecords(formId).find(r => String(r.id) === String(recordId)) : null;
+      if (!cfg || !record) { toast('Could not find that entry — it may have been deleted.', 'error'); return; }
+      generateEHSRecordPDF(cfg, record) && toast('PDF downloaded.', 'success');
+    }
+    // Brand palette shared by the header band, table headers and footer rule,
+    // matching the portal's own CSS accent colours (--accent-3 / --accent).
+    const PDF_BRAND_BLUE = [11, 125, 191];
+    const PDF_BRAND_GREEN = [18, 183, 106];
+    const PDF_INK = [11, 32, 39];
+    const PDF_MUTED = [91, 122, 132];
+
+    // Draws the letterhead band across the top of the current page: a solid
+    // brand-blue bar with the company name, a thin green accent underline,
+    // then the form title/doc-no in dark text below. Returns the y position
+    // where page content should start.
+    function pdfLetterhead(doc, cfg) {
+      const pageW = doc.internal.pageSize.getWidth();
+      doc.setFillColor(...PDF_BRAND_BLUE);
+      doc.rect(0, 0, pageW, 24, 'F');
+      doc.setFillColor(...PDF_BRAND_GREEN);
+      doc.rect(0, 24, pageW, 2, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(14); doc.setFont(undefined, 'bold');
+      doc.text('TARSONS PRODUCTS LIMITED', 14, 11);
+      doc.setFontSize(9.5); doc.setFont(undefined, 'normal');
+      doc.text('HSE Portal — Statutory & Monthly EHS Records', 14, 18);
+      doc.setTextColor(...PDF_INK);
+      let y = 34;
+      doc.setFontSize(12.5); doc.setFont(undefined, 'bold');
+      doc.text(cfg.title, 14, y); y += 5;
+      if (cfg.docNo) {
+        doc.setFontSize(8.5); doc.setFont(undefined, 'normal'); doc.setTextColor(...PDF_MUTED);
+        doc.text('Doc No: ' + cfg.docNo, 14, y); y += 5;
+        doc.setTextColor(...PDF_INK);
+      }
+      return y + 2;
+    }
+
+    // Draws a light, rounded info panel summarising who/where/when the entry
+    // was filed, laid out as two label/value columns rather than a wall of
+    // plain stacked text lines. Returns the y position below the panel.
+    function pdfMetaPanel(doc, record, y) {
+      const pageW = doc.internal.pageSize.getWidth();
+      const boxH = 20;
+      doc.setFillColor(244, 250, 249);
+      doc.setDrawColor(230, 237, 240);
+      doc.roundedRect(14, y, pageW - 28, boxH, 2, 2, 'FD');
+      const col1X = 20, col2X = pageW / 2 + 4;
+      const rowY1 = y + 8, rowY2 = y + 16;
+      const field = (label, value, x, ry) => {
+        doc.setFontSize(7.5); doc.setFont(undefined, 'bold'); doc.setTextColor(...PDF_MUTED);
+        doc.text(label.toUpperCase(), x, ry - 3.2);
+        doc.setFontSize(9.5); doc.setFont(undefined, 'normal'); doc.setTextColor(...PDF_INK);
+        doc.text(String(value || '-'), x, ry + 1.2);
+      };
+      field('Location', record.location, col1X, rowY1);
+      field('Report Month', monthValueLabel(record.month) || '-', col2X, rowY1);
+      field('Submitted By', String(record.submittedBy || '-').split(' (')[0], col1X, rowY2);
+      field('Date Filed', new Date(record.ts).toLocaleString('en-IN'), col2X, rowY2);
+      return y + boxH + 8;
+    }
+
+    // Adds a consistent footer (thin rule, portal name, generated timestamp,
+    // page X of Y) to every page of the document — called once at the end,
+    // after all content/tables are drawn, so the page count is final.
+    function pdfFooter(doc) {
+      const pageCount = doc.internal.getNumberOfPages();
+      const pageW = doc.internal.pageSize.getWidth();
+      const pageH = doc.internal.pageSize.getHeight();
+      for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setDrawColor(...PDF_BRAND_BLUE);
+        doc.setLineWidth(0.4);
+        doc.line(14, pageH - 14, pageW - 14, pageH - 14);
+        doc.setFontSize(7.5); doc.setFont(undefined, 'normal'); doc.setTextColor(...PDF_MUTED);
+        doc.text('TARSONS PRODUCTS LIMITED — HSE Portal · System-generated document', 14, pageH - 9);
+        doc.text(`Generated ${new Date().toLocaleString('en-IN')}`, pageW / 2, pageH - 9, { align: 'center' });
+        doc.text(`Page ${i} of ${pageCount}`, pageW - 14, pageH - 9, { align: 'right' });
+      }
+    }
+
+    // Shared table look for every EHS table in the PDF — brand-blue header,
+    // subtle zebra striping, thin grid lines — used everywhere pdfTable() is
+    // called below instead of repeating the same style object each time.
+    function pdfTableTheme(extra) {
+      return Object.assign({
+        theme: 'grid',
+        headStyles: { fillColor: PDF_BRAND_BLUE, textColor: [255,255,255], fontStyle: 'bold' },
+        alternateRowStyles: { fillColor: [244, 250, 249] },
+        styles: { fontSize: 9, textColor: PDF_INK, lineColor: [222, 232, 235], lineWidth: 0.15 },
+        margin: { left: 14, right: 14 }
+      }, extra);
+    }
+
     // Single submission → PDF, triggered automatically right after every
     // successful save so each entry is instantly available as a document
     // (no manual "print" step needed). Falls back to a plain alert if the
@@ -4463,32 +4631,39 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
         }
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
-        let y = 16;
-        doc.setFontSize(14); doc.setFont(undefined, 'bold');
-        doc.text('TARSONS PRODUCTS LIMITED — HSE Portal', 14, y); y += 7;
-        doc.setFontSize(12); doc.text(cfg.title, 14, y); y += 6;
-        doc.setFontSize(9); doc.setFont(undefined, 'normal');
-        if (cfg.docNo) { doc.text('Doc No: ' + cfg.docNo, 14, y); y += 5; }
-        doc.text(`Location: ${record.location || '-'}   Month: ${monthValueLabel(record.month) || '-'}`, 14, y); y += 5;
-        doc.text(`Submitted By: ${record.submittedBy || '-'}   Date: ${new Date(record.ts).toLocaleString('en-IN')}`, 14, y); y += 6;
+        let y = pdfLetterhead(doc, cfg);
+        y = pdfMetaPanel(doc, record, y);
 
         if (cfg.style === 'register') {
           const rows = cfg.columns.map(c => [c.label, record[c.key] || '-']);
-          pdfTable(doc, { startY: y, head: [['Field', 'Value']], body: rows, styles: { fontSize: 9 }, headStyles: { fillColor: [11,125,191] } });
+          pdfTable(doc, pdfTableTheme({ startY: y, head: [['Field', 'Value']], body: rows }));
         } else if (cfg.style === 'inspection') {
           const metaRows = cfg.meta.map(m => [m.label, record.meta[m.key] || '-']);
-          pdfTable(doc, { startY: y, head: [['Field', 'Value']], body: metaRows, styles: { fontSize: 9 }, headStyles: { fillColor: [11,125,191] } });
+          pdfTable(doc, pdfTableTheme({ startY: y, head: [['Field', 'Value']], body: metaRows }));
           const qRows = record.answers.map((a, i) => [i + 1, a.q, a.response || '-', a.remark || '']);
-          pdfTable(doc, { startY: doc.lastAutoTable.finalY + 6, head: [['#', 'Checking Requirement', 'Response', 'Remarks']],
-            body: qRows, styles: { fontSize: 8 }, headStyles: { fillColor: [11,125,191] }, columnStyles: { 0: { cellWidth: 8 }, 1: { cellWidth: 100 } } });
+          pdfTable(doc, pdfTableTheme({
+            startY: doc.lastAutoTable.finalY + 8, head: [['#', 'Checking Requirement', 'Response', 'Remarks']],
+            body: qRows, styles: { fontSize: 8, textColor: PDF_INK, lineColor: [222, 232, 235], lineWidth: 0.15 },
+            columnStyles: { 0: { cellWidth: 8 }, 1: { cellWidth: 100 }, 2: { fontStyle: 'bold', halign: 'center' } },
+            didParseCell: (data) => {
+              if (data.section === 'body' && data.column.index === 2) {
+                const v = String(data.cell.raw || '').toUpperCase();
+                if (v === 'NO') data.cell.styles.textColor = [197, 48, 48];
+                else if (v === 'YES') data.cell.styles.textColor = PDF_BRAND_GREEN;
+              }
+            }
+          }));
         } else if (cfg.style === 'matrix') {
           const metaRows = cfg.meta.filter(m => m.inputType !== 'textarea').map(m => [m.label, record.meta[m.key] || '-']);
-          pdfTable(doc, { startY: y, head: [['Field', 'Value']], body: metaRows, styles: { fontSize: 9 }, headStyles: { fillColor: [11,125,191] } });
+          pdfTable(doc, pdfTableTheme({ startY: y, head: [['Field', 'Value']], body: metaRows }));
           const cols = cfg.matrixColumns || [{ key: 'value', label: cfg.valueLabel || 'Value' }];
           const mRows = record.values.map(v => [v.row, ...cols.map(c => v.cells[c.key] || '-')]);
-          pdfTable(doc, { startY: doc.lastAutoTable.finalY + 6, head: [[cfg.rowLabel, ...cols.map(c => c.label)]],
-            body: mRows, styles: { fontSize: 8 }, headStyles: { fillColor: [11,125,191] } });
+          pdfTable(doc, pdfTableTheme({
+            startY: doc.lastAutoTable.finalY + 8, head: [[cfg.rowLabel, ...cols.map(c => c.label)]],
+            body: mRows, styles: { fontSize: 8, textColor: PDF_INK, lineColor: [222, 232, 235], lineWidth: 0.15 }
+          }));
         }
+        pdfFooter(doc);
         const filename = `${cfg.id}_${record.location || 'entry'}_${record.month || ''}_${record.id}.pdf`.replace(/\s+/g, '_');
         doc.save(filename);
         return true;
@@ -5855,6 +6030,7 @@ TARSONS HSE Portal`;
     window.setEHSFilter = setEHSFilter;
     window.clearEHSFilters = clearEHSFilters;
     window.generateEHSRecordPDF = generateEHSRecordPDF;
+    window.downloadEHSRecordPDF = downloadEHSRecordPDF;
     window.exportEHSTableToPDF = exportEHSTableToPDF;
     window.addVisitor = addVisitor;
     window.deleteVisitor = deleteVisitor;
