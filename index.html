@@ -10,8 +10,32 @@
     <link rel="apple-touch-icon" href="favicon.png">
   <link rel="manifest" href="manifest.json">
 
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script>
+    // Fallback loader: if a CDN <script> fails to load (blocked network,
+    // jsdelivr hiccup, ad-blocker, etc.) retry once from a second CDN.
+    // This is what was silently breaking PDF export — jsPDF itself loaded
+    // fine, but the jspdf-autotable script failed to load, so
+    // `doc.autoTable` didn't exist and every PDF attempt threw
+    // "doc.autoTable is not a function".
+    function loadWithFallback(primarySrc, fallbackSrc) {
+      const s = document.createElement('script');
+      s.src = primarySrc;
+      s.async = false; // preserve document order — jspdf-autotable must run after jspdf finishes
+      s.onerror = function () {
+        console.warn('CDN script failed, retrying from fallback:', primarySrc);
+        const s2 = document.createElement('script');
+        s2.src = fallbackSrc;
+        s2.async = false;
+        document.head.appendChild(s2);
+      };
+      document.head.appendChild(s);
+    }
+    loadWithFallback('https://cdn.jsdelivr.net/npm/chart.js', 'https://unpkg.com/chart.js');
+    loadWithFallback('https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js', 'https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js');
+    loadWithFallback('https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js', 'https://unpkg.com/jspdf@2.5.1/dist/jspdf.umd.min.js');
+    loadWithFallback('https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf-autotable.min.js', 'https://unpkg.com/jspdf-autotable@3.8.2/dist/jspdf-autotable.min.js');
+  </script>
+  <noscript></noscript>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
 
   <!-- Import map to safely resolve standard Firebase package imports directly in the browser -->
@@ -174,7 +198,7 @@
      scopes (general mail vs. visitor-pass-only mail for Security). Any
      role with full add access (is-officer-up) automatically satisfies
      these too — see the JS permission engine. */
-  .incident-add-only,.hira-add-only,.ptw-add-only,.training-add-only,.ppe-add-only,.visitor-add-only,.mail-general-only,.mail-visitor-only{display:none}
+  .incident-add-only,.hira-add-only,.ptw-add-only,.training-add-only,.ppe-add-only,.visitor-add-only,.mail-general-only,.mail-visitor-only,.ehsreport-add-only{display:none}
   body.is-incident-adder .incident-add-only{display:revert}
   body.is-hira-adder .hira-add-only{display:revert}
   body.is-ptw-adder .ptw-add-only{display:revert}
@@ -183,12 +207,14 @@
   body.is-visitor-adder .visitor-add-only{display:revert}
   body.is-mail-general .mail-general-only{display:revert}
   body.is-mail-visitor .mail-visitor-only{display:revert}
+  body.is-ehsreport-adder .ehsreport-add-only{display:revert}
   body.is-incident-adder li.incident-add-only,
   body.is-hira-adder li.hira-add-only,
   body.is-ptw-adder li.ptw-add-only,
   body.is-training-adder li.training-add-only,
   body.is-ppe-adder li.ppe-add-only,
-  body.is-visitor-adder li.visitor-add-only{display:list-item}
+  body.is-visitor-adder li.visitor-add-only,
+  body.is-ehsreport-adder li.ehsreport-add-only{display:list-item}
   body.is-incident-adder div.incident-add-only, body.is-incident-adder span.incident-add-only,
   body.is-hira-adder div.hira-add-only, body.is-hira-adder span.hira-add-only,
   body.is-ptw-adder div.ptw-add-only, body.is-ptw-adder span.ptw-add-only,
@@ -196,8 +222,13 @@
   body.is-ppe-adder div.ppe-add-only, body.is-ppe-adder span.ppe-add-only,
   body.is-visitor-adder div.visitor-add-only, body.is-visitor-adder span.visitor-add-only,
   body.is-mail-general div.mail-general-only, body.is-mail-general span.mail-general-only,
-  body.is-mail-visitor div.mail-visitor-only, body.is-mail-visitor span.mail-visitor-only
+  body.is-mail-visitor div.mail-visitor-only, body.is-mail-visitor span.mail-visitor-only,
+  body.is-ehsreport-adder div.ehsreport-add-only, body.is-ehsreport-adder span.ehsreport-add-only
   {display:block}
+  /* Shown only to users who can NOT add EHS Monthly Report entries — a small
+     "view only" notice so it's clear why the add-form is hidden for them. */
+  .ehsreport-view-only-note{display:block}
+  body.is-ehsreport-adder .ehsreport-view-only-note{display:none}
 
   /* ---------- Cards / layout ---------- */
   .card{
@@ -336,7 +367,6 @@
   body.dark-theme #mailVisitorPassBox,body.dark-theme #changePasswordBox,body.dark-theme #resetUserPasswordBox
   {background:#101e2c !important;color:#e8f0f2}
   body.dark-theme .expiry-alert-card{background:#2a1414 !important}
-  body.dark-theme #aiMessages{background:#0c1826}
   body.dark-theme [style*="background:#f9f9f9"]{background:#0c1826 !important;color:#e8f0f2 !important}
   /* .ghost-dark (Cancel / Excel export / Refresh / etc. — used throughout the
      whole app) had a hardcoded white background with the variable text color,
@@ -536,6 +566,61 @@
   .audit-item-row input.audit-item:focus-visible{box-shadow:0 0 0 3px rgba(14,201,176,.25)}
   .audit-item-row span{font-size:13.2px;line-height:1.45;color:var(--text-dark)}
   .audit-item-row .audit-q-num{font-weight:800;color:var(--accent-3);margin-right:2px}
+
+  /* ---------- EHS Monthly Report ---------- */
+  .ehs-dashboard{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+  @media (max-width:820px){.ehs-dashboard{grid-template-columns:repeat(2,1fr)}}
+  .ehs-stat-card{
+    padding:14px 16px;border-radius:14px;position:relative;overflow:hidden;color:#fff;
+    display:flex;flex-direction:column;gap:2px;box-shadow:0 8px 20px rgba(11,125,191,.14);
+  }
+  .ehs-stat-card .ehs-stat-value{font-size:24px;font-weight:800;line-height:1.15}
+  .ehs-stat-card .ehs-stat-label{font-size:11.5px;font-weight:700;opacity:.92;text-transform:uppercase;letter-spacing:.3px}
+  .ehs-stat-card .ehs-stat-icon{position:absolute;top:10px;right:12px;font-size:22px;opacity:.4}
+  .ehs-stat-total{background:linear-gradient(135deg,var(--accent-3),#0a5a8a)}
+  .ehs-stat-entries{background:linear-gradient(135deg,var(--accent),var(--accent-2))}
+  .ehs-stat-month{background:linear-gradient(135deg,#7c5cff,#5233c7)}
+  .ehs-stat-pending{background:linear-gradient(135deg,#f5a524,#dd7d0a)}
+  .ehs-charts-row{display:grid;grid-template-columns:1.3fr 1fr;gap:14px;margin-bottom:18px}
+  @media (max-width:820px){.ehs-charts-row{grid-template-columns:1fr}}
+  .ehs-chart-box{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:14px 16px}
+  .ehs-chart-box h4{margin:0 0 8px}
+  .ehs-chart-box canvas{max-height:230px}
+  .ehs-toolbar{
+    display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;background:var(--panel);
+    border:1px solid var(--border);border-radius:14px;padding:12px 14px;margin-bottom:16px;
+  }
+  .ehs-toolbar .ehs-toolbar-field{display:flex;flex-direction:column;gap:3px}
+  .ehs-toolbar label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.3px}
+  .ehs-toolbar select,.ehs-toolbar input{padding:8px 10px;border-radius:8px;border:1px solid var(--border);font-family:inherit;font-size:13px}
+  .ehs-toolbar .ehs-toolbar-clear{margin-left:auto}
+  .ehs-forms-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
+  .ehs-form-card{
+    text-align:left;padding:16px;border-radius:14px;background:var(--panel);border:1px solid var(--border);
+    cursor:pointer;transition:transform .15s ease,box-shadow .15s ease;display:flex;flex-direction:column;gap:6px;
+    position:relative;
+  }
+  .ehs-form-card:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(11,125,191,.14)}
+  .ehs-form-card .ehs-card-icon{
+    width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;
+    background:linear-gradient(135deg,var(--accent-3),var(--accent-2));color:#fff;
+  }
+  .ehs-form-card .ehs-card-title{font-weight:700;font-size:13.5px;line-height:1.35}
+  .ehs-form-card .ehs-card-meta{font-size:11px;color:var(--muted);font-weight:600}
+  .ehs-pending-badge{
+    position:absolute;top:10px;right:10px;background:var(--warning);color:#fff;font-size:9.5px;font-weight:800;
+    padding:3px 7px;border-radius:999px;letter-spacing:.3px;text-transform:uppercase;
+  }
+  .ehs-ok-badge{
+    position:absolute;top:10px;right:10px;background:var(--accent);color:#fff;font-size:9.5px;font-weight:800;
+    padding:3px 7px;border-radius:999px;letter-spacing:.3px;text-transform:uppercase;
+  }
+  .ehs-meta-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;margin-bottom:12px}
+  .ehs-meta-grid label{display:block;font-size:11px;font-weight:700;color:var(--muted);margin-bottom:3px;text-transform:none}
+  .ehs-meta-grid .ehs-required-field label::after{content:' *';color:var(--danger)}
+  #ehsFormTable td, #ehsFormTable th{white-space:nowrap}
+  .ehs-inspect-table td:first-child{white-space:normal;min-width:220px}
+  body.dark-theme .ehs-chart-box,body.dark-theme .ehs-toolbar{background:var(--bg-dark-2);border-color:#24384a}
   .eval-trainee-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 4px;border-bottom:1px solid var(--border)}
   .eval-trainee-row:last-child{border-bottom:none}
   .eval-trainee-row .eval-trainee-name{font-weight:600;font-size:13.5px}
@@ -702,31 +787,6 @@
     #desktopNav{display:none !important}
     #mobileMenuBtn{display:flex !important}
   }
-
-  /* ---------- AI assistant ---------- */
-  #aiAssistantBtn{
-    position:fixed;bottom:25px;right:25px;width:60px;height:60px;
-    background:linear-gradient(135deg,var(--accent-3),var(--accent-2));
-    border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;
-    box-shadow:0 10px 28px rgba(0,0,0,.35);z-index:10000;transition:all .3s cubic-bezier(0.175,0.885,0.32,1.275);
-  }
-  #aiAssistantBtn:hover{transform:scale(1.1) rotate(5deg)}
-  #aiAssistantBox{
-    position:fixed;bottom:95px;right:25px;width:360px;height:500px;background:#fff;
-    border-radius:20px;box-shadow:var(--shadow-lg);display:none;flex-direction:column;overflow:hidden;
-    z-index:10000;border:1px solid rgba(0,0,0,.08);animation:modalIn .2s ease both;
-  }
-  @media (max-width:480px){ #aiAssistantBox{width:92vw;right:4vw;height:70vh;bottom:90px} }
-  #aiHeader{background:linear-gradient(100deg,var(--accent-3),var(--accent-2));color:white;padding:16px;font-weight:800;display:flex;justify-content:space-between;align-items:center}
-  #aiMessages{flex:1;padding:15px;overflow-y:auto;background:#f0f4f7;display:flex;flex-direction:column;gap:12px}
-  .ai-msg{max-width:85%;padding:10px 14px;border-radius:15px;font-size:13.5px;line-height:1.5}
-  .ai-user{align-self:flex-end;background:var(--accent-3);color:white;border-bottom-right-radius:3px}
-  .ai-bot{align-self:flex-start;background:white;color:#333;border-bottom-left-radius:3px;box-shadow:0 2px 6px rgba(0,0,0,.08)}
-  .typing{font-style:italic;color:#888;font-size:12px;display:none;margin-bottom:10px}
-  #aiInputArea{padding:12px;border-top:1px solid #eee;display:flex;gap:8px;background:white}
-  #aiInput{flex:1;border:1.5px solid #ddd;border-radius:25px;padding:10px 15px;outline:none;transition:border .2s}
-  #aiInput:focus{border-color:var(--accent-2)}
-  #aiInputArea button{background:var(--accent-2);color:white;border:none;width:40px;height:40px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0}
 
   /* ---------- Complaint / Suggestion Box (hover widget, all pages) ---------- */
   #complaintBtn{
@@ -1195,7 +1255,7 @@
             <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
                 <div>
                   <h3 style="margin:0">Complaint / Suggestion Register</h3>
-                  <p class="small" style="margin:4px 0 0;color:var(--muted);text-transform:none;font-weight:500;">Visible to every user. Status, target date and responsible person/department can only be updated by Admin, EHS Manager, Plant Head or Department Head. Only Admin can email or delete an entry.</p>
+                  <p class="small" style="margin:4px 0 0;color:var(--muted);text-transform:none;font-weight:500;">Visible to every user. Status, target date and responsible person/department can only be updated by Admin, Safety Manager, Plant Head or Department Head. Only Admin can email or delete an entry.</p>
                 </div>
                 <div style="display:flex; gap:8px; flex-wrap:wrap;">
                     <button class="primary btn-sm" onclick="toggleComplaintBox()">📢 New Entry</button>
@@ -1216,7 +1276,7 @@
                   <select id="newRole" required>
                     <option value="">Select Role</option>
                     <option value="admin">👑 Super Admin</option>
-                    <option value="ehsmanager">⛑️ EHS Manager</option>
+                    <option value="ehsmanager">⛑️ Safety Manager</option>
                     <option value="ehsofficer">👷 EHS Officer</option>
                     <option value="ert">🛡️ ERT Member</option>
                     <option value="planthead">💼 Plant Head</option>
@@ -1375,6 +1435,7 @@
           <div class="admin-tab-btn" id="tabTrainingVisitor" onclick="switchTrainingTab('visitor')">🪪 Visitor Safety Induction</div>
           <div class="admin-tab-btn" id="tabTrainingMaterials" onclick="switchTrainingTab('materials')">📚 Training Materials</div>
           <div class="admin-tab-btn" id="tabTrainingEval" onclick="switchTrainingTab('evaluation')">📝 Training Evaluation</div>
+          <div class="admin-tab-btn" id="tabTrainingEHS" onclick="switchTrainingTab('ehsreport')">🧾 EHS Monthly Report</div>
         </div>
 
         <div id="trainingMainContainer">
@@ -1455,7 +1516,7 @@
         <div id="trainingMaterialsContainer" style="display:none">
           <div class="training-add-only" style="background:#f9f9f9;padding:15px;border-radius:8px;margin-bottom:18px;border-left:4px solid var(--accent);">
             <h4>Upload Training Material (PDF)</h4>
-            <p class="small" style="text-transform:none;font-weight:500;margin:-4px 0 8px;">Visible to everyone once uploaded. Admin, EHS Manager, EHS Officer, Plant Head and Department Head can upload.</p>
+            <p class="small" style="text-transform:none;font-weight:500;margin:-4px 0 8px;">Visible to everyone once uploaded. Admin, Safety Manager, EHS Officer, Plant Head and Department Head can upload.</p>
             <form onsubmit="uploadTrainingMaterial(event)">
               <div class="two-cols"><input id="tmTitle" placeholder="Material Title (e.g. Fire Safety Handbook)" required><input id="tmFile" type="file" accept="application/pdf" required></div>
               <button type="submit" class="primary" style="margin-top:8px">Upload</button>
@@ -1501,6 +1562,59 @@
           </div>
           <div style="overflow-x:auto;margin-bottom:20px">
             <table id="evalTable"><thead><tr><th>Trainee</th><th>Module / Topic</th><th>Location</th><th>Training Date</th><th>Evaluation Date</th><th>Trainer</th><th>Score</th><th>Status</th><th>Retraining</th><th class="admin-only">Action</th></tr></thead><tbody></tbody></table>
+          </div>
+        </div>
+
+        <div id="trainingEHSContainer" style="display:none">
+          <p class="small" style="text-transform:none;font-weight:500;color:var(--muted);margin:-4px 0 14px">
+            Statutory and monthly EHS records in one place. Super Admin, Safety Manager, EHS Officer, Department Head and Supervisor can add entries — everything else can view, filter and export. Every save is instantly available as a PDF, and each form's saved entries can be filtered by month and location below.
+          </p>
+
+          <div class="ehs-dashboard" id="ehsDashboardStats"></div>
+
+          <div class="ehs-charts-row">
+            <div class="ehs-chart-box">
+              <h4>📈 Entries by Location</h4>
+              <div style="position:relative;height:230px">
+                <canvas id="ehsChartLocation"></canvas>
+              </div>
+            </div>
+            <div class="ehs-chart-box">
+              <h4>🥧 Entries by Form</h4>
+              <div style="position:relative;height:230px">
+                <canvas id="ehsChartForms"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <div class="ehs-toolbar">
+            <div class="ehs-toolbar-field">
+              <label>Filter by Month</label>
+              <select id="ehsGlobalMonthFilter" onchange="setEHSFilter('month', this.value)"></select>
+            </div>
+            <div class="ehs-toolbar-field">
+              <label>Filter by Location</label>
+              <select id="ehsGlobalLocationFilter" onchange="setEHSFilter('location', this.value)"></select>
+            </div>
+            <button type="button" class="ghost-dark btn-sm ehs-toolbar-clear" onclick="clearEHSFilters()">✕ Clear Filters</button>
+          </div>
+
+          <div id="ehsFormsGrid" class="ehs-forms-grid"></div>
+
+          <div id="ehsFormDetail" style="display:none">
+            <button type="button" class="ghost-dark btn-sm" style="margin-bottom:12px" onclick="closeEHSForm()">← Back to All Reports</button>
+            <div class="ehsreport-add-only" id="ehsFormAddCard" style="background:#f9f9f9;padding:15px;border-radius:8px;margin-bottom:16px;border-left:4px solid var(--accent)"></div>
+            <p class="small ehsreport-view-only-note" style="text-transform:none;font-weight:600;color:var(--muted);background:#f9f9f9;padding:10px 14px;border-radius:8px;margin:0 0 16px;border-left:4px solid var(--muted)">
+              🔒 View-only — only Super Admin, Safety Manager, EHS Officer, Department Head and Supervisor can add entries to this report.
+            </p>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;flex-wrap:wrap;gap:8px">
+              <h3 style="margin:0" id="ehsFormRecordsTitle">Saved Entries</h3>
+              <div>
+                <button class="ghost-dark btn-sm" id="ehsFormExportBtn">⬇ Excel</button>
+                <button class="ghost-dark btn-sm" id="ehsFormExportPdfBtn">📄 Export PDF</button>
+              </div>
+            </div>
+            <div style="overflow-x:auto"><table id="ehsFormTable"></table></div>
           </div>
         </div>
       </div>
@@ -1909,27 +2023,6 @@
 
   <button id="backToTop" onclick="window.scrollTo({top:0,behavior:'smooth'})" title="Back to top" aria-label="Scroll to top">↑</button>
 
-  <div id="aiAssistantBtn" onclick="toggleAI()">
-  <svg width="30" height="30" viewBox="0 0 24 24" fill="white">
-    <path d="M12 2C6.477 2 2 6.477 2 12c0 1.821.487 3.53 1.338 5L2 22l5-1.338c1.47.851 3.179 1.338 5 1.338 5.523 0 10-4.477 10-10S17.523 2 12 2z"/>
-  </svg>
-</div>
-
-<div id="aiAssistantBox">
-  <div id="aiHeader">
-    <span>TPL Safety Bot</span>
-    <span style="cursor:pointer" onclick="toggleAI()">×</span>
-  </div>
-  <div id="aiMessages">
-    <div class="ai-msg ai-bot">Hi! I'm the HSE Portal assistant. Ask me things like "what's overdue", "how many open PTWs", "near miss", or "PPE stock" — I'll check the live data and answer.</div>
-    <div id="aiTyping" class="typing">Bot is typing...</div>
-  </div>
-  <div id="aiInputArea">
-    <input type="text" id="aiInput" placeholder="Type a message..." onkeypress="if(event.key==='Enter') sendAIMessage()">
-    <button onclick="sendAIMessage()">➤</button>
-  </div>
-</div>
-
   <div id="complaintBtn" onclick="toggleComplaintBox()" title="Complaint / Suggestion Box">
     <span style="font-size:27px;line-height:1">📢</span>
   </div>
@@ -2259,7 +2352,7 @@
     // before this change keep working without a data migration.
     const ROLE_META = {
       admin:         { label: 'Super Admin' },
-      ehsmanager:    { label: 'EHS Manager' },
+      ehsmanager:    { label: 'Safety Manager' }, // AKA "EHS Manager" — full system-wide permissions, same tier as Super Admin
       ehsofficer:    { label: 'EHS Officer' },
       ert:           { label: 'ERT Member' },
       planthead:     { label: 'Plant Head' },
@@ -2324,6 +2417,15 @@
       return Array.isArray(mail) && mail.includes(mod);
     }
     function canChangeOwnPassword(user) { return !!getRolePerms(user).changePassword; }
+    // EHS Monthly Report entry permission — deliberately its own list rather
+    // than riding on the generic addScope/'training' gate: Super Admin and
+    // Safety Manager (EHS Manager) have full rights everywhere as usual, and
+    // EHS Officer, Department Head and Supervisor may specifically add/submit
+    // EHS Monthly Report entries. Every other role (Plant Head, ERT, Store,
+    // Security, Auditor, Top Management, Employee) is view-only here even if
+    // they have broader add-access elsewhere in the portal.
+    const EHS_REPORT_ADD_ROLES = ['admin', 'ehsmanager', 'ehsofficer', 'depthead', 'supervisor'];
+    function canAddEHSReport(user) { return !!(user && EHS_REPORT_ADD_ROLES.includes(user.role)); }
     // Restricted-field editors: only these roles may change the PTW "Status"/
     // "Actions" (approve/reject) and the Complaints/Suggestions "Status",
     // "Target Date" and "Responsible Person/Dept." fields.
@@ -2392,6 +2494,7 @@
         document.body.classList.toggle('is-training-adder', canAddModule(currentUser, 'training'));
         document.body.classList.toggle('is-ppe-adder', canAddModule(currentUser, 'ppe'));
         document.body.classList.toggle('is-visitor-adder', canAddModule(currentUser, 'visitor'));
+        document.body.classList.toggle('is-ehsreport-adder', canAddEHSReport(currentUser));
         // Mail permissions (general vs. visitor-pass-only for Security)
         document.body.classList.toggle('is-mail-general', canMailModule(currentUser, 'general'));
         document.body.classList.toggle('is-mail-visitor', canMailModule(currentUser, 'visitor'));
@@ -3248,7 +3351,7 @@
       }).join('') || `<tr><td colspan="9" style="text-align:center;color:grey">No complaints or suggestions submitted yet.</td></tr>`;
     }
     function updateComplaintField(id, field, value) {
-      if (!canEditStatusFields(currentUser)) { alert('Only Admin, EHS Manager, Plant Head or Department Head can update this field.'); return; }
+      if (!canEditStatusFields(currentUser)) { alert('Only Admin, Safety Manager, Plant Head or Department Head can update this field.'); return; }
       const list = LocalDB.get('complaints', []);
       const item = list.find(x => x.id === id);
       if (!item) return;
@@ -3749,15 +3852,691 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
     }
 
     function switchTrainingTab(t) {
-      const tabs = ['main','visitor','materials','evaluation'];
-      const idMap = { main:'tabTrainingMain', visitor:'tabTrainingVisitor', materials:'tabTrainingMaterials', evaluation:'tabTrainingEval' };
-      const containerMap = { main:'trainingMainContainer', visitor:'trainingVisitorContainer', materials:'trainingMaterialsContainer', evaluation:'trainingEvalContainer' };
+      const tabs = ['main','visitor','materials','evaluation','ehsreport'];
+      const idMap = { main:'tabTrainingMain', visitor:'tabTrainingVisitor', materials:'tabTrainingMaterials', evaluation:'tabTrainingEval', ehsreport:'tabTrainingEHS' };
+      const containerMap = { main:'trainingMainContainer', visitor:'trainingVisitorContainer', materials:'trainingMaterialsContainer', evaluation:'trainingEvalContainer', ehsreport:'trainingEHSContainer' };
       tabs.forEach(id => {
         document.getElementById(idMap[id]).className = t === id ? 'admin-tab-btn active' : 'admin-tab-btn';
         document.getElementById(containerMap[id]).style.display = t === id ? 'block' : 'none';
       });
       if (t === 'materials') renderTrainingMaterials();
       if (t === 'evaluation') { populateEvalBatchSelect(); renderTrainingEvals(); }
+      if (t === 'ehsreport') renderEHSFormsGrid();
+    }
+
+    // =========================================================================
+    // EHS Monthly Report — statutory/monthly forms requested alongside Safety
+    // Training. Three reusable "styles" cover all 13 forms instead of one-off
+    // code per form:
+    //   register   — open-ended logbook, add a row any time (First Aid,
+    //                Chemical Register, E-Waste, LUX/Sound monitoring, ...)
+    //   inspection — a fixed set of Yes/No/NA questions, one submission per
+    //                visit (Fire Pump, Quarterly Fire System, 5S, Fire Safety)
+    //   matrix     — a few header fields + a small FIXED table of rows/columns,
+    //                one submission per month (Groundwater, RO Water Plant)
+    // Every submission is stored under LocalDB key `ehsReport_<id>`.
+    const EHS_REPORT_FORMS = [
+      { id:'firePump', icon:'🔥', title:'Fire Pump Monthly Inspection Checklist', docNo:'ESF-EHS-06', style:'inspection',
+        meta:[
+          {key:'manufacturer',label:'Manufacturer'}, {key:'pumpNo',label:'Pump No'},
+          {key:'month',label:'Month'}, {key:'location',label:'Location'},
+          {key:'date',label:'Date',inputType:'date'}, {key:'inspector',label:'Inspector'}
+        ],
+        questions:[
+          'Heat in the pump room is bearable',
+          'Intake air louvres in the pump room appear operational',
+          'Pump suction, discharge, and bypass valves are open',
+          'No piping or hoses leak',
+          'Check pump room House Keeping',
+          'Check all butterfly valve in open condition',
+          'Check fire panel Jocky pump in auto mode',
+          'Suction line pressure is normal',
+          'System line pressure is normal',
+          'The suction reservoir is full',
+          'Controller pilot light (power on) is illuminated',
+          'Transfer switch normal power light is illuminated',
+          'Oil level in the vertical motor sight glass is normal',
+          'Check lube oil for operation',
+          'Any abnormal sound generated during pump running condition'
+        ]
+      },
+      { id:'firstAid', icon:'🩹', title:'First Aid Register', docNo:'ESF-EHS-01', style:'register',
+        columns:[
+          {key:'date',label:'Date',inputType:'date'}, {key:'name',label:'Name Of Injured Person'},
+          {key:'location',label:'Location'}, {key:'injuryType',label:'Type of Injury'},
+          {key:'bodyPart',label:'Body Part Affected'}, {key:'details',label:'Details of Incident'},
+          {key:'action',label:'Immediate Action'}, {key:'doctor',label:'Doctor/Clinic Name'},
+          {key:'responsibility',label:'Responsibility'}
+        ]
+      },
+      { id:'monthlyData', icon:'📊', title:'Monthly Consumption Data Tracker', docNo:'', style:'register',
+        columns:[
+          {key:'description',label:'Description'}, {key:'uom',label:'UOM'},
+          {key:'month',label:'Month (e.g. Apr26)'}, {key:'quantity',label:'Quantity',inputType:'number'}
+        ]
+      },
+      { id:'groundwater', icon:'💧', title:'Monthly Groundwater Consumption Record', docNo:'ESF-EHS-10/01', style:'matrix',
+        meta:[
+          {key:'factoryUnit',label:'Factory / Unit Name'}, {key:'reportingMonth',label:'Reporting Month & Year'},
+          {key:'rateWithdrawal',label:'Rate of Withdrawal (m3/hr)'}, {key:'meterId',label:'Meter Identification No'},
+          {key:'lastCalibration',label:'Last Calibration Date',inputType:'date'}, {key:'nextCalibration',label:'Next Calibration Date',inputType:'date'},
+          {key:'extractionPermission',label:'Extraction Permission (Yes/No)'}, {key:'rainwaterHarvesting',label:'Rainwater Harvesting Available (Yes/No)'},
+          {key:'meterCondition',label:'Water Meter Condition'}, {key:'incidents',label:'Abnormal Consumption / Incidents (if any)',inputType:'textarea'}
+        ],
+        rowLabel:'Description', valueLabel:'Quantity (KL)',
+        rows:['Opening Meter Reading','Closing Meter Reading','Total Groundwater Extracted (Month)','Average Daily Consumption','No. of Operating Days']
+      },
+      { id:'roWeekly', icon:'🚰', title:'Weekly Checklist of RO Water Plant', docNo:'QSF-MAINT-38/02', style:'matrix',
+        meta:[{key:'month',label:'Month'}, {key:'year',label:'Year'}, {key:'machineNo',label:'Machine No./Id'}],
+        rowLabel:'Description',
+        matrixColumns:[{key:'w1',label:'1st Week'},{key:'w2',label:'2nd Week'},{key:'w3',label:'3rd Week'},{key:'w4',label:'4th Week'},{key:'w5',label:'5th Week'}],
+        rows:['Check all Pressure Gauge','Check TDS Value','Antiscalant Dosing','Sodium Bicarbonate Dosing','Sodium Chloride Dosing']
+      },
+      { id:'fireSystemQtr', icon:'🧯', title:'Quarterly Fire System Inspection Checklist', docNo:'ESF-EHS-12/01', style:'inspection',
+        meta:[{key:'date',label:'Inspection Date',inputType:'date'}, {key:'unit',label:'Unit'}, {key:'location',label:'Location'}],
+        questions:[
+          'Are evacuation signs/diagrams displayed and fully visible?',
+          'Are evacuation routes clear of obstructions?',
+          'Fire extinguisher condition is good, and all extinguishers are in date?',
+          'All type of detectors working properly?',
+          'The fire alarm panel is operating with no faults indicated',
+          'Gas cylinder correctly stored and secured?',
+          'Is there a written fire and evacuation plan for the factory?',
+          'Are fire hydrants in good condition?',
+          'Hydrant box key available?',
+          'General paintwork in good condition?',
+          'Is the front area of the fire hydrants covered/blocked?',
+          'No leaks?',
+          'No erosion on the hose?',
+          'Spray nozzle in good working condition?',
+          'Flammables are secured when not in use',
+          'Hose can take the pressure?',
+          'All pumps (Main, Sprinkler, DG, Booster) working properly?',
+          'Manual call point, control panel, audible and visual devices functioning?',
+          'Fire extinguisher condition is good and all extinguishers are updated?'
+        ]
+      },
+      { id:'luxQtr', icon:'💡', title:'Quarterly LUX Level Monitoring Record', docNo:'', style:'register',
+        columns:[
+          {key:'area',label:'Area of Sampling'},
+          {key:'s1',label:'Sample 1',inputType:'number'}, {key:'s2',label:'Sample 2',inputType:'number'},
+          {key:'s3',label:'Sample 3',inputType:'number'}, {key:'s4',label:'Sample 4',inputType:'number'},
+          {key:'avg',label:'Average (LUX)',inputType:'number'}, {key:'limit',label:'Permissible Limit (LUX)',inputType:'number'},
+          {key:'remarks',label:'Remarks'}
+        ]
+      },
+      { id:'soundQtr', icon:'🔊', title:'Quarterly Sound (dB) Level Monitoring Record', docNo:'', style:'register',
+        columns:[
+          {key:'area',label:'Area of Sampling'},
+          {key:'s1',label:'Sample 1',inputType:'number'}, {key:'s2',label:'Sample 2',inputType:'number'},
+          {key:'s3',label:'Sample 3',inputType:'number'}, {key:'s4',label:'Sample 4',inputType:'number'},
+          {key:'avg',label:'Average (dB)',inputType:'number'}, {key:'limit',label:'Permissible Limit (dB)',inputType:'number'},
+          {key:'remarks',label:'Remarks'}
+        ]
+      },
+      { id:'fiveSAudit', icon:'🧹', title:'Quarterly 5S Audit', docNo:'', style:'inspection',
+        meta:[{key:'date',label:'Audit Date',inputType:'date'}, {key:'area',label:'Area / Department'}, {key:'auditor',label:'Auditor'}],
+        questions:[
+          'Sort — only necessary items are present at the workstation',
+          'Set in Order — items have a designated, labeled place and are easy to locate',
+          'Shine — work area, equipment and floors are clean',
+          'Standardize — visual controls and standard procedures are followed',
+          'Sustain — 5S practices are being maintained consistently',
+          'Aisles and walkways are clearly marked and unobstructed',
+          'Tools and equipment are returned to their place after use',
+          'No unnecessary/obsolete material or scrap lying around',
+          'Notice boards / displays are current and neatly maintained',
+          'Overall housekeeping rating is satisfactory'
+        ]
+      },
+      { id:'fireSafetyAuditQtr', icon:'🚒', title:'Quarterly Fire Safety Audit', docNo:'', style:'inspection',
+        meta:[{key:'date',label:'Audit Date',inputType:'date'}, {key:'factory',label:'Factory/Unit'}, {key:'auditor',label:'Auditor'}],
+        questions:[
+          'Fire risk assessment is current and available',
+          'Fire extinguishers are adequate in number and correctly located',
+          'Fire hydrant system is tested and operational',
+          'Fire alarm and detection system is functional, no faults indicated',
+          'Emergency evacuation plan and assembly point are displayed',
+          'Evacuation routes and exits are unobstructed',
+          'Fire drills conducted as per schedule with records maintained',
+          'Electrical installations show no fire hazard (exposed wiring, overloading)',
+          'Flammable/combustible materials stored safely',
+          'Fire wardens/marshals are trained and identified',
+          'Statutory fire NOC / license is valid',
+          "Previous audit's corrective actions have been closed"
+        ]
+      },
+      { id:'chemicalReg', icon:'🧪', title:'Chemical Register', docNo:'ESF-EHS-07', style:'register',
+        columns:[
+          {key:'chemName',label:'Name of Chemical'}, {key:'make',label:'Make'},
+          {key:'productCode',label:'Product Code'}, {key:'lotNo',label:'Lot No'},
+          {key:'msds',label:'MSDS Available (Y/N)'}, {key:'expiry',label:'Expiry Date',inputType:'date'},
+          {key:'qtyReceived',label:'Qty Received'}, {key:'qtyUsed',label:'Qty Used'}, {key:'qtyRemaining',label:'Qty Remaining'},
+          {key:'storage',label:'Storage Location'}, {key:'usedBy',label:'Used By'}, {key:'remarks',label:'Remarks'}
+        ]
+      },
+      { id:'ewasteReg', icon:'♻️', title:'E-Waste Register', docNo:'ESF-EHS-13', style:'register',
+        columns:[
+          {key:'date',label:'Date',inputType:'date'}, {key:'dept',label:'Department'},
+          {key:'wasteType',label:'Type of E-Waste'}, {key:'qty',label:'Quantity (Nos/Kg)'},
+          {key:'storage',label:'Storage Location'}, {key:'condition',label:'Condition (Working/Non-working)'},
+          {key:'disposalDate',label:'Disposal Date',inputType:'date'}, {key:'vendor',label:'Disposed Through (Vendor)'},
+          {key:'authNo',label:'Vendor Authorization No.'}, {key:'manifestNo',label:'Manifest/Document No.'},
+          {key:'certReceived',label:'Disposal Certificate Received (Y/N)'}, {key:'remarks',label:'Remarks'},
+          {key:'checkedBy',label:'Checked By (EHS)'}
+        ]
+      },
+      { id:'soilMixing', icon:'🌱', title:'Media Soil Mixing Record', docNo:'EHS-LAB-01', style:'register',
+        columns:[
+          {key:'date',label:'Date',inputType:'date'}, {key:'qty',label:'Quantity (In grams)',inputType:'number'},
+          {key:'disposalLoc',label:'Disposal Location'}, {key:'mixedBy',label:'Soil mixing by (Name)'}, {key:'signature',label:'Signature'}
+        ]
+      }
+    ];
+
+    let activeEHSFormId = null;
+    function ehsFormCfg(id) { return EHS_REPORT_FORMS.find(f => f.id === id); }
+    function ehsRecords(id) { return LocalDB.get('ehsReport_' + id, []); }
+    function saveEhsRecords(id, list) { LocalDB.set('ehsReport_' + id, list); }
+
+    // Shared Month + Location filter state for the whole EHS Monthly Report
+    // section — drives the dashboard stat cards/charts, the forms grid
+    // (including the "pending this month" badge) and, once a form is open,
+    // its own saved-entries table. Every record (regardless of register /
+    // inspection / matrix style) always carries top-level `location` and
+    // `month` fields (captured via the two common fields added to every
+    // add-form below) so filtering works identically across all 13 forms.
+    let ehsFilterState = { month: '', location: '' };
+    function currentMonthValue() { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); }
+    function monthValueLabel(v) {
+      if (!v) return '';
+      const [y, m] = v.split('-');
+      const names = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      const mi = parseInt(m, 10) - 1;
+      return (names[mi] || m) + ' ' + y;
+    }
+    function populateEHSFilterSelects() {
+      const monthSel = document.getElementById('ehsGlobalMonthFilter');
+      const locSel = document.getElementById('ehsGlobalLocationFilter');
+      if (monthSel && !monthSel.dataset.filled) {
+        // Last 12 months (current month first) plus "All Months".
+        const opts = ['<option value="">All Months</option>'];
+        const d = new Date();
+        for (let i = 0; i < 12; i++) {
+          const y = d.getFullYear(), m = d.getMonth() + 1;
+          const v = y + '-' + String(m).padStart(2, '0');
+          opts.push(`<option value="${v}">${escapeHtml(monthValueLabel(v))}</option>`);
+          d.setMonth(d.getMonth() - 1);
+        }
+        monthSel.innerHTML = opts.join('');
+        monthSel.dataset.filled = '1';
+      }
+      if (locSel && !locSel.dataset.filled) {
+        locSel.innerHTML = factoryOptionsHtml('');
+        locSel.dataset.filled = '1';
+      }
+      if (monthSel) monthSel.value = ehsFilterState.month;
+      if (locSel) locSel.value = ehsFilterState.location;
+    }
+    function setEHSFilter(key, value) {
+      ehsFilterState[key] = value;
+      renderEHSFormsGrid();
+      if (activeEHSFormId) renderEHSFormTable(ehsFormCfg(activeEHSFormId));
+    }
+    function clearEHSFilters() {
+      ehsFilterState = { month: '', location: '' };
+      populateEHSFilterSelects();
+      renderEHSFormsGrid();
+      if (activeEHSFormId) renderEHSFormTable(ehsFormCfg(activeEHSFormId));
+    }
+    // Applies the shared Month/Location filter to a form's raw records.
+    function ehsFilteredRecords(id) {
+      const list = ehsRecords(id);
+      return list.filter(r =>
+        (!ehsFilterState.month || r.month === ehsFilterState.month) &&
+        (!ehsFilterState.location || r.location === ehsFilterState.location)
+      );
+    }
+
+    let ehsLocChart = null, ehsFormsChart = null;
+    function renderEHSDashboard() {
+      const statsEl = document.getElementById('ehsDashboardStats');
+      if (!statsEl) return;
+      const filteredByForm = EHS_REPORT_FORMS.map(f => ({ f, list: ehsFilteredRecords(f.id) }));
+      const totalEntries = filteredByForm.reduce((s, x) => s + x.list.length, 0);
+      const thisMonth = currentMonthValue();
+      // "Entries This Month" now respects the active Location filter (if any),
+      // matching the Total Entries card above it — previously it always summed
+      // every location's entries for the current month regardless of the
+      // location filter, which made the two cards disagree as soon as a
+      // location was selected.
+      const entriesThisMonth = EHS_REPORT_FORMS.reduce((s, f) => s + ehsRecords(f.id).filter(r => r.month === thisMonth && (!ehsFilterState.location || r.location === ehsFilterState.location)).length, 0);
+      // "Pending This Month" = number of (form × unit) combinations still
+      // unfiled for the current calendar month. Previously this only checked
+      // whether ANY unit had filed a given form (`.some(...)`), so once each
+      // of the 13 forms had at least one submission from *any* of the 4
+      // units, the count silently dropped to 0 — even though most units
+      // still hadn't filed most forms. It now requires every unit (or just
+      // the selected one, if the Location filter is active) to have filed
+      // each form before it's no longer counted as pending.
+      const pendingLocations = ehsFilterState.location ? [ehsFilterState.location] : FACTORY_LIST;
+      let pendingForms = 0;
+      EHS_REPORT_FORMS.forEach(f => {
+        const filedLocsThisMonth = new Set(ehsRecords(f.id).filter(r => r.month === thisMonth).map(r => r.location));
+        pendingForms += pendingLocations.filter(loc => !filedLocsThisMonth.has(loc)).length;
+      });
+
+      statsEl.innerHTML = `
+        <div class="ehs-stat-card ehs-stat-total"><span class="ehs-stat-icon">🧾</span><span class="ehs-stat-value">${EHS_REPORT_FORMS.length}</span><span class="ehs-stat-label">EHS Forms</span></div>
+        <div class="ehs-stat-card ehs-stat-entries"><span class="ehs-stat-icon">📥</span><span class="ehs-stat-value">${totalEntries}</span><span class="ehs-stat-label">${ehsFilterState.month || ehsFilterState.location ? 'Entries (Filtered)' : 'Total Entries'}</span></div>
+        <div class="ehs-stat-card ehs-stat-month"><span class="ehs-stat-icon">📅</span><span class="ehs-stat-value">${entriesThisMonth}</span><span class="ehs-stat-label">Entries This Month</span></div>
+        <div class="ehs-stat-card ehs-stat-pending"><span class="ehs-stat-icon">⏳</span><span class="ehs-stat-value">${pendingForms}</span><span class="ehs-stat-label">Pending This Month${ehsFilterState.location ? '' : ' (Forms × Units)'}</span></div>`;
+
+      // Entries by location (across ALL forms, respecting only the Month filter
+      // so the location breakdown itself stays meaningful).
+      const locCounts = {};
+      FACTORY_LIST.forEach(l => locCounts[l] = 0);
+      let locOther = 0;
+      EHS_REPORT_FORMS.forEach(f => {
+        ehsRecords(f.id).forEach(r => {
+          if (ehsFilterState.month && r.month !== ehsFilterState.month) return;
+          if (r.location && locCounts.hasOwnProperty(r.location)) locCounts[r.location]++;
+          else if (r.location) locOther++;
+        });
+      });
+      const locLabels = FACTORY_LIST.concat(locOther ? ['Other'] : []);
+      const locData = FACTORY_LIST.map(l => locCounts[l]).concat(locOther ? [locOther] : []);
+
+      // Entries by form (top 8 by count, respecting the full active filter).
+      const formCounts = filteredByForm.map(x => ({ label: x.f.title, count: x.list.length, icon: x.f.icon }))
+        .sort((a, b) => b.count - a.count).filter(x => x.count > 0).slice(0, 8);
+
+      if (typeof Chart === 'undefined') return;
+      const locCtx = document.getElementById('ehsChartLocation');
+      const formCtx = document.getElementById('ehsChartForms');
+      if (ehsLocChart) ehsLocChart.destroy();
+      if (ehsFormsChart) ehsFormsChart.destroy();
+      if (locCtx) {
+        ehsLocChart = new Chart(locCtx, {
+          type: 'bar',
+          data: { labels: locLabels, datasets: [{ label: 'Entries', data: locData, backgroundColor: '#0b7dbf', borderRadius: 6 }] },
+          options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
+        });
+      }
+      if (formCtx) {
+        const palette = ['#12b76a','#0ec9b0','#0b7dbf','#7c5cff','#f5a524','#e5484d','#3aa0e8','#5233c7'];
+        ehsFormsChart = new Chart(formCtx, {
+          type: 'doughnut',
+          data: { labels: formCounts.map(x => x.label), datasets: [{ data: formCounts.map(x => x.count), backgroundColor: palette }] },
+          options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { boxWidth: 10, font: { size: 10 } } } } }
+        });
+      }
+    }
+
+    function renderEHSFormsGrid() {
+      const grid = document.getElementById('ehsFormsGrid');
+      if (!grid) return;
+      populateEHSFilterSelects();
+      renderEHSDashboard();
+      const thisMonth = currentMonthValue();
+      grid.innerHTML = EHS_REPORT_FORMS.map(f => {
+        const count = ehsFilteredRecords(f.id).length;
+        // "Filed" now means every relevant unit has filed this form this
+        // month (just the selected unit if a Location filter is active,
+        // otherwise all 4 units) — previously a single unit filing was
+        // enough to mark the form "Filed" for everyone, which is why forms
+        // could show as complete while 3 of 4 units still hadn't submitted.
+        const relevantLocs = ehsFilterState.location ? [ehsFilterState.location] : FACTORY_LIST;
+        const filedLocsThisMonth = new Set(ehsRecords(f.id).filter(r => r.month === thisMonth).map(r => r.location));
+        const filedCount = relevantLocs.filter(loc => filedLocsThisMonth.has(loc)).length;
+        const submittedThisMonth = filedCount === relevantLocs.length;
+        const badge = submittedThisMonth
+          ? '<span class="ehs-ok-badge">✓ Filed</span>'
+          : `<span class="ehs-pending-badge">Pending${relevantLocs.length > 1 ? ` (${filedCount}/${relevantLocs.length} units)` : ''}</span>`;
+        return `<div class="ehs-form-card" onclick="openEHSForm('${f.id}')">
+          ${badge}
+          <div class="ehs-card-icon">${f.icon}</div>
+          <div class="ehs-card-title">${escapeHtml(f.title)}</div>
+          <div class="ehs-card-meta">${f.docNo ? escapeHtml(f.docNo) + ' · ' : ''}${count} entr${count === 1 ? 'y' : 'ies'}${(ehsFilterState.month || ehsFilterState.location) ? ' (filtered)' : ' saved'}</div>
+        </div>`;
+      }).join('');
+    }
+
+    function openEHSForm(id) {
+      activeEHSFormId = id;
+      const cfg = ehsFormCfg(id);
+      if (!cfg) return;
+      document.getElementById('ehsFormsGrid').style.display = 'none';
+      document.getElementById('ehsFormDetail').style.display = 'block';
+      document.getElementById('ehsFormRecordsTitle').innerText = cfg.title + ' — Saved Entries';
+      document.getElementById('ehsFormExportBtn').setAttribute('onclick', `exportTableToExcel('ehsFormTable','${cfg.id}')`);
+      document.getElementById('ehsFormExportPdfBtn').setAttribute('onclick', `exportEHSTableToPDF('${cfg.id}')`);
+      if (cfg.style === 'register') renderEHSRegisterForm(cfg);
+      else if (cfg.style === 'inspection') renderEHSInspectionForm(cfg);
+      else if (cfg.style === 'matrix') renderEHSMatrixForm(cfg);
+    }
+    function closeEHSForm() {
+      activeEHSFormId = null;
+      document.getElementById('ehsFormDetail').style.display = 'none';
+      document.getElementById('ehsFormsGrid').style.display = 'grid';
+      renderEHSFormsGrid();
+    }
+    function renderEHSFormTable(cfg) {
+      if (cfg.style === 'register') renderEHSRegisterTable(cfg);
+      else if (cfg.style === 'inspection') renderEHSInspectionTable(cfg);
+      else if (cfg.style === 'matrix') renderEHSMatrixTable(cfg);
+    }
+    function deleteEHSRow(formId, rowId) {
+      if (!confirm('Delete this entry?')) return;
+      const list = ehsRecords(formId).filter(r => r.id !== rowId);
+      saveEhsRecords(formId, list);
+      renderEHSFormTable(ehsFormCfg(formId));
+      renderEHSFormsGrid();
+    }
+
+    // Markup for the two fields that every EHS Monthly Report submission
+    // captures regardless of its style — Location and Report Month — which
+    // is what makes the month/location filters and dashboard above work
+    // uniformly across all 13 very differently-shaped forms.
+    function ehsCommonFieldsHtml() {
+      return `<div class="ehs-required-field"><label>Location</label><select id="ehsCommonLocation">${factoryOptionsHtml('')}</select></div>
+        <div class="ehs-required-field"><label>Report Month</label><input id="ehsCommonMonth" type="month" value="${currentMonthValue()}"></div>`;
+    }
+    function readEhsCommonFields() {
+      const location = (document.getElementById('ehsCommonLocation') || {}).value || '';
+      const month = (document.getElementById('ehsCommonMonth') || {}).value || '';
+      return { location, month };
+    }
+    function validateEhsCommonFields(common) {
+      if (!common.location) { alert('Please select a Location before saving.'); return false; }
+      if (!common.month) { alert('Please select the Report Month before saving.'); return false; }
+      return true;
+    }
+
+    // ---- Style: register (open-ended logbook) ----
+    function renderEHSRegisterForm(cfg) {
+      document.getElementById('ehsFormAddCard').innerHTML = `
+        <h4>${escapeHtml(cfg.title)}${cfg.docNo ? ' <span style="font-weight:500;color:var(--muted);font-size:12px">(' + escapeHtml(cfg.docNo) + ')</span>' : ''}</h4>
+        <form id="ehsRegisterForm" onsubmit="addEHSRegisterRow(event)">
+          <div class="ehs-meta-grid">
+            ${ehsCommonFieldsHtml()}
+            ${cfg.columns.map(c => `<div><label>${escapeHtml(c.label)}</label><input id="ehsField_${c.key}" type="${c.inputType || 'text'}"></div>`).join('')}
+          </div>
+          <div style="text-align:right"><button type="submit" class="primary btn-sm">Add Entry (auto-saves as PDF)</button></div>
+        </form>`;
+      renderEHSFormTable(cfg);
+    }
+    function addEHSRegisterRow(ev) {
+      ev.preventDefault();
+      const cfg = ehsFormCfg(activeEHSFormId);
+      const common = readEhsCommonFields();
+      if (!validateEhsCommonFields(common)) return;
+      const row = { id: Date.now(), ts: new Date().toISOString(), location: common.location, month: common.month,
+        submittedBy: currentUser ? `${currentUser.username} (${getRoleLabel(currentUser.role)})` : '' };
+      let hasValue = false;
+      cfg.columns.forEach(c => {
+        const el = document.getElementById('ehsField_' + c.key);
+        row[c.key] = el ? el.value.trim() : '';
+        if (row[c.key]) hasValue = true;
+      });
+      if (!hasValue) { alert('Please fill in at least one field.'); return; }
+      const list = ehsRecords(cfg.id);
+      list.push(row);
+      saveEhsRecords(cfg.id, list);
+      cfg.columns.forEach(c => { const el = document.getElementById('ehsField_' + c.key); if (el) el.value = ''; });
+      renderEHSFormTable(cfg);
+      renderEHSFormsGrid();
+      generateEHSRecordPDF(cfg, row) && toast('Entry saved and downloaded as PDF.', 'success');
+    }
+    function renderEHSRegisterTable(cfg) {
+      const list = ehsFilteredRecords(cfg.id);
+      document.getElementById('ehsFormTable').innerHTML =
+        `<thead><tr><th>Location</th><th>Month</th>${cfg.columns.map(c => `<th>${escapeHtml(c.label)}</th>`).join('')}<th>Submitted By</th><th>PDF</th><th class="admin-only">Action</th></tr></thead>
+        <tbody>${list.map(r => `<tr><td>${escapeHtml(r.location || '')}</td><td>${escapeHtml(monthValueLabel(r.month))}</td>${cfg.columns.map(c => `<td>${escapeHtml(r[c.key] || '')}</td>`).join('')}
+          <td>${escapeHtml(r.submittedBy || '')}</td>
+          <td><button class="ghost-dark btn-sm" onclick="generateEHSRecordPDF(ehsFormCfg('${cfg.id}'), ${JSON.stringify(r).replace(/&/g, '&amp;').replace(/"/g, '&quot;')})">📄</button></td>
+          <td class="admin-only"><button class="btn-danger btn-sm" onclick="deleteEHSRow('${cfg.id}',${r.id})">✕</button></td></tr>`).join('') ||
+          `<tr><td colspan="${cfg.columns.length + 5}" style="text-align:center;color:grey;padding:14px">No entries match the current filter.</td></tr>`}</tbody>`;
+    }
+
+    // ---- Style: inspection (fixed Yes/No/NA questions, one row per visit) ----
+    function renderEHSInspectionForm(cfg) {
+      document.getElementById('ehsFormAddCard').innerHTML = `
+        <h4>${escapeHtml(cfg.title)}${cfg.docNo ? ' <span style="font-weight:500;color:var(--muted);font-size:12px">(' + escapeHtml(cfg.docNo) + ')</span>' : ''}</h4>
+        <div class="ehs-meta-grid">
+          ${ehsCommonFieldsHtml()}
+          ${cfg.meta.map(m => `<div><label>${escapeHtml(m.label)}</label><input id="ehsMeta_${m.key}" type="${m.inputType || 'text'}"></div>`).join('')}
+        </div>
+        <div style="overflow-x:auto">
+          <table class="ehs-inspect-table">
+            <thead><tr><th>Checking Requirement</th><th style="width:120px">Response</th><th>Remarks</th></tr></thead>
+            <tbody>
+              ${cfg.questions.map((q, i) => `<tr>
+                <td>${i + 1}. ${escapeHtml(q)}</td>
+                <td><select id="ehsResp_${i}"><option value="">—</option><option>YES</option><option>NO</option><option>NA</option></select></td>
+                <td><input id="ehsRemark_${i}" placeholder="Remarks"></td>
+              </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+        <div style="text-align:right;margin-top:10px"><button type="button" class="primary btn-sm" onclick="saveEHSInspection()">Save Inspection (auto-saves as PDF)</button></div>`;
+      renderEHSFormTable(cfg);
+    }
+    function saveEHSInspection() {
+      const cfg = ehsFormCfg(activeEHSFormId);
+      const common = readEhsCommonFields();
+      if (!validateEhsCommonFields(common)) return;
+      const meta = {};
+      cfg.meta.forEach(m => { const el = document.getElementById('ehsMeta_' + m.key); meta[m.key] = el ? el.value.trim() : ''; });
+      const answers = cfg.questions.map((q, i) => ({
+        q,
+        response: (document.getElementById('ehsResp_' + i) || {}).value || '',
+        remark: (document.getElementById('ehsRemark_' + i) || { value: '' }).value.trim()
+      }));
+      if (!answers.some(a => a.response)) { alert('Please record at least one response before saving.'); return; }
+      const record = { id: Date.now(), ts: new Date().toISOString(), location: common.location, month: common.month,
+        submittedBy: currentUser ? `${currentUser.username} (${getRoleLabel(currentUser.role)})` : '', meta, answers };
+      const list = ehsRecords(cfg.id);
+      list.push(record);
+      saveEhsRecords(cfg.id, list);
+      cfg.meta.forEach(m => { const el = document.getElementById('ehsMeta_' + m.key); if (el) el.value = ''; });
+      cfg.questions.forEach((q, i) => {
+        const r = document.getElementById('ehsResp_' + i); if (r) r.value = '';
+        const rm = document.getElementById('ehsRemark_' + i); if (rm) rm.value = '';
+      });
+      renderEHSFormTable(cfg);
+      renderEHSFormsGrid();
+      generateEHSRecordPDF(cfg, record) && toast('Inspection saved and downloaded as PDF.', 'success');
+    }
+    function renderEHSInspectionTable(cfg) {
+      const list = ehsFilteredRecords(cfg.id);
+      document.getElementById('ehsFormTable').innerHTML =
+        `<thead><tr><th>Location</th><th>Month</th>${cfg.meta.map(m => `<th>${escapeHtml(m.label)}</th>`).join('')}<th>NO count</th><th>Submitted By</th><th>PDF</th><th class="admin-only">Action</th></tr></thead>
+        <tbody>${list.map(r => {
+          const noCount = r.answers.filter(a => a.response === 'NO').length;
+          return `<tr><td>${escapeHtml(r.location || '')}</td><td>${escapeHtml(monthValueLabel(r.month))}</td>${cfg.meta.map(m => `<td>${escapeHtml(r.meta[m.key] || '')}</td>`).join('')}
+            <td>${noCount ? `<b style="color:#c0392b">${noCount}</b>` : '0'}</td>
+            <td>${escapeHtml(r.submittedBy || '')}</td>
+            <td><button class="ghost-dark btn-sm" onclick='generateEHSRecordPDF(ehsFormCfg("${cfg.id}"), ${JSON.stringify(r).replace(/&/g, "&amp;").replace(/'/g, "&#39;")})'>📄</button></td>
+            <td class="admin-only"><button class="btn-danger btn-sm" onclick="deleteEHSRow('${cfg.id}',${r.id})">✕</button></td></tr>`;
+        }).join('') || `<tr><td colspan="${cfg.meta.length + 6}" style="text-align:center;color:grey;padding:14px">No inspections match the current filter.</td></tr>`}</tbody>`;
+    }
+
+    // ---- Style: matrix (meta + a small fixed row/column grid, one per month) ----
+    function renderEHSMatrixForm(cfg) {
+      const cols = cfg.matrixColumns || [{ key: 'value', label: cfg.valueLabel || 'Value' }];
+      document.getElementById('ehsFormAddCard').innerHTML = `
+        <h4>${escapeHtml(cfg.title)}${cfg.docNo ? ' <span style="font-weight:500;color:var(--muted);font-size:12px">(' + escapeHtml(cfg.docNo) + ')</span>' : ''}</h4>
+        <div class="ehs-meta-grid">
+          ${ehsCommonFieldsHtml()}
+          ${cfg.meta.map(m => m.inputType === 'textarea'
+            ? `<div style="grid-column:1/-1"><label>${escapeHtml(m.label)}</label><textarea id="ehsMeta_${m.key}" style="min-height:50px"></textarea></div>`
+            : `<div><label>${escapeHtml(m.label)}</label><input id="ehsMeta_${m.key}" type="${m.inputType || 'text'}"></div>`
+          ).join('')}
+        </div>
+        <div style="overflow-x:auto">
+          <table class="ehs-inspect-table">
+            <thead><tr><th>${escapeHtml(cfg.rowLabel)}</th>${cols.map(c => `<th>${escapeHtml(c.label)}</th>`).join('')}</tr></thead>
+            <tbody>${cfg.rows.map((row, i) => `<tr><td>${escapeHtml(row)}</td>${cols.map(c => `<td><input id="ehsMx_${i}_${c.key}"></td>`).join('')}</tr>`).join('')}</tbody>
+          </table>
+        </div>
+        <div style="text-align:right;margin-top:10px"><button type="button" class="primary btn-sm" onclick="saveEHSMatrix()">Save Record (auto-saves as PDF)</button></div>`;
+      renderEHSFormTable(cfg);
+    }
+    function saveEHSMatrix() {
+      const cfg = ehsFormCfg(activeEHSFormId);
+      const common = readEhsCommonFields();
+      if (!validateEhsCommonFields(common)) return;
+      const cols = cfg.matrixColumns || [{ key: 'value', label: cfg.valueLabel || 'Value' }];
+      const meta = {};
+      cfg.meta.forEach(m => { const el = document.getElementById('ehsMeta_' + m.key); meta[m.key] = el ? el.value.trim() : ''; });
+      const values = cfg.rows.map((row, i) => {
+        const cells = {};
+        cols.forEach(c => { const el = document.getElementById(`ehsMx_${i}_${c.key}`); cells[c.key] = el ? el.value.trim() : ''; });
+        return { row, cells };
+      });
+      const record = { id: Date.now(), ts: new Date().toISOString(), location: common.location, month: common.month,
+        submittedBy: currentUser ? `${currentUser.username} (${getRoleLabel(currentUser.role)})` : '', meta, values };
+      const list = ehsRecords(cfg.id);
+      list.push(record);
+      saveEhsRecords(cfg.id, list);
+      cfg.meta.forEach(m => { const el = document.getElementById('ehsMeta_' + m.key); if (el) el.value = ''; });
+      cfg.rows.forEach((row, i) => cols.forEach(c => { const el = document.getElementById(`ehsMx_${i}_${c.key}`); if (el) el.value = ''; }));
+      renderEHSFormTable(cfg);
+      renderEHSFormsGrid();
+      generateEHSRecordPDF(cfg, record) && toast('Record saved and downloaded as PDF.', 'success');
+    }
+    function renderEHSMatrixTable(cfg) {
+      const list = ehsFilteredRecords(cfg.id);
+      const metaCols = cfg.meta.filter(m => m.inputType !== 'textarea');
+      document.getElementById('ehsFormTable').innerHTML =
+        `<thead><tr><th>Location</th><th>Month</th>${metaCols.map(m => `<th>${escapeHtml(m.label)}</th>`).join('')}<th>Submitted By</th><th>PDF</th><th class="admin-only">Action</th></tr></thead>
+        <tbody>${list.map(r => `<tr><td>${escapeHtml(r.location || '')}</td><td>${escapeHtml(monthValueLabel(r.month))}</td>${metaCols.map(m => `<td>${escapeHtml(r.meta[m.key] || '')}</td>`).join('')}
+          <td>${escapeHtml(r.submittedBy || '')}</td>
+          <td><button class="ghost-dark btn-sm" onclick='generateEHSRecordPDF(ehsFormCfg("${cfg.id}"), ${JSON.stringify(r).replace(/&/g, "&amp;").replace(/'/g, "&#39;")})'>📄</button></td>
+          <td class="admin-only"><button class="btn-danger btn-sm" onclick="deleteEHSRow('${cfg.id}',${r.id})">✕</button></td></tr>`).join('') ||
+          `<tr><td colspan="${metaCols.length + 5}" style="text-align:center;color:grey;padding:14px">No monthly records match the current filter.</td></tr>`}</tbody>`;
+    }
+
+    // ---- PDF generation (jsPDF) ----
+    // Draws a table using the jspdf-autotable plugin when it's available; if
+    // that plugin failed to load (from both the primary and fallback CDN —
+    // see loadWithFallback in <head>), falls back to a plain manual text
+    // grid so the PDF still contains the data instead of throwing
+    // "doc.autoTable is not a function" and producing nothing at all.
+    function pdfTable(doc, opts) {
+      if (typeof doc.autoTable === 'function') { doc.autoTable(opts); return; }
+      let y = opts.startY || 20;
+      const lineH = 6;
+      doc.setFontSize(8);
+      if (opts.head && opts.head[0]) {
+        doc.setFont(undefined, 'bold');
+        doc.text(opts.head[0].join('   |   '), 14, y);
+        doc.setFont(undefined, 'normal');
+        y += lineH;
+      }
+      (opts.body || []).forEach(row => {
+        const line = row.map(c => String(c == null ? '' : c)).join('   |   ');
+        const wrapped = doc.splitTextToSize(line, doc.internal.pageSize.getWidth() - 28);
+        wrapped.forEach(w => {
+          if (y > doc.internal.pageSize.getHeight() - 20) { doc.addPage(); y = 20; }
+          doc.text(w, 14, y);
+          y += lineH;
+        });
+      });
+      doc.lastAutoTable = { finalY: y };
+    }
+    // Single submission → PDF, triggered automatically right after every
+    // successful save so each entry is instantly available as a document
+    // (no manual "print" step needed). Falls back to a plain alert if the
+    // jsPDF library failed to load (e.g. no internet on first load).
+    function generateEHSRecordPDF(cfg, record) {
+      try {
+        if (typeof window.jspdf === 'undefined') {
+          // Previously this just logged to the console and returned, so the
+          // entry saved correctly but the "auto-saves as PDF" promise silently
+          // failed with no indication to the user — it looked like "PDF not
+          // generating" with no explanation. Now it's surfaced as a toast.
+          console.warn('jsPDF not loaded — skipping auto PDF.');
+          toast('Entry saved, but the PDF library did not load — check your internet connection and use the 📄 button in the table to retry.', 'error');
+          return false;
+        }
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        let y = 16;
+        doc.setFontSize(14); doc.setFont(undefined, 'bold');
+        doc.text('TARSONS PRODUCTS LIMITED — HSE Portal', 14, y); y += 7;
+        doc.setFontSize(12); doc.text(cfg.title, 14, y); y += 6;
+        doc.setFontSize(9); doc.setFont(undefined, 'normal');
+        if (cfg.docNo) { doc.text('Doc No: ' + cfg.docNo, 14, y); y += 5; }
+        doc.text(`Location: ${record.location || '-'}   Month: ${monthValueLabel(record.month) || '-'}`, 14, y); y += 5;
+        doc.text(`Submitted By: ${record.submittedBy || '-'}   Date: ${new Date(record.ts).toLocaleString('en-IN')}`, 14, y); y += 6;
+
+        if (cfg.style === 'register') {
+          const rows = cfg.columns.map(c => [c.label, record[c.key] || '-']);
+          pdfTable(doc, { startY: y, head: [['Field', 'Value']], body: rows, styles: { fontSize: 9 }, headStyles: { fillColor: [11,125,191] } });
+        } else if (cfg.style === 'inspection') {
+          const metaRows = cfg.meta.map(m => [m.label, record.meta[m.key] || '-']);
+          pdfTable(doc, { startY: y, head: [['Field', 'Value']], body: metaRows, styles: { fontSize: 9 }, headStyles: { fillColor: [11,125,191] } });
+          const qRows = record.answers.map((a, i) => [i + 1, a.q, a.response || '-', a.remark || '']);
+          pdfTable(doc, { startY: doc.lastAutoTable.finalY + 6, head: [['#', 'Checking Requirement', 'Response', 'Remarks']],
+            body: qRows, styles: { fontSize: 8 }, headStyles: { fillColor: [11,125,191] }, columnStyles: { 0: { cellWidth: 8 }, 1: { cellWidth: 100 } } });
+        } else if (cfg.style === 'matrix') {
+          const metaRows = cfg.meta.filter(m => m.inputType !== 'textarea').map(m => [m.label, record.meta[m.key] || '-']);
+          pdfTable(doc, { startY: y, head: [['Field', 'Value']], body: metaRows, styles: { fontSize: 9 }, headStyles: { fillColor: [11,125,191] } });
+          const cols = cfg.matrixColumns || [{ key: 'value', label: cfg.valueLabel || 'Value' }];
+          const mRows = record.values.map(v => [v.row, ...cols.map(c => v.cells[c.key] || '-')]);
+          pdfTable(doc, { startY: doc.lastAutoTable.finalY + 6, head: [[cfg.rowLabel, ...cols.map(c => c.label)]],
+            body: mRows, styles: { fontSize: 8 }, headStyles: { fillColor: [11,125,191] } });
+        }
+        const filename = `${cfg.id}_${record.location || 'entry'}_${record.month || ''}_${record.id}.pdf`.replace(/\s+/g, '_');
+        doc.save(filename);
+        return true;
+      } catch (err) {
+        console.error('EHS PDF generation failed:', err);
+        toast('PDF generation failed for this entry: ' + err.message, 'error');
+        return false;
+      }
+    }
+
+    // Bulk export → PDF of the currently filtered saved-entries table for a
+    // form (button next to Excel export, once a form is open).
+    function exportEHSTableToPDF(formId) {
+      const cfg = ehsFormCfg(formId);
+      if (!cfg || typeof window.jspdf === 'undefined') { alert('PDF library not loaded — check your internet connection.'); return; }
+      try {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({ orientation: 'landscape' });
+        doc.setFontSize(13); doc.setFont(undefined, 'bold');
+        doc.text('TARSONS PRODUCTS LIMITED — ' + cfg.title, 14, 14);
+        doc.setFontSize(9); doc.setFont(undefined, 'normal');
+        const filterLabel = `Filters — Month: ${ehsFilterState.month ? monthValueLabel(ehsFilterState.month) : 'All'}, Location: ${ehsFilterState.location || 'All'}`;
+        doc.text(filterLabel, 14, 20);
+        // Export the actual filtered record data directly (rather than reading
+        // it back out of the rendered #ehsFormTable DOM), so hidden admin-only
+        // columns or action-button cells can't throw off the exported table —
+        // and so this never silently produces an empty/broken PDF from a DOM
+        // read that didn't match what's on screen.
+        const list = ehsFilteredRecords(cfg.id);
+        if (!list.length) { toast('No entries match the current filter — nothing to export.', 'error'); return; }
+        let head, body;
+        if (cfg.style === 'register') {
+          head = ['Location', 'Month', ...cfg.columns.map(c => c.label), 'Submitted By'];
+          body = list.map(r => [r.location || '-', monthValueLabel(r.month), ...cfg.columns.map(c => r[c.key] || '-'), r.submittedBy || '-']);
+        } else if (cfg.style === 'inspection') {
+          head = ['Location', 'Month', ...cfg.meta.map(m => m.label), 'NO count', 'Submitted By'];
+          body = list.map(r => [r.location || '-', monthValueLabel(r.month), ...cfg.meta.map(m => r.meta[m.key] || '-'), r.answers.filter(a => a.response === 'NO').length, r.submittedBy || '-']);
+        } else {
+          const metaCols = cfg.meta.filter(m => m.inputType !== 'textarea');
+          head = ['Location', 'Month', ...metaCols.map(m => m.label), 'Submitted By'];
+          body = list.map(r => [r.location || '-', monthValueLabel(r.month), ...metaCols.map(m => r.meta[m.key] || '-'), r.submittedBy || '-']);
+        }
+        pdfTable(doc, { head: [head], body, startY: 25, styles: { fontSize: 7 }, headStyles: { fillColor: [11,125,191] } });
+        doc.save(`${cfg.id}_report_${Date.now()}.pdf`);
+      } catch (err) {
+        console.error('EHS table PDF export failed:', err);
+        toast('PDF export failed: ' + err.message, 'error');
+      }
     }
 
     // Per-module location filter selections (in-memory only — resets on reload,
@@ -4485,7 +5264,7 @@ TARSONS HSE Portal`;
         refreshStats();
     }
     function updatePTWStatus(id, status){
-      if (!canEditStatusFields(currentUser)) { alert('Only Admin, EHS Manager, Plant Head or Department Head can change PTW status.'); return; }
+      if (!canEditStatusFields(currentUser)) { alert('Only Admin, Safety Manager, Plant Head or Department Head can change PTW status.'); return; }
       const list = LocalDB.get('ptw', []);
       const idx = list.findIndex(p => p.id === id);
       if(idx>-1){ list[idx].status = status; LocalDB.set('ptw', list); renderPTWList(); updateBell();
@@ -4997,182 +5776,6 @@ TARSONS HSE Portal`;
       if (openBlogId) deleteBlogPost(openBlogId);
     }
 
-    function toggleAI() {
-      const box = document.getElementById('aiAssistantBox');
-      box.style.display = (box.style.display === 'flex') ? 'none' : 'flex';
-      if(box.style.display === 'flex') document.getElementById('aiInput').focus();
-    }
-
-    async function sendAIMessage() {
-      const input = document.getElementById('aiInput');
-      const msg = input.value.trim();
-      if (!msg) return;
-
-      appendMessage('user', msg);
-      input.value = '';
-
-      const typing = document.getElementById('aiTyping');
-      typing.style.display = 'block';
-      const msgContainer = document.getElementById('aiMessages');
-      msgContainer.scrollTop = msgContainer.scrollHeight;
-
-      setTimeout(() => {
-        typing.style.display = 'none';
-        appendMessage('bot', getAIReply(msg));
-        msgContainer.scrollTop = msgContainer.scrollHeight;
-      }, 500);
-    }
-
-    // Rule-based assistant that reads live portal data so answers reflect what's
-    // actually in the system right now, not static canned text.
-    function getAIReply(msg) {
-      const lower = msg.toLowerCase();
-      const today = nowInKolkata();
-      const daysUntil = (d) => daysBetweenKolkata(d, today);
-
-      // Greeting
-      if (/^(hi|hello|hey|good morning|good afternoon)\b/.test(lower)) {
-        return `Hi${currentUser ? ' ' + currentUser.username : ''}! Ask me about incidents, PTW, HIRA, PPE stock, extinguishers, legal compliance, CAPA, training, contacts, complaints/suggestions, or the blog/news page — I'll pull the current numbers for you.`;
-      }
-
-      // Overall safety snapshot
-      if (lower.includes('how are we doing') || lower.includes('overview') || lower.includes('summary') || lower.includes('safety stat')) {
-        const reports = LocalDB.get('reports', []);
-        const safeDays = document.getElementById('safeDays') ? document.getElementById('safeDays').innerText : '–';
-        return `Currently: ${safeDays} safe days, ${reports.length} total reports logged. Ask "overdue items" for a full compliance check.`;
-      }
-
-      // Near miss / unsafe condition
-      if (lower.includes('near miss') || lower.includes('unsafe condition') || lower.includes('unsafe act')) {
-        const reports = LocalDB.get('reports', []);
-        const nm = reports.filter(r => r.type === 'Near Miss').length;
-        const uc = reports.filter(r => r.type === 'Unsafe Condition').length;
-        return `${nm} Near Miss and ${uc} Unsafe Condition reports have been logged so far. You can submit a new one from the Incidents tab — select the report type there.`;
-      }
-
-      // Incidents
-      if (lower.includes('incident')) {
-        const reports = LocalDB.get('reports', []).filter(r => !r.type || r.type === 'Incident');
-        const thisMonth = reports.filter(r => { const d = parseKolkataDate(r.date); return !isNaN(d) && d.getMonth() === today.getMonth() && d.getFullYear() === today.getFullYear(); }).length;
-        return `${reports.length} incidents logged in total, ${thisMonth} this month. You can submit a new one, or view/edit details, in the Incidents/Accidents tab.`;
-      }
-
-      // Accidents
-      if (lower.includes('accident')) {
-        const reports = LocalDB.get('reports', []).filter(r => r.type === 'Accident');
-        const injured = reports.filter(r => r.injured).length;
-        return `${reports.length} accident(s) logged, ${injured} with a named injured person on record. Accidents count toward Safe Days and Accident Ratio, the same as Incidents.`;
-      }
-
-      // Fire extinguishers — overdue check
-      if (lower.includes('extinguisher') || lower.includes('fire safety')) {
-        const list = LocalDB.get('extinguishers', []);
-        const overdue = list.filter(x => x.due && daysUntil(x.due) < 0);
-        const dueSoon = list.filter(x => x.due && daysUntil(x.due) >= 0 && daysUntil(x.due) <= 30);
-        if (!list.length) return `No fire extinguishers are registered yet — an Admin can add them under Admin → Fire Extinguishers.`;
-        return `${list.length} extinguishers registered. ${overdue.length} overdue, ${dueSoon.length} due within 30 days. Check Admin → Fire Extinguishers for details.`;
-      }
-
-      // Legal / statutory compliance
-      if (lower.includes('legal') || lower.includes('license') || lower.includes('licence') || lower.includes('statutory') || lower.includes('compliance')) {
-        const list = LocalDB.get('legal', []);
-        const expiring = list.filter(x => x.expiry && daysUntil(x.expiry) <= 30);
-        return `${list.length} legal/statutory items on record, ${expiring.length} expiring within 30 days. See the Legal tab for the full register.`;
-      }
-
-      // CAPA
-      if (lower.includes('capa') || lower.includes('corrective') || lower.includes('preventive action')) {
-        const list = LocalDB.get('capa', []);
-        const overdue = list.filter(x => x.status !== 'Closed' && x.due && daysUntil(x.due) < 0);
-        const open = list.filter(x => x.status !== 'Closed');
-        return `${open.length} CAPA action(s) currently open, ${overdue.length} overdue. Manage these in Admin → CAPA Tracker.`;
-      }
-
-      // Overdue items across everything (compliance check)
-      if (lower.includes('overdue') || lower.includes('due soon') || lower.includes('what needs attention') || lower.includes('what is due')) {
-        const ext = LocalDB.get('extinguishers', []).filter(x => x.due && daysUntil(x.due) <= 30);
-        const legal = LocalDB.get('legal', []).filter(x => x.expiry && daysUntil(x.expiry) <= 30);
-        const capa = LocalDB.get('capa', []).filter(x => x.status !== 'Closed' && x.due && daysUntil(x.due) < 0);
-        if (!ext.length && !legal.length && !capa.length) return `Nothing is overdue or due soon right now — everything tracked looks current. 👍`;
-        return `Needs attention: ${ext.length} extinguisher(s), ${legal.length} legal item(s) expiring soon, ${capa.length} overdue CAPA action(s). Check the bell icon for the full list.`;
-      }
-
-      // PPE
-      if (lower.includes('ppe') || lower.includes('mask') || lower.includes('helmet') || lower.includes('goggles') || lower.includes('safety shoe')) {
-        const items = LocalDB.get('ppe', []);
-        const low = Array.isArray(items) ? items.filter(p => p.qty <= p.reorder) : [];
-        return `PPE stock and issue log are in the PPE tab. ${low.length ? low.length + ' item(s) are at or below reorder level.' : 'All tracked items look adequately stocked.'}`;
-      }
-
-      // PTW
-      if (lower.includes('ptw') || lower.includes('permit')) {
-        const list = LocalDB.get('ptw', []);
-        const pending = list.filter(p => p.status === 'Pending').length;
-        return `${pending} Permit(s) to Work are pending approval out of ${list.length} total. You can request a new PTW from the PTW tab — an Admin will approve or reject it.`;
-      }
-
-      // HIRA
-      if (lower.includes('hira') || lower.includes('risk assessment') || lower.includes('hazard')) {
-        const list = LocalDB.get('hira', []);
-        return `${list.length} HIRA entries on record. View them in the HIRA tab; Admins can add new activities, hazards, and controls there.`;
-      }
-
-      // Waste
-      if (lower.includes('waste') || lower.includes('disposal') || lower.includes('hazardous')) {
-        const h51 = document.getElementById('wasteHaz51Total') ? document.getElementById('wasteHaz51Total').innerText : '0';
-        const h52 = document.getElementById('wasteHaz52Total') ? document.getElementById('wasteHaz52Total').innerText : '0';
-        const h331 = document.getElementById('wasteHaz331Total') ? document.getElementById('wasteHaz331Total').innerText : '0';
-        const gen = document.getElementById('wasteRecTotal') ? document.getElementById('wasteRecTotal').innerText : '0';
-        return `Current on-site hazardous stock — 5.1: ${h51} Kg, 5.2: ${h52} Kg, 33.1: ${h331} Kg. General/recyclable waste: ${gen} Kg. See Waste Mgmt for the full log.`;
-      }
-
-      // Training
-      if (lower.includes('training') || lower.includes('induction') || lower.includes('certificat')) {
-        const records = LocalDB.get('records', []);
-        return `${records.length} training completion record(s) on file. Modules and records are in the Training tab. Visitor induction certificates are generated automatically when an Admin logs a visitor there.`;
-      }
-
-      // Gallery / policy
-      if (lower.includes('gallery') || lower.includes('photo')) {
-        const photos = LocalDB.get('gallery', []);
-        return `${photos.length} photo(s) currently in the EHS Gallery. Anyone can view them; only Admins can upload or delete.`;
-      }
-      if (lower.includes('policy') || lower.includes('policies') || lower.includes('document')) {
-        const pols = LocalDB.get('policies', []);
-        return `${pols.length} policy document(s) uploaded. Click any tile in the Policies tab to open it.`;
-      }
-
-      // Complaints / Suggestions
-      if (lower.includes('complaint') || lower.includes('suggestion') || lower.includes('feedback')) {
-        const list = LocalDB.get('complaints', []);
-        const pending = list.filter(x => x.status === 'Pending').length;
-        return `${list.length} complaint(s)/suggestion(s) logged, ${pending} still pending review. Use the 📢 button in the corner of any page to submit one, or check Admin → Complaints/Suggestions for the full register.`;
-      }
-
-      // Blog / News
-      if (lower.includes('blog') || lower.includes('news') || lower.includes('announcement')) {
-        const posts = LocalDB.get('blog', []);
-        return `${posts.length} post(s) published on the EHS Blog/News page. Anyone can read them; only Admins can publish or delete a post.`;
-      }
-
-      // Contacts — now reads the dynamic list instead of a hardcoded name
-      if (lower.includes('contact') || lower.includes('phone') || lower.includes('call') || lower.includes('emergency number')) {
-        const contacts = LocalDB.get('contacts', null) || DEFAULT_CONTACTS;
-        const ert = contacts.filter(c => c.category === 'ERT');
-        return `Emergency and Factory ERT contacts are in the Contact tab (☎ icons are tap/click-to-call). ${ert.length} ERT member(s) currently listed across all factories.`;
-      }
-
-      return "I can answer questions about incidents, near misses, PTW, HIRA, waste, PPE, extinguishers, legal compliance, CAPA, training, gallery, policies, contacts, complaints/suggestions, or the blog/news page — try asking something like \"what's overdue\" or \"how many open PTWs\".";
-    }
-
-    function appendMessage(sender, text) {
-      const container = document.getElementById('aiMessages');
-      const div = document.createElement('div');
-      div.className = `ai-msg ai-${sender}`;
-      div.innerText = text;
-      container.appendChild(div);
-    }
-
     // ---------- Toast notifications ----------
     // Non-blocking replacement for the browser's native alert() popup, which
     // interrupts the whole page and looks dated. Every existing alert('...')
@@ -5220,6 +5823,12 @@ TARSONS HSE Portal`;
     window.showForgotPasswordHelp = showForgotPasswordHelp;
     window.clearActivityLog = clearActivityLog;
     window.switchTrainingTab = switchTrainingTab;
+    window.openEHSForm = openEHSForm;
+    window.closeEHSForm = closeEHSForm;
+    window.addEHSRegisterRow = addEHSRegisterRow;
+    window.deleteEHSRow = deleteEHSRow;
+    window.saveEHSInspection = saveEHSInspection;
+    window.saveEHSMatrix = saveEHSMatrix;
     window.toggleModuleRecords = toggleModuleRecords;
     window.addExtinguisher = addExtinguisher;
     window.renderExtinguisherList = renderExtinguisherList;
@@ -5243,6 +5852,10 @@ TARSONS HSE Portal`;
     window.deleteRecordBatch = deleteRecordBatch; // BUGFIX: "Delete Batch" button in Training Modules called this via inline onclick, but it was never attached to window — since the app script is type="module", top-level functions aren't global by default, so every click silently threw "deleteRecordBatch is not defined" and nothing was ever removed from storage (hence old batches/records kept lingering under the module and under Select Training Date / Topic).
     window.deleteSelectedEvalBatch = deleteSelectedEvalBatch;
     window.setModuleLocFilter = setModuleLocFilter;
+    window.setEHSFilter = setEHSFilter;
+    window.clearEHSFilters = clearEHSFilters;
+    window.generateEHSRecordPDF = generateEHSRecordPDF;
+    window.exportEHSTableToPDF = exportEHSTableToPDF;
     window.addVisitor = addVisitor;
     window.deleteVisitor = deleteVisitor;
     window.reprintVisitorCertificate = reprintVisitorCertificate;
@@ -5266,9 +5879,6 @@ TARSONS HSE Portal`;
     window.openPolicyFile = openPolicyFile;
     window.openFullscreen = openFullscreen;
     window.moveGallery = moveGallery;
-    window.toggleAI = toggleAI;
-    window.sendAIMessage = sendAIMessage;
-    window.appendMessage = appendMessage;
     window.addCAPA = addCAPA;
     window.updateCAPAStatus = updateCAPAStatus;
     window.deleteCAPA = deleteCAPA;
