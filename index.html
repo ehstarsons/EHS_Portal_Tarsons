@@ -616,8 +616,50 @@
     padding:3px 7px;border-radius:999px;letter-spacing:.3px;text-transform:uppercase;
   }
   .ehs-meta-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;margin-bottom:12px}
-  .ehs-meta-grid label{display:block;font-size:11px;font-weight:700;color:var(--muted);margin-bottom:3px;text-transform:none}
+  .ehs-meta-grid label{display:flex;align-items:center;gap:5px;font-size:11px;font-weight:700;color:var(--muted);margin-bottom:5px;text-transform:none}
   .ehs-meta-grid .ehs-required-field label::after{content:' *';color:var(--danger)}
+  .ehs-field-icon{font-size:12.5px;line-height:1}
+
+  /* Section blocks — visually separate the always-the-same Submission
+     Details (Location + Report Month) from each form's own fields, so the
+     two are never mistaken for duplicates of one another. */
+  .ehs-section-block{margin-bottom:16px}
+  .ehs-section-title{
+    display:flex;align-items:center;gap:7px;font-size:12.5px;font-weight:800;color:var(--accent-3);
+    text-transform:uppercase;letter-spacing:.4px;margin-bottom:9px;
+  }
+  .ehs-section-icon{font-size:14px}
+  .ehs-section-common{
+    background:linear-gradient(135deg,rgba(11,125,191,.07),rgba(14,201,176,.07));
+    border:1px solid rgba(11,125,191,.16);border-radius:14px;padding:14px 16px 4px;
+  }
+  .ehs-section-common .ehs-meta-grid{margin-bottom:8px}
+  body.dark-theme .ehs-section-common{background:linear-gradient(135deg,rgba(11,125,191,.14),rgba(14,201,176,.1));border-color:rgba(14,201,176,.22)}
+
+  /* Consistent, professional look for every generated form control —
+     selects, text/date/number inputs, textareas — so the whole grid reads
+     as one designed system instead of bare unstyled browser defaults. */
+  .ehs-select, .ehs-input{
+    width:100%;padding:9px 11px;border-radius:9px;border:1.5px solid var(--border);
+    font-family:inherit;font-size:13.5px;color:var(--text-dark);background:#fff;
+    transition:border-color .15s ease,box-shadow .15s ease;
+  }
+  .ehs-select:hover, .ehs-input:hover{border-color:#c3d6dc}
+  .ehs-select:focus, .ehs-input:focus{
+    outline:none;border-color:var(--accent-3);box-shadow:0 0 0 3px rgba(11,125,191,.15);
+  }
+  .ehs-input[type="date"]::-webkit-calendar-picker-indicator,
+  .ehs-input[type="month"]::-webkit-calendar-picker-indicator{cursor:pointer;opacity:.65}
+  .ehs-input[type="date"]:hover::-webkit-calendar-picker-indicator{opacity:1}
+  body.dark-theme .ehs-select, body.dark-theme .ehs-input{background:var(--bg-dark-2);border-color:#2a4054;color:#eaf4f6}
+  body.dark-theme .ehs-select:hover, body.dark-theme .ehs-input:hover{border-color:#3a5a72}
+
+  /* Report Month — two dropdowns (Month name + Year) side by side instead
+     of a raw browser <input type=month>, so it looks and behaves the same
+     across every device and reads clearly as "pick from a list", not a
+     second free-form date to fill in. */
+  .ehs-month-picker{display:grid;grid-template-columns:1.5fr 1fr;gap:8px}
+  .ehs-year-select{text-align:center}
   #ehsFormTable td, #ehsFormTable th{white-space:nowrap}
   .ehs-inspect-table td:first-child{white-space:normal;min-width:220px}
   body.dark-theme .ehs-chart-box,body.dark-theme .ehs-toolbar{background:var(--bg-dark-2);border-color:#24384a}
@@ -3882,7 +3924,7 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
       { id:'firePump', icon:'🔥', title:'Fire Pump Monthly Inspection Checklist', docNo:'ESF-EHS-06', style:'inspection',
         meta:[
           {key:'manufacturer',label:'Manufacturer'}, {key:'pumpNo',label:'Pump No'},
-          {key:'date',label:'Date',inputType:'date'}, {key:'inspector',label:'Inspector'}
+          {key:'date',label:'Inspection Date',inputType:'date'}, {key:'inspector',label:'Inspector'}
         ],
         questions:[
           'Heat in the pump room is bearable',
@@ -3904,7 +3946,7 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
       },
       { id:'firstAid', icon:'🩹', title:'First Aid Register', docNo:'ESF-EHS-01', style:'register',
         columns:[
-          {key:'date',label:'Date',inputType:'date'}, {key:'name',label:'Name Of Injured Person'},
+          {key:'date',label:'Incident Date',inputType:'date'}, {key:'name',label:'Name Of Injured Person'},
           {key:'injuryType',label:'Type of Injury'},
           {key:'bodyPart',label:'Body Part Affected'}, {key:'details',label:'Details of Incident'},
           {key:'action',label:'Immediate Action'}, {key:'doctor',label:'Doctor/Clinic Name'},
@@ -3919,7 +3961,7 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
       },
       { id:'groundwater', icon:'💧', title:'Monthly Groundwater Consumption Record', docNo:'ESF-EHS-10', style:'matrix',
         meta:[
-          {key:'factoryUnit',label:'Factory / Unit Name'}, {key:'reportingMonth',label:'Reporting Month & Year'},
+          {key:'factoryUnit',label:'Factory / Unit Name'},
           {key:'rateWithdrawal',label:'Rate of Withdrawal (m3/hr)'}, {key:'meterId',label:'Meter Identification No'},
           {key:'lastCalibration',label:'Last Calibration Date',inputType:'date'}, {key:'nextCalibration',label:'Next Calibration Date',inputType:'date'},
           {key:'extractionPermission',label:'Extraction Permission (Yes/No)'}, {key:'rainwaterHarvesting',label:'Rainwater Harvesting Available (Yes/No)'},
@@ -3929,7 +3971,7 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
         rows:['Opening Meter Reading','Closing Meter Reading','Total Groundwater Extracted (Month)','Average Daily Consumption','No. of Operating Days']
       },
       { id:'roWeekly', icon:'🚰', title:'Weekly Checklist of RO Water Plant', docNo:'QSF-MAINT-38/02', style:'matrix',
-        meta:[{key:'month',label:'Month'}, {key:'year',label:'Year'}, {key:'machineNo',label:'Machine No./Id'}],
+        meta:[{key:'machineNo',label:'Machine No./Id'}],
         rowLabel:'Description',
         matrixColumns:[{key:'w1',label:'1st Week'},{key:'w2',label:'2nd Week'},{key:'w3',label:'3rd Week'},{key:'w4',label:'4th Week'},{key:'w5',label:'5th Week'}],
         rows:['Check all Pressure Gauge','Check TDS Value','Antiscalant Dosing','Sodium Bicarbonate Dosing','Sodium Chloride Dosing']
@@ -4019,7 +4061,7 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
       },
       { id:'ewasteReg', icon:'♻️', title:'E-Waste Register', docNo:'ESF-EHS-13', style:'register',
         columns:[
-          {key:'date',label:'Date',inputType:'date'}, {key:'dept',label:'Department'},
+          {key:'date',label:'Entry Date',inputType:'date'}, {key:'dept',label:'Department'},
           {key:'wasteType',label:'Type of E-Waste'}, {key:'qty',label:'Quantity (Nos/Kg)'},
           {key:'storage',label:'Storage Location'}, {key:'condition',label:'Condition (Working/Non-working)'},
           {key:'disposalDate',label:'Disposal Date',inputType:'date'}, {key:'vendor',label:'Disposed Through (Vendor)'},
@@ -4030,7 +4072,7 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
       },
       { id:'soilMixing', icon:'🌱', title:'Media Soil Mixing Record', docNo:'EHS-LAB-01', style:'register',
         columns:[
-          {key:'date',label:'Date',inputType:'date'}, {key:'qty',label:'Quantity (In grams)',inputType:'number'},
+          {key:'date',label:'Mixing Date',inputType:'date'}, {key:'qty',label:'Quantity (In grams)',inputType:'number'},
           {key:'disposalLoc',label:'Disposal Location'}, {key:'mixedBy',label:'Soil mixing by (Name)'}, {key:'signature',label:'Signature'}
         ]
       }
@@ -4252,11 +4294,44 @@ for (let i = 0; i < 14; i++) {   // 14 months
     // captures regardless of its style — Location and Report Month — which
     // is what makes the month/location filters and dashboard above work
     // uniformly across all 13 very differently-shaped forms.
+    const EHS_MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
     function ehsCommonFieldsHtml() {
       const locOptions = '<option value="">— Select Location —</option>' +
         FACTORY_LIST.map(f => `<option value="${f}">${f}</option>`).join('');
-      return `<div class="ehs-required-field"><label>Location</label><select id="ehsCommonLocation">${locOptions}</select></div>
-        <div class="ehs-required-field"><label>Report Month</label><input id="ehsCommonMonth" type="month" value="${currentMonthValue()}"></div>`;
+      const monthNow = currentMonthValue();
+      const [curY, curM] = monthNow.split('-');
+      const monthOptions = EHS_MONTH_NAMES.map((n, i) => {
+        const v = String(i + 1).padStart(2, '0');
+        return `<option value="${v}" ${v === curM ? 'selected' : ''}>${n}</option>`;
+      }).join('');
+      // Two years back to one year ahead is enough range for any real filing
+      // (statutory registers are filed monthly, never far in advance or in
+      // arrears), and keeps the dropdown short instead of a long scroll.
+      const yearNow = parseInt(curY, 10);
+      let yearOptions = '';
+      for (let y = yearNow - 2; y <= yearNow + 1; y++) yearOptions += `<option value="${y}" ${y === yearNow ? 'selected' : ''}>${y}</option>`;
+      return `
+        <div class="ehs-required-field ehs-field-location">
+          <label><span class="ehs-field-icon">📍</span>Location</label>
+          <select id="ehsCommonLocation" class="ehs-select">${locOptions}</select>
+        </div>
+        <div class="ehs-required-field ehs-field-month">
+          <label><span class="ehs-field-icon">🗓️</span>Report Month</label>
+          <div class="ehs-month-picker">
+            <select id="ehsCommonMonthSel" class="ehs-select" onchange="syncEhsCommonMonth()">${monthOptions}</select>
+            <select id="ehsCommonYearSel" class="ehs-select ehs-year-select" onchange="syncEhsCommonMonth()">${yearOptions}</select>
+          </div>
+          <input type="hidden" id="ehsCommonMonth" value="${monthNow}">
+        </div>`;
+    }
+    // Keeps the hidden ehsCommonMonth field (YYYY-MM, what every save/filter/
+    // dashboard function already reads) in sync with the two visible
+    // dropdowns above — so the rest of the EHS code never had to change.
+    function syncEhsCommonMonth() {
+      const m = document.getElementById('ehsCommonMonthSel');
+      const y = document.getElementById('ehsCommonYearSel');
+      const hidden = document.getElementById('ehsCommonMonth');
+      if (m && y && hidden) hidden.value = y.value + '-' + m.value;
     }
     function readEhsCommonFields() {
       const location = (document.getElementById('ehsCommonLocation') || {}).value || '';
@@ -4274,9 +4349,15 @@ for (let i = 0; i < 14; i++) {   // 14 months
       document.getElementById('ehsFormAddCard').innerHTML = `
         <h4>${escapeHtml(cfg.title)}${cfg.docNo ? ' <span style="font-weight:500;color:var(--muted);font-size:12px">(' + escapeHtml(cfg.docNo) + ')</span>' : ''}</h4>
         <form id="ehsRegisterForm" onsubmit="addEHSRegisterRow(event)">
-          <div class="ehs-meta-grid">
-            ${ehsCommonFieldsHtml()}
-            ${cfg.columns.map(c => `<div><label>${escapeHtml(c.label)}</label><input id="ehsField_${c.key}" type="${c.inputType || 'text'}"></div>`).join('')}
+          <div class="ehs-section-block ehs-section-common">
+            <div class="ehs-section-title"><span class="ehs-section-icon">🧾</span>Submission Details</div>
+            <div class="ehs-meta-grid ehs-meta-grid-common">${ehsCommonFieldsHtml()}</div>
+          </div>
+          <div class="ehs-section-block">
+            <div class="ehs-section-title"><span class="ehs-section-icon">📋</span>Entry Details</div>
+            <div class="ehs-meta-grid">
+              ${cfg.columns.map(c => `<div><label>${escapeHtml(c.label)}</label><input id="ehsField_${c.key}" class="ehs-input" type="${c.inputType || 'text'}"></div>`).join('')}
+            </div>
           </div>
           <div style="text-align:right"><button type="submit" class="primary btn-sm">Add Entry (auto-saves as PDF)</button></div>
         </form>`;
@@ -4319,9 +4400,15 @@ for (let i = 0; i < 14; i++) {   // 14 months
     function renderEHSInspectionForm(cfg) {
       document.getElementById('ehsFormAddCard').innerHTML = `
         <h4>${escapeHtml(cfg.title)}${cfg.docNo ? ' <span style="font-weight:500;color:var(--muted);font-size:12px">(' + escapeHtml(cfg.docNo) + ')</span>' : ''}</h4>
-        <div class="ehs-meta-grid">
-          ${ehsCommonFieldsHtml()}
-          ${cfg.meta.map(m => `<div><label>${escapeHtml(m.label)}</label><input id="ehsMeta_${m.key}" type="${m.inputType || 'text'}"></div>`).join('')}
+        <div class="ehs-section-block ehs-section-common">
+          <div class="ehs-section-title"><span class="ehs-section-icon">🧾</span>Submission Details</div>
+          <div class="ehs-meta-grid ehs-meta-grid-common">${ehsCommonFieldsHtml()}</div>
+        </div>
+        <div class="ehs-section-block">
+          <div class="ehs-section-title"><span class="ehs-section-icon">📋</span>Inspection Details</div>
+          <div class="ehs-meta-grid">
+            ${cfg.meta.map(m => `<div><label>${escapeHtml(m.label)}</label><input id="ehsMeta_${m.key}" class="ehs-input" type="${m.inputType || 'text'}"></div>`).join('')}
+          </div>
         </div>
         <div style="overflow-x:auto">
           <table class="ehs-inspect-table">
@@ -4383,17 +4470,23 @@ for (let i = 0; i < 14; i++) {   // 14 months
       const cols = cfg.matrixColumns || [{ key: 'value', label: cfg.valueLabel || 'Value' }];
       document.getElementById('ehsFormAddCard').innerHTML = `
         <h4>${escapeHtml(cfg.title)}${cfg.docNo ? ' <span style="font-weight:500;color:var(--muted);font-size:12px">(' + escapeHtml(cfg.docNo) + ')</span>' : ''}</h4>
-        <div class="ehs-meta-grid">
-          ${ehsCommonFieldsHtml()}
-          ${cfg.meta.map(m => m.inputType === 'textarea'
-            ? `<div style="grid-column:1/-1"><label>${escapeHtml(m.label)}</label><textarea id="ehsMeta_${m.key}" style="min-height:50px"></textarea></div>`
-            : `<div><label>${escapeHtml(m.label)}</label><input id="ehsMeta_${m.key}" type="${m.inputType || 'text'}"></div>`
-          ).join('')}
+        <div class="ehs-section-block ehs-section-common">
+          <div class="ehs-section-title"><span class="ehs-section-icon">🧾</span>Submission Details</div>
+          <div class="ehs-meta-grid ehs-meta-grid-common">${ehsCommonFieldsHtml()}</div>
         </div>
+        ${cfg.meta.length ? `<div class="ehs-section-block">
+          <div class="ehs-section-title"><span class="ehs-section-icon">📋</span>Record Details</div>
+          <div class="ehs-meta-grid">
+            ${cfg.meta.map(m => m.inputType === 'textarea'
+              ? `<div style="grid-column:1/-1"><label>${escapeHtml(m.label)}</label><textarea id="ehsMeta_${m.key}" class="ehs-input" style="min-height:50px"></textarea></div>`
+              : `<div><label>${escapeHtml(m.label)}</label><input id="ehsMeta_${m.key}" class="ehs-input" type="${m.inputType || 'text'}"></div>`
+            ).join('')}
+          </div>
+        </div>` : ''}
         <div style="overflow-x:auto">
           <table class="ehs-inspect-table">
             <thead><tr><th>${escapeHtml(cfg.rowLabel)}</th>${cols.map(c => `<th>${escapeHtml(c.label)}</th>`).join('')}</tr></thead>
-            <tbody>${cfg.rows.map((row, i) => `<tr><td>${escapeHtml(row)}</td>${cols.map(c => `<td><input id="ehsMx_${i}_${c.key}"></td>`).join('')}</tr>`).join('')}</tbody>
+            <tbody>${cfg.rows.map((row, i) => `<tr><td>${escapeHtml(row)}</td>${cols.map(c => `<td><input id="ehsMx_${i}_${c.key}" class="ehs-input"></td>`).join('')}</tr>`).join('')}</tbody>
           </table>
         </div>
         <div style="text-align:right;margin-top:10px"><button type="button" class="primary btn-sm" onclick="saveEHSMatrix()">Save Record (auto-saves as PDF)</button></div>`;
@@ -5999,6 +6092,7 @@ TARSONS HSE Portal`;
     window.clearActivityLog = clearActivityLog;
     window.switchTrainingTab = switchTrainingTab;
     window.openEHSForm = openEHSForm;
+    window.syncEhsCommonMonth = syncEhsCommonMonth;
     window.closeEHSForm = closeEHSForm;
     window.addEHSRegisterRow = addEHSRegisterRow;
     window.deleteEHSRow = deleteEHSRow;
