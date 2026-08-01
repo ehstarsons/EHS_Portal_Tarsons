@@ -568,53 +568,102 @@
   .audit-item-row .audit-q-num{font-weight:800;color:var(--accent-3);margin-right:2px}
 
   /* ---------- EHS Monthly Report ---------- */
+  /* Hero banner — a graphical header for the whole section instead of
+     dropping straight into stat cards, so the module reads as a designed
+     dashboard rather than a bare list of forms. */
+  .ehs-hero{
+    position:relative;overflow:hidden;border-radius:18px;padding:22px 24px;margin-bottom:18px;color:#fff;
+    background:
+      radial-gradient(420px 160px at 100% 0%, rgba(255,255,255,.16), transparent 60%),
+      linear-gradient(120deg,var(--accent-3),var(--accent-2) 75%);
+    box-shadow:0 14px 34px rgba(11,125,191,.28);
+    display:flex;align-items:center;gap:16px;flex-wrap:wrap;
+  }
+  .ehs-hero-icon{
+    width:52px;height:52px;flex:0 0 52px;border-radius:14px;background:rgba(255,255,255,.18);
+    display:flex;align-items:center;justify-content:center;font-size:26px;
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.25);
+  }
+  .ehs-hero-text h3{margin:0 0 3px;font-size:19px;color:#fff}
+  .ehs-hero-text p{margin:0;font-size:12.5px;color:rgba(255,255,255,.88);font-weight:500;max-width:640px;line-height:1.5}
+  .ehs-hero-deco{
+    position:absolute;right:-30px;bottom:-40px;font-size:130px;opacity:.12;line-height:1;pointer-events:none;
+  }
+
   .ehs-dashboard{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
   @media (max-width:820px){.ehs-dashboard{grid-template-columns:repeat(2,1fr)}}
   .ehs-stat-card{
-    padding:14px 16px;border-radius:14px;position:relative;overflow:hidden;color:#fff;
-    display:flex;flex-direction:column;gap:2px;box-shadow:0 8px 20px rgba(11,125,191,.14);
+    padding:16px 18px;border-radius:16px;position:relative;overflow:hidden;color:#fff;
+    display:flex;flex-direction:column;gap:3px;box-shadow:0 10px 24px rgba(11,125,191,.16);
+    transition:transform .18s ease,box-shadow .18s ease;
   }
-  .ehs-stat-card .ehs-stat-value{font-size:24px;font-weight:800;line-height:1.15}
+  .ehs-stat-card:hover{transform:translateY(-3px);box-shadow:0 16px 32px rgba(11,125,191,.24)}
+  .ehs-stat-card::after{
+    content:'';position:absolute;inset:0;background:linear-gradient(160deg,rgba(255,255,255,.16),transparent 55%);pointer-events:none;
+  }
+  .ehs-stat-card .ehs-stat-value{font-size:26px;font-weight:800;line-height:1.15}
   .ehs-stat-card .ehs-stat-label{font-size:11.5px;font-weight:700;opacity:.92;text-transform:uppercase;letter-spacing:.3px}
-  .ehs-stat-card .ehs-stat-icon{position:absolute;top:10px;right:12px;font-size:22px;opacity:.4}
+  .ehs-stat-card .ehs-stat-icon{
+    position:absolute;top:12px;right:12px;width:34px;height:34px;border-radius:10px;font-size:17px;
+    display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.18);opacity:1;
+  }
   .ehs-stat-total{background:linear-gradient(135deg,var(--accent-3),#0a5a8a)}
   .ehs-stat-entries{background:linear-gradient(135deg,var(--accent),var(--accent-2))}
   .ehs-stat-month{background:linear-gradient(135deg,#7c5cff,#5233c7)}
   .ehs-stat-pending{background:linear-gradient(135deg,#f5a524,#dd7d0a)}
+
   .ehs-charts-row{display:grid;grid-template-columns:1.3fr 1fr;gap:14px;margin-bottom:18px}
   @media (max-width:820px){.ehs-charts-row{grid-template-columns:1fr}}
-  .ehs-chart-box{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:14px 16px}
-  .ehs-chart-box h4{margin:0 0 8px}
+  .ehs-chart-box{
+    background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:16px 18px 14px;
+    position:relative;overflow:hidden;box-shadow:0 6px 18px rgba(10,26,47,.05);
+  }
+  .ehs-chart-box::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--accent-3),var(--accent-2))}
+  .ehs-chart-box h4{margin:0 0 10px;display:flex;align-items:center;gap:7px;font-size:14px}
   .ehs-chart-box canvas{max-height:230px}
+
   .ehs-toolbar{
-    display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;background:var(--panel);
-    border:1px solid var(--border);border-radius:14px;padding:12px 14px;margin-bottom:16px;
+    display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;background:var(--panel);
+    border:1px solid var(--border);border-radius:16px;padding:14px 16px;margin-bottom:16px;
+    box-shadow:0 6px 18px rgba(10,26,47,.05);
   }
-  .ehs-toolbar .ehs-toolbar-field{display:flex;flex-direction:column;gap:3px}
-  .ehs-toolbar label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.3px}
-  .ehs-toolbar select,.ehs-toolbar input{padding:8px 10px;border-radius:8px;border:1px solid var(--border);font-family:inherit;font-size:13px}
-  .ehs-toolbar .ehs-toolbar-clear{margin-left:auto}
-  .ehs-forms-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
+  .ehs-toolbar .ehs-toolbar-field{display:flex;flex-direction:column;gap:4px}
+  .ehs-toolbar label{display:flex;align-items:center;gap:5px;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.3px}
+  .ehs-toolbar select,.ehs-toolbar input{
+    padding:9px 12px;border-radius:10px;border:1.5px solid var(--border);font-family:inherit;font-size:13px;
+    min-width:170px;background:#fff;transition:border-color .15s ease,box-shadow .15s ease;
+  }
+  .ehs-toolbar select:focus,.ehs-toolbar input:focus{outline:none;border-color:var(--accent-3);box-shadow:0 0 0 3px rgba(11,125,191,.15)}
+  .ehs-toolbar .ehs-toolbar-clear{margin-left:auto;border-radius:999px}
+  body.dark-theme .ehs-toolbar select,body.dark-theme .ehs-toolbar input{background:var(--bg-dark-2);border-color:#2a4054;color:#eaf4f6}
+
+  .ehs-forms-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px}
   .ehs-form-card{
-    text-align:left;padding:16px;border-radius:14px;background:var(--panel);border:1px solid var(--border);
-    cursor:pointer;transition:transform .15s ease,box-shadow .15s ease;display:flex;flex-direction:column;gap:6px;
-    position:relative;
+    text-align:left;padding:18px 16px 16px;border-radius:16px;background:var(--panel);border:1px solid var(--border);
+    cursor:pointer;transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease;display:flex;flex-direction:column;gap:8px;
+    position:relative;overflow:hidden;box-shadow:0 4px 14px rgba(10,26,47,.05);
   }
-  .ehs-form-card:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(11,125,191,.14)}
+  .ehs-form-card::before{
+    content:'';position:absolute;top:0;left:0;right:0;height:3px;
+    background:linear-gradient(90deg,var(--accent-3),var(--accent-2));opacity:0;transition:opacity .18s ease;
+  }
+  .ehs-form-card:hover{transform:translateY(-4px);box-shadow:0 14px 28px rgba(11,125,191,.18);border-color:rgba(11,125,191,.3)}
+  .ehs-form-card:hover::before{opacity:1}
   .ehs-form-card .ehs-card-icon{
-    width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;
+    width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;
     background:linear-gradient(135deg,var(--accent-3),var(--accent-2));color:#fff;
+    box-shadow:0 6px 14px rgba(11,125,191,.3);
   }
   .ehs-form-card .ehs-card-title{font-weight:700;font-size:13.5px;line-height:1.35}
-  .ehs-form-card .ehs-card-meta{font-size:11px;color:var(--muted);font-weight:600}
-  .ehs-pending-badge{
-    position:absolute;top:10px;right:10px;background:var(--warning);color:#fff;font-size:9.5px;font-weight:800;
-    padding:3px 7px;border-radius:999px;letter-spacing:.3px;text-transform:uppercase;
+  .ehs-form-card .ehs-card-meta{font-size:11px;color:var(--muted);font-weight:600;display:flex;align-items:center;gap:5px}
+  .ehs-pending-badge,.ehs-ok-badge{
+    position:absolute;top:12px;right:12px;font-size:9.5px;font-weight:800;color:#fff;
+    padding:4px 9px;border-radius:999px;letter-spacing:.3px;text-transform:uppercase;
+    display:flex;align-items:center;gap:4px;box-shadow:0 3px 8px rgba(0,0,0,.15);
   }
-  .ehs-ok-badge{
-    position:absolute;top:10px;right:10px;background:var(--accent);color:#fff;font-size:9.5px;font-weight:800;
-    padding:3px 7px;border-radius:999px;letter-spacing:.3px;text-transform:uppercase;
-  }
+  .ehs-pending-badge{background:linear-gradient(120deg,var(--warning),#dd7d0a)}
+  .ehs-ok-badge{background:linear-gradient(120deg,var(--accent),var(--accent-2))}
+
   .ehs-meta-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;margin-bottom:12px}
   .ehs-meta-grid label{display:flex;align-items:center;gap:5px;font-size:11px;font-weight:700;color:var(--muted);margin-bottom:5px;text-transform:none}
   .ehs-meta-grid .ehs-required-field label::after{content:' *';color:var(--danger)}
@@ -636,6 +685,30 @@
   .ehs-section-common .ehs-meta-grid{margin-bottom:8px}
   body.dark-theme .ehs-section-common{background:linear-gradient(135deg,rgba(11,125,191,.14),rgba(14,201,176,.1));border-color:rgba(14,201,176,.22)}
 
+  /* Add-entry card — the form-specific panel where users fill in and save a
+     new record. A gradient top rule + icon badge give it a clear visual
+     "start here" identity instead of a plain grey box. */
+  .ehs-add-card{
+    background:var(--panel);border:1px solid var(--border);border-radius:18px;padding:20px 20px 18px;
+    margin-bottom:16px;position:relative;overflow:hidden;box-shadow:0 10px 26px rgba(10,26,47,.07);
+  }
+  .ehs-add-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,var(--accent),var(--accent-3))}
+  .ehs-add-card-head{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+  .ehs-add-card-icon{
+    width:44px;height:44px;flex:0 0 44px;border-radius:13px;display:flex;align-items:center;justify-content:center;
+    font-size:21px;background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#fff;box-shadow:0 6px 14px rgba(18,183,106,.3);
+  }
+  .ehs-add-card-head h4{margin:0;font-size:16px}
+  .ehs-add-card-head .ehs-add-card-docno{font-weight:500;color:var(--muted);font-size:11.5px}
+  body.dark-theme .ehs-add-card{background:var(--bg-dark-2)}
+
+  .ehs-view-only-note{
+    display:flex;align-items:center;gap:9px;text-transform:none;font-weight:600;color:var(--muted);
+    background:linear-gradient(135deg,rgba(245,165,36,.1),rgba(245,165,36,.04));
+    padding:11px 15px;border-radius:12px;margin:0 0 16px;border:1px solid rgba(245,165,36,.28);
+  }
+  .ehs-view-only-note .ehs-note-icon{font-size:15px}
+
   /* Consistent, professional look for every generated form control —
      selects, text/date/number inputs, textareas — so the whole grid reads
      as one designed system instead of bare unstyled browser defaults. */
@@ -653,6 +726,9 @@
   .ehs-input[type="date"]:hover::-webkit-calendar-picker-indicator{opacity:1}
   body.dark-theme .ehs-select, body.dark-theme .ehs-input{background:var(--bg-dark-2);border-color:#2a4054;color:#eaf4f6}
   body.dark-theme .ehs-select:hover, body.dark-theme .ehs-input:hover{border-color:#3a5a72}
+  .ehs-input[readonly]{background:#f4f7f8;color:var(--muted);cursor:not-allowed;font-style:italic}
+  .ehs-input[readonly]:hover{border-color:var(--border)}
+  body.dark-theme .ehs-input[readonly]{background:#0e1f30;color:#8fa8b3}
 
   /* Report Month — two dropdowns (Month name + Year) side by side instead
      of a raw browser <input type=month>, so it looks and behaves the same
@@ -660,8 +736,33 @@
      second free-form date to fill in. */
   .ehs-month-picker{display:grid;grid-template-columns:1.5fr 1fr;gap:8px}
   .ehs-year-select{text-align:center}
+
+  /* Saved-entries table — rounded card wrapper, sticky brand header, zebra
+     rows and a hover highlight so scanning many rows feels less like a
+     raw HTML table and more like a proper records viewer. */
+  .ehs-table-wrap{
+    border:1px solid var(--border);border-radius:16px;overflow:auto;box-shadow:0 6px 18px rgba(10,26,47,.05);
+    max-height:560px;
+  }
+  #ehsFormTable{border-collapse:separate;border-spacing:0;width:100%}
+  #ehsFormTable thead th{
+    position:sticky;top:0;z-index:1;background:linear-gradient(100deg,var(--accent-3),var(--accent-2) 85%);
+    color:#fff;font-size:11.5px;text-transform:uppercase;letter-spacing:.3px;padding:11px 12px;text-align:left;
+  }
+  #ehsFormTable tbody td{padding:10px 12px;border-bottom:1px solid var(--border);font-size:12.5px}
+  #ehsFormTable tbody tr:nth-child(even){background:rgba(11,125,191,.035)}
+  #ehsFormTable tbody tr:hover{background:rgba(14,201,176,.08)}
+  #ehsFormTable tbody tr:last-child td{border-bottom:none}
+  body.dark-theme .ehs-table-wrap{border-color:#24384a}
+  body.dark-theme #ehsFormTable tbody td{border-color:#24384a}
+  body.dark-theme #ehsFormTable tbody tr:nth-child(even){background:rgba(11,125,191,.1)}
+  body.dark-theme #ehsFormTable tbody tr:hover{background:rgba(14,201,176,.12)}
   #ehsFormTable td, #ehsFormTable th{white-space:nowrap}
   .ehs-inspect-table td:first-child{white-space:normal;min-width:220px}
+  .ehs-resp-select{font-weight:700;text-align:center}
+  .ehs-resp-select.resp-yes{border-color:var(--accent);color:var(--accent);background:rgba(18,183,106,.08)}
+  .ehs-resp-select.resp-no{border-color:var(--danger);color:var(--danger);background:rgba(229,72,77,.08)}
+  .ehs-resp-select.resp-na{border-color:var(--muted);color:var(--muted);background:rgba(91,122,132,.08)}
   body.dark-theme .ehs-chart-box,body.dark-theme .ehs-toolbar{background:var(--bg-dark-2);border-color:#24384a}
   .eval-trainee-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 4px;border-bottom:1px solid var(--border)}
   .eval-trainee-row:last-child{border-bottom:none}
@@ -1608,9 +1709,14 @@
         </div>
 
         <div id="trainingEHSContainer" style="display:none">
-          <p class="small" style="text-transform:none;font-weight:500;color:var(--muted);margin:-4px 0 14px">
-            Statutory and monthly EHS records in one place. Super Admin, Safety Manager, EHS Officer, Department Head and Supervisor can add entries — everything else can view, filter and export. Every save is instantly available as a PDF, and each form's saved entries can be filtered by month and location below.
-          </p>
+          <div class="ehs-hero">
+            <div class="ehs-hero-icon">🧾</div>
+            <div class="ehs-hero-text">
+              <h3>EHS Monthly Report</h3>
+              <p>Statutory and monthly EHS records in one place. Super Admin, Safety Manager, EHS Officer, Department Head and Supervisor can add entries — everything else can view, filter and export. Every save is instantly available as a PDF, and each form's saved entries can be filtered by month and location below.</p>
+            </div>
+            <div class="ehs-hero-deco">🛡️</div>
+          </div>
 
           <div class="ehs-dashboard" id="ehsDashboardStats"></div>
 
@@ -1631,11 +1737,11 @@
 
           <div class="ehs-toolbar">
             <div class="ehs-toolbar-field">
-              <label>Filter by Month</label>
+              <label>🗓️ Filter by Month</label>
               <select id="ehsGlobalMonthFilter" onchange="setEHSFilter('month', this.value)"></select>
             </div>
             <div class="ehs-toolbar-field">
-              <label>Filter by Location</label>
+              <label>📍 Filter by Location</label>
               <select id="ehsGlobalLocationFilter" onchange="setEHSFilter('location', this.value)"></select>
             </div>
             <button type="button" class="ghost-dark btn-sm ehs-toolbar-clear" onclick="clearEHSFilters()">✕ Clear Filters</button>
@@ -1645,17 +1751,17 @@
 
           <div id="ehsFormDetail" style="display:none">
             <button type="button" class="ghost-dark btn-sm" style="margin-bottom:12px" onclick="closeEHSForm()">← Back to All Reports</button>
-            <div class="ehsreport-add-only" id="ehsFormAddCard" style="background:#f9f9f9;padding:15px;border-radius:8px;margin-bottom:16px;border-left:4px solid var(--accent)"></div>
-            <p class="small ehsreport-view-only-note" style="text-transform:none;font-weight:600;color:var(--muted);background:#f9f9f9;padding:10px 14px;border-radius:8px;margin:0 0 16px;border-left:4px solid var(--muted)">
-              🔒 View-only — only Super Admin, Safety Manager, EHS Officer, Department Head and Supervisor can add entries to this report.
+            <div class="ehsreport-add-only ehs-add-card" id="ehsFormAddCard"></div>
+            <p class="small ehs-view-only-note ehsreport-view-only-note">
+              <span class="ehs-note-icon">🔒</span>View-only — only Super Admin, Safety Manager, EHS Officer, Department Head and Supervisor can add entries to this report.
             </p>
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;flex-wrap:wrap;gap:8px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px">
               <h3 style="margin:0" id="ehsFormRecordsTitle">Saved Entries</h3>
               <div>
                 <button class="ghost-dark btn-sm" id="ehsFormExportBtn">⬇ Excel</button>
               </div>
             </div>
-            <div style="overflow-x:auto"><table id="ehsFormTable"></table></div>
+            <div class="ehs-table-wrap"><table id="ehsFormTable"></table></div>
           </div>
         </div>
       </div>
@@ -3920,6 +4026,52 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
     //   matrix     — a few header fields + a small FIXED table of rows/columns,
     //                one submission per month (Groundwater, RO Water Plant)
     // Every submission is stored under LocalDB key `ehsReport_<id>`.
+    // Fixed item list for the Monthly Consumption Data Tracker — each item
+    // carries a preset UOM, so the add-entry form offers Description as a
+    // dropdown and auto-fills UOM the moment an item is picked; only
+    // Quantity is typed in by the user.
+    const MONTHLY_CONSUMPTION_ITEMS = [
+      { desc:'LPG Consumption', uom:'KG (19kg/Pc)' },
+      { desc:'Hydraulic Oil Consumption', uom:'Liters' },
+      { desc:'Lubrication Oil/Gear box Oil Consumption', uom:'Liters' },
+      { desc:'Rejection Oil', uom:'Liters' },
+      { desc:'Kerosene Consumption', uom:'Liters' },
+      { desc:'R22 (AC)', uom:'Kg' },
+      { desc:'R32', uom:'Kg' },
+      { desc:'R410A', uom:'Kg' },
+      { desc:'R22 (Refegerators)', uom:'Kg' },
+      { desc:'R134A', uom:'Kg' },
+      { desc:'R600A', uom:'Kg' },
+      { desc:'R438A', uom:'Kg' },
+      { desc:'R407C', uom:'Kg' },
+      { desc:'Electricity Consumed', uom:'KWH' },
+      { desc:'DG set Generated Electricity', uom:'KWH' },
+      { desc:'Ground Water Consumed', uom:'Liters' },
+      { desc:'Distilled water/Third party water', uom:'Liters' },
+      { desc:'Plastic Generation', uom:'Kg' },
+      { desc:'Plastic Waste', uom:'Kg' },
+      { desc:'UV Ink Container (150 gm/ps)', uom:'Kg' },
+      { desc:'ISO poly Container', uom:'Kg (19 kg & 19.600 kg/Pc)' },
+      { desc:'Ise Bucket Ink Container', uom:'Kg (2 kg, 2 kg, 15 gm/Pc)' },
+      { desc:'Oil Contaminated Cotton Rags', uom:'Kg' },
+      { desc:'Diesel Oil Consumption', uom:'Liters' }
+    ];
+    // Looks up the UOM for a picked Description and writes it into the
+    // paired UOM field — wired to the Description dropdown's onchange
+    // below. Reads the mapping off the active form's own column config
+    // (via autoFillTarget/autoFillMap) rather than a hard-coded id, so any
+    // future register-style form can reuse the same pick-item-to-fill-unit
+    // pattern just by setting those two properties on a column.
+    function ehsAutoFillField(targetKey, selectedValue) {
+      const cfg = ehsFormCfg(activeEHSFormId);
+      if (!cfg) return;
+      const srcCol = (cfg.columns || cfg.meta || []).find(c => c.autoFillTarget === targetKey);
+      const map = srcCol && srcCol.autoFillMap;
+      const targetEl = document.getElementById('ehsField_' + targetKey) || document.getElementById('ehsMeta_' + targetKey);
+      if (!targetEl || !map) return;
+      const match = map.find(i => i.desc === selectedValue);
+      targetEl.value = match ? match.uom : '';
+    }
     const EHS_REPORT_FORMS = [
       { id:'firePump', icon:'🔥', title:'Fire Pump Monthly Inspection Checklist', docNo:'ESF-EHS-06', style:'inspection',
         meta:[
@@ -3953,11 +4105,14 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
           {key:'responsibility',label:'Responsibility'}
         ]
       },
-      { id:'monthlyData', icon:'📊', title:'Monthly Consumption Data Tracker', docNo:'', style:'register',
-        columns:[
-          {key:'description',label:'Description'}, {key:'uom',label:'UOM'},
-          {key:'quantity',label:'Quantity',inputType:'number'}
-        ]
+      { id:'monthlyData', icon:'📊', title:'Monthly Consumption Data Tracker', docNo:'', style:'matrix',
+        meta:[],
+        rowLabel:'Description (UOM)',
+        matrixColumns:[{key:'quantity',label:'Quantity',inputType:'number'}],
+        // One row per fixed item, each carrying its own UOM baked into the
+        // label — the whole month's consumption is filled in and saved as
+        // a single record per Location, instead of one save per item.
+        rows: MONTHLY_CONSUMPTION_ITEMS.map(i => `${i.desc} — ${i.uom}`)
       },
       { id:'groundwater', icon:'💧', title:'Monthly Groundwater Consumption Record', docNo:'ESF-EHS-10', style:'matrix',
         meta:[
@@ -4254,7 +4409,7 @@ for (let i = 0; i < 14; i++) {   // 14 months
           ${badge}
           <div class="ehs-card-icon">${f.icon}</div>
           <div class="ehs-card-title">${escapeHtml(f.title)}</div>
-          <div class="ehs-card-meta">${f.docNo ? escapeHtml(f.docNo) + ' · ' : ''}${count} entr${count === 1 ? 'y' : 'ies'}${(ehsFilterState.month || ehsFilterState.location) ? ' (filtered)' : ' saved'}</div>
+          <div class="ehs-card-meta">${f.docNo ? '📄 ' + escapeHtml(f.docNo) + ' · ' : ''}🗂️ ${count} entr${count === 1 ? 'y' : 'ies'}${(ehsFilterState.month || ehsFilterState.location) ? ' (filtered)' : ' saved'}</div>
         </div>`;
       }).join('');
     }
@@ -4345,9 +4500,36 @@ for (let i = 0; i < 14; i++) {   // 14 months
     }
 
     // ---- Style: register (open-ended logbook) ----
+    // Renders one Entry Details control for the register style: a normal
+    // text/date/number input by default, or — when a column declares
+    // inputType:'select' — a dropdown of fixed options (optionally wired to
+    // auto-fill another field via autoFillTarget, e.g. Description → UOM).
+    // readonly:true renders a locked, auto-filled-only field (still
+    // submitted with the row, just not hand-typed).
+    function ehsRegisterFieldHtml(c) {
+      if (c.inputType === 'select') {
+        const opts = '<option value="">— Select —</option>' + (c.options || []).map(o => `<option value="${escapeHtml(o)}">${escapeHtml(o)}</option>`).join('');
+        const onchange = c.autoFillTarget ? ` onchange="ehsAutoFillField('${c.autoFillTarget}', this.value)"` : '';
+        return `<div><label>${escapeHtml(c.label)}</label><select id="ehsField_${c.key}" class="ehs-input"${onchange}>${opts}</select></div>`;
+      }
+      const readonlyAttr = c.readonly ? ' readonly placeholder="Auto-filled"' : '';
+      return `<div><label>${escapeHtml(c.label)}</label><input id="ehsField_${c.key}" class="ehs-input"${readonlyAttr} type="${c.inputType || 'text'}"></div>`;
+    }
+    // Shared icon + title header for the add-entry card across all three
+    // form styles (register/inspection/matrix) — keeps that banner
+    // consistent instead of a plain <h4> text line.
+    function ehsAddCardHeaderHtml(cfg) {
+      return `<div class="ehs-add-card-head">
+        <div class="ehs-add-card-icon">${cfg.icon}</div>
+        <div>
+          <h4>${escapeHtml(cfg.title)}</h4>
+          ${cfg.docNo ? `<div class="ehs-add-card-docno">Doc No: ${escapeHtml(cfg.docNo)}</div>` : ''}
+        </div>
+      </div>`;
+    }
     function renderEHSRegisterForm(cfg) {
       document.getElementById('ehsFormAddCard').innerHTML = `
-        <h4>${escapeHtml(cfg.title)}${cfg.docNo ? ' <span style="font-weight:500;color:var(--muted);font-size:12px">(' + escapeHtml(cfg.docNo) + ')</span>' : ''}</h4>
+        ${ehsAddCardHeaderHtml(cfg)}
         <form id="ehsRegisterForm" onsubmit="addEHSRegisterRow(event)">
           <div class="ehs-section-block ehs-section-common">
             <div class="ehs-section-title"><span class="ehs-section-icon">🧾</span>Submission Details</div>
@@ -4356,7 +4538,7 @@ for (let i = 0; i < 14; i++) {   // 14 months
           <div class="ehs-section-block">
             <div class="ehs-section-title"><span class="ehs-section-icon">📋</span>Entry Details</div>
             <div class="ehs-meta-grid">
-              ${cfg.columns.map(c => `<div><label>${escapeHtml(c.label)}</label><input id="ehsField_${c.key}" class="ehs-input" type="${c.inputType || 'text'}"></div>`).join('')}
+              ${cfg.columns.map(ehsRegisterFieldHtml).join('')}
             </div>
           </div>
           <div style="text-align:right"><button type="submit" class="primary btn-sm">Add Entry (auto-saves as PDF)</button></div>
@@ -4399,7 +4581,7 @@ for (let i = 0; i < 14; i++) {   // 14 months
     // ---- Style: inspection (fixed Yes/No/NA questions, one row per visit) ----
     function renderEHSInspectionForm(cfg) {
       document.getElementById('ehsFormAddCard').innerHTML = `
-        <h4>${escapeHtml(cfg.title)}${cfg.docNo ? ' <span style="font-weight:500;color:var(--muted);font-size:12px">(' + escapeHtml(cfg.docNo) + ')</span>' : ''}</h4>
+        ${ehsAddCardHeaderHtml(cfg)}
         <div class="ehs-section-block ehs-section-common">
           <div class="ehs-section-title"><span class="ehs-section-icon">🧾</span>Submission Details</div>
           <div class="ehs-meta-grid ehs-meta-grid-common">${ehsCommonFieldsHtml()}</div>
@@ -4416,8 +4598,8 @@ for (let i = 0; i < 14; i++) {   // 14 months
             <tbody>
               ${cfg.questions.map((q, i) => `<tr>
                 <td>${i + 1}. ${escapeHtml(q)}</td>
-                <td><select id="ehsResp_${i}"><option value="">—</option><option>YES</option><option>NO</option><option>NA</option></select></td>
-                <td><input id="ehsRemark_${i}" placeholder="Remarks"></td>
+                <td><select id="ehsResp_${i}" class="ehs-input ehs-resp-select" onchange="this.className='ehs-input ehs-resp-select resp-' + this.value.toLowerCase()"><option value="">—</option><option>YES</option><option>NO</option><option>NA</option></select></td>
+                <td><input id="ehsRemark_${i}" class="ehs-input" placeholder="Remarks"></td>
               </tr>`).join('')}
             </tbody>
           </table>
@@ -4444,7 +4626,7 @@ for (let i = 0; i < 14; i++) {   // 14 months
       saveEhsRecords(cfg.id, list);
       cfg.meta.forEach(m => { const el = document.getElementById('ehsMeta_' + m.key); if (el) el.value = ''; });
       cfg.questions.forEach((q, i) => {
-        const r = document.getElementById('ehsResp_' + i); if (r) r.value = '';
+        const r = document.getElementById('ehsResp_' + i); if (r) { r.value = ''; r.className = 'ehs-input ehs-resp-select'; }
         const rm = document.getElementById('ehsRemark_' + i); if (rm) rm.value = '';
       });
       renderEHSFormTable(cfg);
@@ -4469,7 +4651,7 @@ for (let i = 0; i < 14; i++) {   // 14 months
     function renderEHSMatrixForm(cfg) {
       const cols = cfg.matrixColumns || [{ key: 'value', label: cfg.valueLabel || 'Value' }];
       document.getElementById('ehsFormAddCard').innerHTML = `
-        <h4>${escapeHtml(cfg.title)}${cfg.docNo ? ' <span style="font-weight:500;color:var(--muted);font-size:12px">(' + escapeHtml(cfg.docNo) + ')</span>' : ''}</h4>
+        ${ehsAddCardHeaderHtml(cfg)}
         <div class="ehs-section-block ehs-section-common">
           <div class="ehs-section-title"><span class="ehs-section-icon">🧾</span>Submission Details</div>
           <div class="ehs-meta-grid ehs-meta-grid-common">${ehsCommonFieldsHtml()}</div>
@@ -4486,7 +4668,7 @@ for (let i = 0; i < 14; i++) {   // 14 months
         <div style="overflow-x:auto">
           <table class="ehs-inspect-table">
             <thead><tr><th>${escapeHtml(cfg.rowLabel)}</th>${cols.map(c => `<th>${escapeHtml(c.label)}</th>`).join('')}</tr></thead>
-            <tbody>${cfg.rows.map((row, i) => `<tr><td>${escapeHtml(row)}</td>${cols.map(c => `<td><input id="ehsMx_${i}_${c.key}" class="ehs-input"></td>`).join('')}</tr>`).join('')}</tbody>
+            <tbody>${cfg.rows.map((row, i) => `<tr><td>${escapeHtml(row)}</td>${cols.map(c => `<td><input id="ehsMx_${i}_${c.key}" class="ehs-input" type="${c.inputType || 'text'}"${c.inputType === 'number' ? ' step="any" min="0" placeholder="0"' : ''}></td>`).join('')}</tr>`).join('')}</tbody>
           </table>
         </div>
         <div style="text-align:right;margin-top:10px"><button type="button" class="primary btn-sm" onclick="saveEHSMatrix()">Save Record (auto-saves as PDF)</button></div>`;
@@ -6093,6 +6275,7 @@ TARSONS HSE Portal`;
     window.switchTrainingTab = switchTrainingTab;
     window.openEHSForm = openEHSForm;
     window.syncEhsCommonMonth = syncEhsCommonMonth;
+    window.ehsAutoFillField = ehsAutoFillField;
     window.closeEHSForm = closeEHSForm;
     window.addEHSRegisterRow = addEHSRegisterRow;
     window.deleteEHSRow = deleteEHSRow;
