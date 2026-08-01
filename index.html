@@ -4342,7 +4342,7 @@ for (let i = 0; i < 14; i++) {   // 14 months
         <div class="ehs-stat-card ehs-stat-total"><span class="ehs-stat-icon">🧾</span><span class="ehs-stat-value">${EHS_REPORT_FORMS.length}</span><span class="ehs-stat-label">EHS Forms</span></div>
         <div class="ehs-stat-card ehs-stat-entries"><span class="ehs-stat-icon">📥</span><span class="ehs-stat-value">${totalEntries}</span><span class="ehs-stat-label">${ehsFilterState.month || ehsFilterState.location ? 'Entries (Filtered)' : 'Total Entries'}</span></div>
         <div class="ehs-stat-card ehs-stat-month"><span class="ehs-stat-icon">📅</span><span class="ehs-stat-value">${entriesThisMonth}</span><span class="ehs-stat-label">Entries This Month</span></div>
-        <div class="ehs-stat-card ehs-stat-pending"><span class="ehs-stat-icon">⏳</span><span class="ehs-stat-value">${pendingForms}</span><span class="ehs-stat-label">Pending This Month${ehsFilterState.location ? '' : ' (Forms × Units)'}</span></div>`;
+        <div class="ehs-stat-card ehs-stat-pending"><span class="ehs-stat-icon">⏳</span><span class="ehs-stat-value">${pendingForms}</span><span class="ehs-stat-label">Pending This Month${ehsFilterState.location ? '' : ''}</span></div>`;
 
       // Entries by location (across ALL forms, respecting only the Month filter
       // so the location breakdown itself stays meaningful).
