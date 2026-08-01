@@ -4539,7 +4539,7 @@ for (let i = 0; i < 14; i++) {   // 14 months
       // changes. Every other field gets that same recalc wired to its
       // oninput so any computed column depending on it stays live.
       const readonlyAttr = (c.readonly || c.computed) ? ' readonly placeholder="Auto-calculated"' : '';
-      const oninputAttr = c.computed ? '' : ` oninput="ehsRegisterRecalc(ehsFormCfg(activeEHSFormId))"`;
+      const oninputAttr = c.computed ? '' : ` oninput="ehsRegisterRecalc()"`;
       return `<div><label>${escapeHtml(c.label)}</label><input id="ehsField_${c.key}" class="ehs-input"${readonlyAttr}${oninputAttr} type="${c.inputType || 'text'}"></div>`;
     }
     // Shared numeric-formula engine used by both register-style computed
@@ -4571,8 +4571,12 @@ for (let i = 0; i < 14; i++) {   // 14 months
       return (result === '' || !isFinite(result)) ? '' : Math.round(result * 100) / 100;
     }
     // Re-derives every computed register column from its computedFrom
-    // sibling fields, live on every keystroke.
-    function ehsRegisterRecalc(cfg) {
+    // sibling fields, live on every keystroke. Takes no argument — it's
+    // called from an inline oninput="" attribute, which runs in the page's
+    // global scope and can't see activeEHSFormId (a module-scoped variable),
+    // so this function resolves the active form itself via closure instead.
+    function ehsRegisterRecalc() {
+      const cfg = ehsFormCfg(activeEHSFormId);
       if (!cfg) return;
       cfg.columns.forEach(c => {
         if (!c.computed || !c.computedFrom) return;
@@ -4763,7 +4767,7 @@ for (let i = 0; i < 14; i++) {   // 14 months
               const computed = typeof row === 'object' && row.computed;
               const attrs = computed
                 ? ' readonly placeholder="Auto-calculated"'
-                : `${c.inputType === 'number' ? ' step="any" min="0" placeholder="0"' : ''} oninput="ehsMatrixRecalc(ehsFormCfg(activeEHSFormId))"`;
+                : `${c.inputType === 'number' ? ' step="any" min="0" placeholder="0"' : ''} oninput="ehsMatrixRecalc()"`;
               return `<td><input id="ehsMx_${i}_${c.key}" class="ehs-input" type="${c.inputType || 'text'}"${attrs}></td>`;
             }).join('')}</tr>`).join('')}</tbody>
           </table>
@@ -4773,8 +4777,11 @@ for (let i = 0; i < 14; i++) {   // 14 months
     }
     // Re-derives every computed matrix row from its computedFrom sibling
     // ROW labels (matched by position within cfg.rows), per matrix column,
-    // live on every keystroke.
-    function ehsMatrixRecalc(cfg) {
+    // live on every keystroke. Takes no argument for the same reason as
+    // ehsRegisterRecalc() above — inline oninput="" can't see the
+    // module-scoped activeEHSFormId, so this resolves it via closure.
+    function ehsMatrixRecalc() {
+      const cfg = ehsFormCfg(activeEHSFormId);
       if (!cfg) return;
       const cols = cfg.matrixColumns || [{ key: 'value', label: cfg.valueLabel || 'Value' }];
       cfg.rows.forEach((row, i) => {
