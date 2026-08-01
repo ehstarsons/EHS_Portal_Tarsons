@@ -2303,7 +2303,7 @@
     function refreshCurrentView() {
       const visible = Array.from(document.querySelectorAll('main section'))
         .find(s => s.style.display !== 'none');
-      navTo(visible ? visible.id : lastNavId);
+      navTo(visible ? visible.id : lastNavId, true);
     }
 
     // Live updates via Supabase Realtime — other users' changes land within a
@@ -2833,7 +2833,7 @@
       requestAnimationFrame(tick);
     }
 
-    function navTo(id) {
+    function navTo(id, silent) {
         document.querySelectorAll('main section').forEach(s => s.style.display = 'none');
         const target = document.getElementById(id);
         if(!target) return;
@@ -2842,7 +2842,13 @@
         document.querySelectorAll('#desktopNav a[data-nav]').forEach(a => {
             const isActive = a.getAttribute('data-nav') === id;
             a.classList.toggle('active', isActive);
-            if (isActive) a.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+            // Only scroll the nav pill into view for a real click on the nav —
+            // never during the background cloud-sync refresh (see
+            // refreshCurrentView below), which used to yank the whole page
+            // back to the header every ~60s (or right after any realtime
+            // event) regardless of what the user was doing, interrupting
+            // anyone mid-entry in a form further down the page.
+            if (isActive && !silent) a.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
         });
         
         if (id === 'home') {
@@ -4116,14 +4122,22 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
       },
       { id:'groundwater', icon:'💧', title:'Monthly Groundwater Consumption Record', docNo:'ESF-EHS-10', style:'matrix',
         meta:[
-          {key:'factoryUnit',label:'Factory / Unit Name'},
-          {key:'rateWithdrawal',label:'Rate of Withdrawal (m3/hr)'}, {key:'meterId',label:'Meter Identification No'},
-          {key:'lastCalibration',label:'Last Calibration Date',inputType:'date'}, {key:'nextCalibration',label:'Next Calibration Date',inputType:'date'},
-          {key:'extractionPermission',label:'Extraction Permission (Yes/No)'}, {key:'rainwaterHarvesting',label:'Rainwater Harvesting Available (Yes/No)'},
+          {key:'meterId',label:'Meter Identification No'},
           {key:'meterCondition',label:'Water Meter Condition'}, {key:'incidents',label:'Abnormal Consumption / Incidents (if any)',inputType:'textarea'}
         ],
         rowLabel:'Description', valueLabel:'Quantity (KL)',
-        rows:['Opening Meter Reading','Closing Meter Reading','Total Groundwater Extracted (Month)','Average Daily Consumption','No. of Operating Days']
+        // Opening/Closing Meter Reading are hand-entered; Total Groundwater
+        // Extracted is derived live as Closing - Opening, and Average Daily
+        // Consumption as Total / No. of Operating Days — both re-computed on
+        // every keystroke via ehsMatrixRecalc() and rendered read-only so
+        // they can never drift out of sync with the entered readings.
+        rows:[
+          {label:'Opening Meter Reading'},
+          {label:'Closing Meter Reading'},
+          {label:'Total Groundwater Extracted (Month)', computed:true, computeType:'subtract', computedFrom:['Closing Meter Reading','Opening Meter Reading']},
+          {label:'No. of Operating Days'},
+          {label:'Average Daily Consumption', computed:true, computeType:'divide', computedFrom:['Total Groundwater Extracted (Month)','No. of Operating Days']}
+        ]
       },
       { id:'roWeekly', icon:'🚰', title:'Weekly Checklist of RO Water Plant', docNo:'QSF-MAINT-38/02', style:'matrix',
         meta:[{key:'machineNo',label:'Machine No./Id'}],
@@ -4160,7 +4174,8 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
           {key:'area',label:'Area of Sampling'},
           {key:'s1',label:'Sample 1',inputType:'number'}, {key:'s2',label:'Sample 2',inputType:'number'},
           {key:'s3',label:'Sample 3',inputType:'number'}, {key:'s4',label:'Sample 4',inputType:'number'},
-          {key:'avg',label:'Average (LUX)',inputType:'number'}, {key:'limit',label:'Permissible Limit (LUX)',inputType:'number'},
+          {key:'avg',label:'Average (LUX)',inputType:'number',computed:true,computeType:'avg',computedFrom:['s1','s2','s3','s4']},
+          {key:'limit',label:'Permissible Limit (LUX)',inputType:'number'},
           {key:'remarks',label:'Remarks'}
         ]
       },
@@ -4169,9 +4184,14 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
           {key:'area',label:'Area of Sampling'},
           {key:'s1',label:'Sample 1',inputType:'number'}, {key:'s2',label:'Sample 2',inputType:'number'},
           {key:'s3',label:'Sample 3',inputType:'number'}, {key:'s4',label:'Sample 4',inputType:'number'},
-          {key:'avg',label:'Average (dB)',inputType:'number'}, {key:'limit',label:'Permissible Limit (dB)',inputType:'number'},
+          {key:'avg',label:'Average (dB)',inputType:'number',computed:true,computeType:'avg',computedFrom:['s1','s2','s3','s4']},
+          {key:'limit',label:'Permissible Limit (dB)',inputType:'number'},
           {key:'remarks',label:'Remarks'}
-        ]
+        ],
+        // Sound is a maximum requirement — critical when the measured
+        // average is HIGHER than (i.e. the Permissible Limit is lower than)
+        // the reading.
+        criticalCheck:{avgKey:'avg', limitKey:'limit', direction:'above'}
       },
       { id:'fiveSAudit', icon:'🧹', title:'Quarterly 5S Audit', docNo:'', style:'inspection',
         meta:[{key:'date',label:'Audit Date',inputType:'date'}, {key:'area',label:'Area / Department'}, {key:'auditor',label:'Auditor'}],
@@ -4189,7 +4209,7 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
         ]
       },
       { id:'fireSafetyAuditQtr', icon:'🚒', title:'Quarterly Fire Safety Audit', docNo:'', style:'inspection',
-        meta:[{key:'date',label:'Audit Date',inputType:'date'}, {key:'factory',label:'Factory/Unit'}, {key:'auditor',label:'Auditor'}],
+        meta:[{key:'date',label:'Audit Date',inputType:'date'}, {key:'auditLocation',label:'Audit Location'}, {key:'auditor',label:'Auditor'}],
         questions:[
           'Fire risk assessment is current and available',
           'Fire extinguishers are adequate in number and correctly located',
@@ -4206,12 +4226,19 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
         ]
       },
       { id:'chemicalReg', icon:'🧪', title:'Chemical Register', docNo:'ESF-EHS-07', style:'register',
+        // Stock + issue ledger: Opening Stock, Qty Received and Qty
+        // Issued/Used are hand-entered; Closing Balance is derived live as
+        // Opening + Received − Issued via ehsRegisterRecalc() and rendered
+        // read-only so the running balance can never be typed out of sync.
         columns:[
+          {key:'date',label:'Entry Date',inputType:'date'},
           {key:'chemName',label:'Name of Chemical'}, {key:'make',label:'Make'},
           {key:'productCode',label:'Product Code'}, {key:'lotNo',label:'Lot No'},
           {key:'msds',label:'MSDS Available (Y/N)'}, {key:'expiry',label:'Expiry Date',inputType:'date'},
-          {key:'qtyReceived',label:'Qty Received'}, {key:'qtyUsed',label:'Qty Used'}, {key:'qtyRemaining',label:'Qty Remaining'},
-          {key:'storage',label:'Storage Location'}, {key:'usedBy',label:'Used By'}, {key:'remarks',label:'Remarks'}
+          {key:'openingStock',label:'Opening Stock',inputType:'number'},
+          {key:'qtyReceived',label:'Qty Received',inputType:'number'}, {key:'qtyUsed',label:'Qty Issued/Used',inputType:'number'},
+          {key:'qtyRemaining',label:'Closing Balance',inputType:'number',computed:true,computeType:'stockBalance',computedFrom:['openingStock','qtyReceived','qtyUsed']},
+          {key:'storage',label:'Storage Location'}, {key:'usedBy',label:'Issued To / Used By'}, {key:'remarks',label:'Remarks'}
         ]
       },
       { id:'ewasteReg', icon:'♻️', title:'E-Waste Register', docNo:'ESF-EHS-13', style:'register',
@@ -4223,12 +4250,6 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
           {key:'authNo',label:'Vendor Authorization No.'}, {key:'manifestNo',label:'Manifest/Document No.'},
           {key:'certReceived',label:'Disposal Certificate Received (Y/N)'}, {key:'remarks',label:'Remarks'},
           {key:'checkedBy',label:'Checked By (EHS)'}
-        ]
-      },
-      { id:'soilMixing', icon:'🌱', title:'Media Soil Mixing Record', docNo:'EHS-LAB-01', style:'register',
-        columns:[
-          {key:'date',label:'Mixing Date',inputType:'date'}, {key:'qty',label:'Quantity (In grams)',inputType:'number'},
-          {key:'disposalLoc',label:'Disposal Location'}, {key:'mixedBy',label:'Soil mixing by (Name)'}, {key:'signature',label:'Signature'}
         ]
       }
     ];
@@ -4512,8 +4533,54 @@ for (let i = 0; i < 14; i++) {   // 14 months
         const onchange = c.autoFillTarget ? ` onchange="ehsAutoFillField('${c.autoFillTarget}', this.value)"` : '';
         return `<div><label>${escapeHtml(c.label)}</label><select id="ehsField_${c.key}" class="ehs-input"${onchange}>${opts}</select></div>`;
       }
-      const readonlyAttr = c.readonly ? ' readonly placeholder="Auto-filled"' : '';
-      return `<div><label>${escapeHtml(c.label)}</label><input id="ehsField_${c.key}" class="ehs-input"${readonlyAttr} type="${c.inputType || 'text'}"></div>`;
+      // Computed columns (e.g. Average, Closing Balance) are always
+      // readonly and never hand-typed — their value is written by
+      // ehsRegisterRecalc() below whenever one of their source fields
+      // changes. Every other field gets that same recalc wired to its
+      // oninput so any computed column depending on it stays live.
+      const readonlyAttr = (c.readonly || c.computed) ? ' readonly placeholder="Auto-calculated"' : '';
+      const oninputAttr = c.computed ? '' : ` oninput="ehsRegisterRecalc(ehsFormCfg(activeEHSFormId))"`;
+      return `<div><label>${escapeHtml(c.label)}</label><input id="ehsField_${c.key}" class="ehs-input"${readonlyAttr}${oninputAttr} type="${c.inputType || 'text'}"></div>`;
+    }
+    // Shared numeric-formula engine used by both register-style computed
+    // columns (e.g. LUX/Sound Average, Chemical Register Closing Balance)
+    // and matrix-style computed rows (e.g. Groundwater Total Extracted,
+    // Average Daily Consumption). `values` is an ordered array of the raw
+    // (string) inputs for computeType.computedFrom; blanks count as 0 for
+    // subtract/divide/stockBalance so a partially-filled row still resolves,
+    // but avg/sum ignore blanks so a couple of samples doesn't get diluted.
+    function ehsComputeFormula(computeType, values) {
+      const blankToZero = values.map(v => parseFloat(v) || 0);
+      const filledOnly = values.filter(v => String(v).trim() !== '').map(Number);
+      let result;
+      if (computeType === 'avg') {
+        if (!filledOnly.length) return '';
+        result = filledOnly.reduce((a, b) => a + b, 0) / filledOnly.length;
+      } else if (computeType === 'sum') {
+        if (!filledOnly.length) return '';
+        result = filledOnly.reduce((a, b) => a + b, 0);
+      } else if (computeType === 'subtract') {
+        result = blankToZero.reduce((acc, n, i) => i === 0 ? n : acc - n);
+      } else if (computeType === 'divide') {
+        result = blankToZero[1] ? blankToZero[0] / blankToZero[1] : '';
+      } else if (computeType === 'stockBalance') {
+        result = blankToZero[0] + blankToZero[1] - blankToZero[2];
+      } else {
+        return '';
+      }
+      return (result === '' || !isFinite(result)) ? '' : Math.round(result * 100) / 100;
+    }
+    // Re-derives every computed register column from its computedFrom
+    // sibling fields, live on every keystroke.
+    function ehsRegisterRecalc(cfg) {
+      if (!cfg) return;
+      cfg.columns.forEach(c => {
+        if (!c.computed || !c.computedFrom) return;
+        const el = document.getElementById('ehsField_' + c.key);
+        if (!el) return;
+        const values = c.computedFrom.map(k => (document.getElementById('ehsField_' + k) || {}).value || '');
+        el.value = ehsComputeFormula(c.computeType, values);
+      });
     }
     // Shared icon + title header for the add-entry card across all three
     // form styles (register/inspection/matrix) — keeps that banner
@@ -4567,15 +4634,32 @@ for (let i = 0; i < 14; i++) {   // 14 months
       renderEHSFormsGrid();
       generateEHSRecordPDF(cfg, row) && toast('Entry saved and downloaded as PDF.', 'success');
     }
+    // Reads a record's Average vs Permissible Limit and returns 'Critical'
+    // when the limit has been exceeded, or null if the form has no
+    // criticalCheck rule / either value is missing (nothing to compare yet).
+    function ehsRegisterRowStatus(cfg, r) {
+      if (!cfg.criticalCheck) return null;
+      const avg = parseFloat(r[cfg.criticalCheck.avgKey]);
+      const limit = parseFloat(r[cfg.criticalCheck.limitKey]);
+      if (isNaN(avg) || isNaN(limit)) return null;
+      return avg > limit ? 'Critical' : 'Normal';
+    }
     function renderEHSRegisterTable(cfg) {
       const list = ehsFilteredRecords(cfg.id);
+      const statusTh = cfg.criticalCheck ? '<th>Status</th>' : '';
       document.getElementById('ehsFormTable').innerHTML =
-        `<thead><tr><th>Location</th><th>Month</th>${cfg.columns.map(c => `<th>${escapeHtml(c.label)}</th>`).join('')}<th>Submitted By</th><th>PDF</th><th class="admin-only">Action</th></tr></thead>
-        <tbody>${list.map(r => `<tr><td>${escapeHtml(r.location || '')}</td><td>${escapeHtml(monthValueLabel(r.month))}</td>${cfg.columns.map(c => `<td>${escapeHtml(r[c.key] || '')}</td>`).join('')}
+        `<thead><tr><th>Location</th><th>Month</th>${cfg.columns.map(c => `<th>${escapeHtml(c.label)}</th>`).join('')}${statusTh}<th>Submitted By</th><th>PDF</th><th class="admin-only">Action</th></tr></thead>
+        <tbody>${list.map(r => {
+          const status = ehsRegisterRowStatus(cfg, r);
+          const statusTd = cfg.criticalCheck
+            ? `<td>${status ? `<span class="status-pill ${status === 'Critical' ? 'status-overdue' : 'status-ok'}">${status}</span>` : '—'}</td>`
+            : '';
+          return `<tr${status === 'Critical' ? ' style="background:rgba(229,72,77,.06)"' : ''}><td>${escapeHtml(r.location || '')}</td><td>${escapeHtml(monthValueLabel(r.month))}</td>${cfg.columns.map(c => `<td>${escapeHtml(r[c.key] || '')}</td>`).join('')}${statusTd}
           <td>${escapeHtml(r.submittedBy || '')}</td>
           <td><button class="ghost-dark btn-sm" onclick="downloadEHSRecordPDF('${cfg.id}',${r.id})">📄</button></td>
-          <td class="admin-only"><button class="btn-danger btn-sm" onclick="deleteEHSRow('${cfg.id}',${r.id})">✕</button></td></tr>`).join('') ||
-          `<tr><td colspan="${cfg.columns.length + 5}" style="text-align:center;color:grey;padding:14px">No entries match the current filter.</td></tr>`}</tbody>`;
+          <td class="admin-only"><button class="btn-danger btn-sm" onclick="deleteEHSRow('${cfg.id}',${r.id})">✕</button></td></tr>`;
+        }).join('') ||
+          `<tr><td colspan="${cfg.columns.length + (cfg.criticalCheck ? 6 : 5)}" style="text-align:center;color:grey;padding:14px">No entries match the current filter.</td></tr>`}</tbody>`;
     }
 
     // ---- Style: inspection (fixed Yes/No/NA questions, one row per visit) ----
@@ -4648,6 +4732,13 @@ for (let i = 0; i < 14; i++) {   // 14 months
     }
 
     // ---- Style: matrix (meta + a small fixed row/column grid, one per month) ----
+    // Rows are normally plain strings, but a row can instead be an object
+    // { label, computed:true, computeType, computedFrom:[otherRowLabels] }
+    // to become an auto-calculated, readonly cell (e.g. Groundwater's Total
+    // Extracted / Average Daily Consumption). ehsRowLabel() reads the label
+    // either way so every other place that touches cfg.rows keeps working
+    // unchanged for the plain-string forms.
+    function ehsRowLabel(row) { return typeof row === 'string' ? row : row.label; }
     function renderEHSMatrixForm(cfg) {
       const cols = cfg.matrixColumns || [{ key: 'value', label: cfg.valueLabel || 'Value' }];
       document.getElementById('ehsFormAddCard').innerHTML = `
@@ -4668,11 +4759,37 @@ for (let i = 0; i < 14; i++) {   // 14 months
         <div style="overflow-x:auto">
           <table class="ehs-inspect-table">
             <thead><tr><th>${escapeHtml(cfg.rowLabel)}</th>${cols.map(c => `<th>${escapeHtml(c.label)}</th>`).join('')}</tr></thead>
-            <tbody>${cfg.rows.map((row, i) => `<tr><td>${escapeHtml(row)}</td>${cols.map(c => `<td><input id="ehsMx_${i}_${c.key}" class="ehs-input" type="${c.inputType || 'text'}"${c.inputType === 'number' ? ' step="any" min="0" placeholder="0"' : ''}></td>`).join('')}</tr>`).join('')}</tbody>
+            <tbody>${cfg.rows.map((row, i) => `<tr><td>${escapeHtml(ehsRowLabel(row))}</td>${cols.map(c => {
+              const computed = typeof row === 'object' && row.computed;
+              const attrs = computed
+                ? ' readonly placeholder="Auto-calculated"'
+                : `${c.inputType === 'number' ? ' step="any" min="0" placeholder="0"' : ''} oninput="ehsMatrixRecalc(ehsFormCfg(activeEHSFormId))"`;
+              return `<td><input id="ehsMx_${i}_${c.key}" class="ehs-input" type="${c.inputType || 'text'}"${attrs}></td>`;
+            }).join('')}</tr>`).join('')}</tbody>
           </table>
         </div>
         <div style="text-align:right;margin-top:10px"><button type="button" class="primary btn-sm" onclick="saveEHSMatrix()">Save Record (auto-saves as PDF)</button></div>`;
       renderEHSFormTable(cfg);
+    }
+    // Re-derives every computed matrix row from its computedFrom sibling
+    // ROW labels (matched by position within cfg.rows), per matrix column,
+    // live on every keystroke.
+    function ehsMatrixRecalc(cfg) {
+      if (!cfg) return;
+      const cols = cfg.matrixColumns || [{ key: 'value', label: cfg.valueLabel || 'Value' }];
+      cfg.rows.forEach((row, i) => {
+        if (typeof row !== 'object' || !row.computed || !row.computedFrom) return;
+        cols.forEach(c => {
+          const el = document.getElementById(`ehsMx_${i}_${c.key}`);
+          if (!el) return;
+          const values = row.computedFrom.map(sourceLabel => {
+            const srcIdx = cfg.rows.findIndex(r => ehsRowLabel(r) === sourceLabel);
+            const srcEl = srcIdx > -1 ? document.getElementById(`ehsMx_${srcIdx}_${c.key}`) : null;
+            return srcEl ? srcEl.value : '';
+          });
+          el.value = ehsComputeFormula(row.computeType, values);
+        });
+      });
     }
     function saveEHSMatrix() {
       const cfg = ehsFormCfg(activeEHSFormId);
@@ -4684,7 +4801,7 @@ for (let i = 0; i < 14; i++) {   // 14 months
       const values = cfg.rows.map((row, i) => {
         const cells = {};
         cols.forEach(c => { const el = document.getElementById(`ehsMx_${i}_${c.key}`); cells[c.key] = el ? el.value.trim() : ''; });
-        return { row, cells };
+        return { row: ehsRowLabel(row), cells };
       });
       const record = { id: Date.now(), ts: new Date().toISOString(), location: common.location, month: common.month,
         submittedBy: currentUser ? `${currentUser.username} (${getRoleLabel(currentUser.role)})` : '', meta, values };
@@ -6278,6 +6395,8 @@ TARSONS HSE Portal`;
     window.ehsAutoFillField = ehsAutoFillField;
     window.closeEHSForm = closeEHSForm;
     window.addEHSRegisterRow = addEHSRegisterRow;
+    window.ehsRegisterRecalc = ehsRegisterRecalc; // wired to oninput="" on register-style Entry Details fields (LUX/Sound Average, Chemical Register Closing Balance, ...)
+    window.ehsMatrixRecalc = ehsMatrixRecalc; // wired to oninput="" on matrix-style grid cells (Groundwater Total Extracted / Average Daily Consumption)
     window.deleteEHSRow = deleteEHSRow;
     window.saveEHSInspection = saveEHSInspection;
     window.saveEHSMatrix = saveEHSMatrix;
