@@ -4183,7 +4183,12 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
        auto-opened, pre-filled wa.me link — the closest a static web app can
        get to sending automatically. It fires the moment the pass is
        generated (to the host, via their admin-set number) and the moment
-       checkout completes (to the visitor's own mobile).
+       checkout completes (to the visitor's own mobile). The check-in message
+       to the host includes a link to the visitor's Digital Pass plus a
+       Visitor Log link (?scan=vislog) that, once the host logs in, jumps
+       straight to that visitor's row in the Visitor Log — highlighted — with
+       a Check Out button right there. The checkout message back to the
+       visitor includes their Digital Pass link too, now showing "Checked Out".
        ===================================================================== */
     function normalizeWhatsappNumber(num) {
       if (!num) return '';
@@ -4201,12 +4206,15 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
     function sendCheckinWhatsAppToHost(v) {
       const num = getMeetingPersonWhatsapp(v.person);
       if (!num) return; // Admin hasn't set a WhatsApp number for this person yet
-      const msg = `Visitor Arrival — TARSONS PRODUCTS LTD\nVisitor: ${v.name} (${v.company || '-'})\nPurpose: ${v.purpose || '-'}\nFactory: ${v.factory || '-'}\nTime In: ${v.time || '-'}\nThey are here to meet you.`;
+      const passUrl = `${appBaseUrl()}?scan=pass&id=${v.id}`;
+      const logUrl = `${appBaseUrl()}?scan=vislog&id=${v.id}`;
+      const msg = `Visitor Arrival — TARSONS PRODUCTS LTD\nVisitor: ${v.name} (${v.company || '-'})\nPurpose: ${v.purpose || '-'}\nFactory: ${v.factory || '-'}\nTime In: ${v.time || '-'}\nThey are here to meet you.\n\nDigital Visitor Pass: ${passUrl}\n\nWhen they leave, check them out here: ${logUrl}`;
       openWhatsAppMessage(num, msg);
     }
     function sendCheckoutWhatsAppToVisitor(v) {
       if (!v.mobile) return;
-      const msg = `TARSONS PRODUCTS LTD — HSE Visitor Pass\nHi ${v.name}, you have been checked out.\nTime In: ${v.time || '-'}\nTime Out: ${v.checkoutTime || '-'}\nThank you for visiting ${v.factory || '-'}.`;
+      const passUrl = `${appBaseUrl()}?scan=pass&id=${v.id}`;
+      const msg = `TARSONS PRODUCTS LTD — HSE Visitor Pass\nHi ${v.name}, you have been checked out.\nTime In: ${v.time || '-'}\nTime Out: ${v.checkoutTime || '-'}\nThank you for visiting ${v.factory || '-'}.\n\nYour Digital Visitor Pass: ${passUrl}`;
       openWhatsAppMessage(v.mobile, msg);
     }
 
@@ -4636,6 +4644,14 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
         if (id) setTimeout(() => showDigitalPass(id, !currentUser), 60);
       } else if (scan === 'assembly') {
         setTimeout(() => openAssemblyPointView(params.get('factory') || ''), 60);
+      } else if (scan === 'vislog') {
+        const id = parseInt(params.get('id'), 10);
+        if (!currentUser) { showLogin(); return; } // after login, doLogin() reloads with the same URL, so this runs again
+        setTimeout(() => {
+          navTo('training');
+          switchTrainingTab('visitor');
+          if (id) highlightVisitorRow(id);
+        }, 60);
       }
     }
     document.addEventListener('DOMContentLoaded', () => { setTimeout(handleScanLanding, 400); });
@@ -6604,7 +6620,7 @@ for (let i = 0; i < 14; i++) {   // 14 months
     function renderVisitors() {
         const list = LocalDB.get('visitors', []);
         document.querySelector('#visitorTable tbody').innerHTML = list.map(v => `
-            <tr><td>${escapeHtml(v.name)}</td><td>${escapeHtml(v.company)}</td><td>${escapeHtml(v.mobile||'')}</td>
+            <tr data-visid="${v.id}"><td>${escapeHtml(v.name)}</td><td>${escapeHtml(v.company)}</td><td>${escapeHtml(v.mobile||'')}</td>
               <td>${escapeHtml(v.person||'-')}</td><td>${escapeHtml(v.time)}</td><td>${escapeHtml(v.brief||'No')}</td><td>${escapeHtml(v.ppe||'')}</td><td>${escapeHtml(v.factory)}</td>
               <td style="white-space:nowrap"><button class="ghost-dark btn-sm" onclick="reprintVisitorCertificate(${v.id})">🖨️ Certificate</button>
               <button class="btn-action btn-sm" onclick="showDigitalPass(${v.id})">🪪 Digital Pass</button>
@@ -6612,6 +6628,19 @@ for (let i = 0; i < 14; i++) {   // 14 months
               <button class="btn-action btn-sm mail-visitor-only" onclick="openMailVisitorPass(${v.id})">✉ Mail Pass</button>
               <button class="btn-danger btn-sm admin-only" onclick="deleteVisitor(${v.id})">Delete</button></td></tr>
         `).join('') || '<tr><td colspan="9" style="text-align:center;color:grey">No visitors logged yet.</td></tr>';
+    }
+    // Scrolls to and briefly highlights one visitor's row in the Visitor Log —
+    // used when a shared Visitor Log link (see sendCheckinWhatsAppToHost) lands
+    // a meeting person straight on the table so they can find and check out
+    // that visitor without hunting through the whole log.
+    function highlightVisitorRow(id) {
+      const row = document.querySelector(`#visitorTable tbody tr[data-visid="${id}"]`);
+      if (!row) return;
+      row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      const prevBg = row.style.backgroundColor;
+      row.style.transition = 'background-color .6s ease';
+      row.style.backgroundColor = 'rgba(245,165,36,.35)';
+      setTimeout(() => { row.style.backgroundColor = prevBg; }, 3500);
     }
     function reprintVisitorCertificate(id) {
       const v = LocalDB.get('visitors', []).find(x => x.id === id);
