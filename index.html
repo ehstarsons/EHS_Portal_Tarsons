@@ -2633,6 +2633,12 @@
       const visible = Array.from(document.querySelectorAll('main section'))
         .find(s => s.style.display !== 'none');
       navTo(visible ? visible.id : lastNavId, true);
+      // BUGFIX: the self-checkin kiosk modal (#checkinModal) isn't a <section>,
+      // so the line above never reaches it — it stays open independently of
+      // section navigation. Refresh its "Person to Meet" dropdown here too,
+      // so it fills in as soon as cloud data actually lands even if the modal
+      // was already open (e.g. opened before Supabase finished syncing).
+      populateMeetingPersonSelects();
     }
 
     // Live updates via Supabase Realtime — other users' changes land within a
@@ -4179,22 +4185,17 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
     /* =====================================================================
        NEW MODULE: WHATSAPP AUTOMATION (VISITOR PASS)
        No backend/WhatsApp Business API is available in this front-end-only
-       app, and WhatsApp's wa.me links only support pre-filled text — there is
-       no URL parameter that can pre-attach a file to a chat. So instead the
-       visitor pass is rendered client-side onto a <canvas> as an actual JPG
-       image (drawVisitorPassCanvas) and handed to the device's native share
-       sheet (navigator.share with files), which lets the person pick
-       WhatsApp directly and sends the image with the details as its caption
-       — the closest a static web app can get to "automatically" sending a
-       photo on WhatsApp. Fires the moment the pass is generated (to the
-       host, via their admin-set number) and the moment checkout completes
-       (to the visitor's own mobile). The check-in message to the host also
-       includes a Visitor Log link (?scan=vislog) that, once the host logs
-       in, jumps straight to that visitor's row in the Visitor Log —
-       highlighted — with a Check Out button right there. On browsers that
-       can't share files (most desktops), it falls back to downloading the
-       JPG and opening WhatsApp with the text pre-filled, so it can be
-       attached manually.
+       app, so "automatic" WhatsApp delivery is implemented as an
+       auto-opened, pre-filled wa.me link — the closest a static web app can
+       get to sending automatically (a real image attachment isn't possible
+       this way; wa.me only supports pre-filled text, and the native-share/
+       JPG approach tried here previously proved unreliable across devices,
+       so it's back to plain text). It fires the moment the pass is
+       generated (to the host, via their admin-set number) and the moment
+       checkout completes (to the visitor's own mobile). The check-in message
+       to the host includes a Visitor Log link (?scan=vislog) that, once the
+       host logs in, jumps straight to that visitor's row in the Visitor Log
+       — highlighted — with a Check Out button right there.
        ===================================================================== */
     function normalizeWhatsappNumber(num) {
       if (!num) return '';
@@ -4209,145 +4210,17 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
       window.open(`https://wa.me/${digits}?text=${encodeURIComponent(message)}`, '_blank');
       return true;
     }
-
-    // ---- Visitor pass rendered as a JPG image (canvas) ----
-    function roundRectPath(ctx, x, y, w, h, r) {
-      ctx.beginPath();
-      ctx.moveTo(x + r, y);
-      ctx.arcTo(x + w, y, x + w, y + h, r);
-      ctx.arcTo(x + w, y + h, x, y + h, r);
-      ctx.arcTo(x, y + h, x, y, r);
-      ctx.arcTo(x, y, x + w, y, r);
-      ctx.closePath();
-    }
-    function wrapCanvasText(ctx, text, x, y, maxWidth, lineHeight) {
-      const words = String(text || '-').split(' ');
-      let line = '', lines = [];
-      words.forEach(w => {
-        const test = line ? line + ' ' + w : w;
-        if (ctx.measureText(test).width > maxWidth && line) { lines.push(line); line = w; }
-        else line = test;
-      });
-      if (line) lines.push(line);
-      lines.forEach((l, i) => ctx.fillText(l, x, y + i * lineHeight));
-      return lines.length * lineHeight;
-    }
-    function loadPassQrImage(v) {
-      return new Promise((resolve) => {
-        const passUrl = `${appBaseUrl()}?scan=pass&id=${v.id}`;
-        const img = new Image();
-        img.crossOrigin = 'anonymous'; // needed so the canvas can still be exported after drawing this image
-        img.onload = () => resolve(img);
-        img.onerror = () => resolve(null);
-        img.src = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(passUrl)}`;
-      });
-    }
-    function drawVisitorPassCanvas(v, qrImg) {
-      const W = 720, H = 1040, pad = 24;
-      const canvas = document.createElement('canvas');
-      canvas.width = W; canvas.height = H;
-      const ctx = canvas.getContext('2d');
-      ctx.fillStyle = '#f4f7f8'; ctx.fillRect(0, 0, W, H);
-      const cardX = pad, cardY = pad, cardW = W - pad * 2, cardH = H - pad * 2;
-      roundRectPath(ctx, cardX, cardY, cardW, cardH, 28);
-      ctx.save(); ctx.clip();
-      const headH = 190;
-      const grad = ctx.createLinearGradient(cardX, cardY, cardX + cardW, cardY + headH);
-      grad.addColorStop(0, '#0b7dbf'); grad.addColorStop(1, '#0ec9b0');
-      ctx.fillStyle = grad; ctx.fillRect(cardX, cardY, cardW, headH);
-      ctx.fillStyle = '#fff'; ctx.textAlign = 'left';
-      ctx.font = '700 24px Arial, sans-serif';
-      ctx.fillText('TARSONS PRODUCTS LTD', cardX + 30, cardY + 58);
-      ctx.font = '600 17px Arial, sans-serif'; ctx.globalAlpha = .9;
-      ctx.fillText('HSE VISITOR PASS', cardX + 30, cardY + 86); ctx.globalAlpha = 1;
-      const status = v.checkoutTime ? 'CHECKED OUT' : 'CHECKED IN';
-      ctx.font = '700 14px Arial, sans-serif';
-      const pillW = ctx.measureText(status).width + 32, pillX = cardX + cardW - pillW - 26, pillY = cardY + 28;
-      roundRectPath(ctx, pillX, pillY, pillW, 32, 16);
-      ctx.fillStyle = 'rgba(255,255,255,.25)'; ctx.fill();
-      ctx.fillStyle = '#fff'; ctx.textAlign = 'center';
-      ctx.fillText(status, pillX + pillW / 2, pillY + 21); ctx.textAlign = 'left';
-      const bodyY = cardY + headH + 14;
-      ctx.fillStyle = '#ffffff'; ctx.fillRect(cardX, bodyY, cardW, cardH - headH - 14);
-      let cy = bodyY + 34;
-      if (qrImg) { const qs = 190, qx = cardX + (cardW - qs) / 2; ctx.drawImage(qrImg, qx, cy, qs, qs); cy += qs + 28; }
-      ctx.fillStyle = '#0b2027'; ctx.font = '800 27px Arial, sans-serif'; ctx.textAlign = 'center';
-      ctx.fillText(v.name || '-', cardX + cardW / 2, cy); cy += 32;
-      ctx.fillStyle = '#5b7a84'; ctx.font = '600 16px Arial, sans-serif';
-      ctx.fillText(v.company || '-', cardX + cardW / 2, cy); cy += 42;
-      ctx.textAlign = 'left';
-      const fields = [['Meeting', v.person || '-'], ['Purpose', v.purpose || '-'], ['Factory', v.factory || '-'],
-        ['Mobile', v.mobile || '-'], ['PPE Issued', v.ppe || 'None'], ['Time In', v.time || '-']];
-      if (v.checkoutTime) fields.push(['Time Out', v.checkoutTime]);
-      const labelX = cardX + 34, valueX = cardX + 190, maxValW = cardW - (valueX - cardX) - 34;
-      fields.forEach(([label, value]) => {
-        ctx.fillStyle = '#5b7a84'; ctx.font = '700 14px Arial, sans-serif';
-        ctx.fillText(label, labelX, cy);
-        ctx.fillStyle = '#0b2027'; ctx.font = '600 14px Arial, sans-serif';
-        const h = wrapCanvasText(ctx, value, valueX, cy, maxValW, 19);
-        cy += Math.max(26, h + 8);
-      });
-      ctx.restore();
-      ctx.fillStyle = '#5b7a84'; ctx.font = '500 12px Arial, sans-serif'; ctx.textAlign = 'center';
-      ctx.fillText(`Pass ID TPL-VIS-${String(v.id).slice(-6)} • Valid for date of issue only`, cardX + cardW / 2, cardY + cardH - 20);
-      return canvas;
-    }
-    function generateVisitorPassJpgBlob(v) {
-      const tryBlob = (img) => new Promise((resolve) => {
-        let canvas;
-        try { canvas = drawVisitorPassCanvas(v, img); } catch (e) { resolve(null); return; }
-        try { canvas.toBlob(blob => resolve(blob || null), 'image/jpeg', 0.92); }
-        catch (e) { resolve(null); } // canvas got tainted by the cross-origin QR image
-      });
-      return loadPassQrImage(v).then(qrImg =>
-        tryBlob(qrImg).then(blob => blob ? blob : (qrImg ? tryBlob(null) : null))
-      ).then(blob => {
-        if (!blob) throw new Error('Could not generate visitor pass image');
-        return blob;
-      });
-    }
-    // Shares the visitor pass as a JPG (native share sheet, so WhatsApp gets
-    // the actual image) with `detailsText` as the caption/message. Falls back
-    // to a manual download + pre-filled WhatsApp chat where file-sharing
-    // isn't supported by the browser.
-    async function sharePassJpgOverWhatsApp(v, number, detailsText) {
-      if (!number) return;
-      let blob;
-      try { blob = await generateVisitorPassJpgBlob(v); }
-      catch (err) { console.warn('Could not generate visitor pass image', err); openWhatsAppMessage(number, detailsText); return; }
-      const fileName = `Visitor_Pass_${(v.name || v.id)}`.replace(/[^a-zA-Z0-9_.-]/g, '_') + '.jpg';
-      const file = new File([blob], fileName, { type: 'image/jpeg' });
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        try {
-          await navigator.share({ files: [file], text: detailsText, title: 'Visitor Pass' });
-          return; // person picked an app (WhatsApp or otherwise) from the native share sheet
-        } catch (err) {
-          if (err && err.name === 'AbortError') return; // person cancelled the share sheet — don't fall back
-        }
-      }
-      // This browser can't share files, and WhatsApp gives websites no way to
-      // pre-attach an image to a chat, so download it and pre-fill the text —
-      // it just needs to be attached manually in the chat that opens.
-      const dlUrl = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = dlUrl; a.download = fileName;
-      document.body.appendChild(a); a.click(); a.remove();
-      setTimeout(() => URL.revokeObjectURL(dlUrl), 4000);
-      alert('Visitor pass image downloaded — attach it manually in the WhatsApp chat that just opened (this browser can\'t auto-attach images to WhatsApp).');
-      openWhatsAppMessage(number, detailsText);
-    }
-
     function sendCheckinWhatsAppToHost(v) {
       const num = getMeetingPersonWhatsapp(v.person);
       if (!num) return; // Admin hasn't set a WhatsApp number for this person yet
       const logUrl = `${appBaseUrl()}?scan=vislog&id=${v.id}`;
       const msg = `Visitor Arrival — TARSONS PRODUCTS LTD\nVisitor: ${v.name} (${v.company || '-'})\nPurpose: ${v.purpose || '-'}\nFactory: ${v.factory || '-'}\nTime In: ${v.time || '-'}\nThey are here to meet you.\n\nWhen they leave, check them out here: ${logUrl}`;
-      sharePassJpgOverWhatsApp(v, num, msg);
+      openWhatsAppMessage(num, msg);
     }
     function sendCheckoutWhatsAppToVisitor(v) {
       if (!v.mobile) return;
       const msg = `TARSONS PRODUCTS LTD — HSE Visitor Pass\nHi ${v.name}, you have been checked out.\nTime In: ${v.time || '-'}\nTime Out: ${v.checkoutTime || '-'}\nThank you for visiting ${v.factory || '-'}.`;
-      sharePassJpgOverWhatsApp(v, v.mobile, msg);
+      openWhatsAppMessage(v.mobile, msg);
     }
 
     /* =====================================================================
