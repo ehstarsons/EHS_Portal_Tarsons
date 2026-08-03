@@ -208,6 +208,10 @@
   body.is-admin li.admin-only{display:list-item}
   body.is-admin div.admin-only,
   body.is-admin span.admin-only{display:block}
+  /* QR Hub nav link — hidden unless the logged-in user is Admin, Safety
+     Manager or Plant Head (see canAccessQrHub()/is-qrhub-allowed). */
+  .qrhub-only{display:none}
+  body.is-qrhub-allowed li.qrhub-only{display:list-item}
 
   /* ---------- "Full add access" + Admin visibility (can add broadly, cannot delete) ---------- */
   /* NOTE: "is-officer-up" now represents roles with addScope:'all' in
@@ -1067,20 +1071,23 @@
     #complaintBtn{bottom:78px}
   }
 
-  /* ---------- Complaint / Suggestion Box (hover widget, all pages) ---------- */
+  /* ---------- Complaint / Suggestion Box (hover widget, all pages) ----------
+     Placed on the RIGHT so it never overlaps the Emergency SOS button
+     (#sosFab), which is fixed to the LEFT — the two used to sit at almost
+     identical bottom-left coordinates and stack on top of each other. */
   #complaintBtn{
-    position:fixed;bottom:25px;left:25px;width:60px;height:60px;
+    position:fixed;bottom:25px;right:25px;width:60px;height:60px;
     background:linear-gradient(135deg,var(--warning),#ef8354);
     border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;
     box-shadow:0 10px 28px rgba(0,0,0,.35);z-index:10000;transition:all .3s cubic-bezier(0.175,0.885,0.32,1.275);
   }
   #complaintBtn:hover{transform:scale(1.1) rotate(-5deg)}
   #complaintBox{
-    position:fixed;bottom:95px;left:25px;width:360px;max-width:92vw;max-height:80vh;overflow-y:auto;
+    position:fixed;bottom:95px;right:25px;width:360px;max-width:92vw;max-height:80vh;overflow-y:auto;
     background:#fff;border-radius:20px;box-shadow:var(--shadow-lg);display:none;flex-direction:column;
     z-index:10000;border:1px solid rgba(0,0,0,.08);animation:modalIn .2s ease both;color:var(--text-dark);
   }
-  @media (max-width:480px){ #complaintBox{width:92vw;left:4vw;max-height:75vh;bottom:90px} }
+  @media (max-width:480px){ #complaintBox{width:92vw;right:4vw;max-height:75vh;bottom:90px} }
   #complaintHeader{background:linear-gradient(100deg,var(--warning),#ef8354);color:white;padding:16px;font-weight:800;display:flex;justify-content:space-between;align-items:center;border-radius:20px 20px 0 0}
   #complaintBoxBody{padding:16px}
   body.dark-theme #complaintBox{background:#101e2c}
@@ -1154,26 +1161,8 @@
   .toast.toast-info{border-left:4px solid var(--accent-3)}
   @media (max-width:480px){ #toastStack{top:auto;bottom:14px} }
 
-  /* ---------- NEW MODULES: Global Search ---------- */
-  #globalSearchModal{position:fixed;left:0;top:0;right:0;bottom:0;background:rgba(4,10,20,0.78);display:none;
-    align-items:flex-start;justify-content:center;z-index:10500;backdrop-filter:blur(4px);padding:12vh 16px 16px;
-    animation:overlayIn .15s ease both;}
-  #globalSearchBox{width:100%;max-width:640px;background:white;border-radius:16px;box-shadow:var(--shadow-lg);
-    overflow:hidden;animation:modalIn .2s cubic-bezier(.2,.9,.3,1.2) both;max-height:74vh;display:flex;flex-direction:column;}
-  body.dark-theme #globalSearchBox{background:#101e2c;color:#e8f0f2}
-  #globalSearchInputWrap{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--border)}
-  body.dark-theme #globalSearchInputWrap{border-color:#24384a}
-  #globalSearchInput{border:none;outline:none;font-size:16px;flex:1;background:transparent;color:inherit}
-  #globalSearchResults{overflow-y:auto;padding:6px}
-  .gs-empty{padding:40px 20px;text-align:center;color:var(--muted);font-size:13.5px}
-  .gs-group-label{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);padding:10px 14px 4px}
-  .gs-item{display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:10px;cursor:pointer;transition:background .12s}
-  .gs-item:hover{background:rgba(11,125,191,.08)}
-  .gs-item-icon{font-size:18px;flex:0 0 auto;width:32px;height:32px;border-radius:9px;background:rgba(11,125,191,.1);display:flex;align-items:center;justify-content:center}
-  .gs-item-title{font-weight:700;font-size:13.5px}
-  .gs-item-sub{font-size:11.5px;color:var(--muted)}
+
   .gs-kbd{font-size:10.5px;color:var(--muted);border:1px solid var(--border);border-radius:5px;padding:1px 6px;margin-left:auto}
-  #searchBtn{width:38px;padding:9px 0}
 
   /* ---------- NEW MODULES: QR Hub ---------- */
   .qr-hub-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;margin-top:14px}
@@ -1325,7 +1314,6 @@
         <div class="subtitle"><div class="subject">HSE Portal</div></div></div>
       </div>
       <div class="header-actions">
-        <button class="ghost" id="searchBtn" onclick="openGlobalSearch()" title="Search everything (Ctrl+K)">🔍</button>
         <button class="ghost" id="themeToggleBtn" onclick="toggleTheme()" title="Toggle dark mode" style="width:38px;padding:9px 0">🌙</button>
         <div class="bell-wrapper" onclick="openNotifications()">
            <span class="bell-icon">🔔</span>
@@ -1359,7 +1347,7 @@
         <li><a href="#" data-nav="policies" onclick="navTo('policies')">📄 Policies</a></li>
         <li><a href="#" data-nav="contact" onclick="navTo('contact')">🆘 Emergency SOS</a></li>
         <li><a href="#" data-nav="inspections" onclick="requireAuthAndGo('inspections')">🔍 Audits/Inspections</a></li>
-        <li><a href="#" data-nav="qrhub" onclick="requireAuthAndGo('qrhub')">🔗 QR Hub</a></li>
+        <li class="qrhub-only"><a href="#" data-nav="qrhub" onclick="requireQrHubAndGo()">🔗 QR Hub</a></li>
         <li><a href="#" data-nav="adminSection" onclick="requireAuthAndGo('adminSection')">🛠️ Admin</a></li>
       </ul>
     </nav>
@@ -1821,6 +1809,20 @@
 
         <div id="trainingVisitorContainer" style="display:none">
           <p style="margin:6px 0 16px;color:var(--muted)">Record visitor induction, issue PPE and generate visitor induction certificate.</p>
+
+          <div class="admin-only" style="background:#f9f9f9;padding:15px;border-radius:8px;margin-bottom:18px;border-left:4px solid var(--accent-3)">
+            <h4>Meeting Persons — WhatsApp Directory</h4>
+            <p class="small" style="text-transform:none;font-weight:500;margin:-4px 0 8px;">Add the people visitors can select as "Person to Meet". Their WhatsApp number is set here by Admin only — when a visitor's pass is generated, that person is notified automatically on WhatsApp.</p>
+            <form onsubmit="addMeetingPerson(event)">
+              <div class="two-cols">
+                <input id="mpName" placeholder="Person's Name" required>
+                <input id="mpWhatsapp" placeholder="WhatsApp Number (e.g. 9198xxxxxxx)" required>
+              </div>
+              <div style="text-align:right;margin-top:8px"><button type="submit" class="primary btn-sm">Add Person</button></div>
+            </form>
+            <div id="meetingPersonList" style="margin-top:10px"></div>
+          </div>
+
           <div style="display:grid; gap:8px; margin-bottom:12px;">
             <form id="visitorForm" class="visitor-add-only" onsubmit="addVisitor(event)">
               <div class="two-cols">
@@ -1828,7 +1830,7 @@
                 <input id="visCompany" placeholder="Company Name" required>
               </div>
               <div class="two-cols" style="margin-top:6px">
-                <input id="visPersonMeet" placeholder="Person to Meet" required>
+                <select id="visPersonMeet" required><option value="">Select Person to Meet</option></select>
                 <input id="visPersonEmail" type="email" placeholder="Email of Person to Meet (optional)">
               </div>
               <div class="two-cols" style="margin-top:6px">
@@ -2099,6 +2101,12 @@
         </div>
         <div id="sosAssemblyGrid" class="factory-grid"></div>
 
+        <div class="admin-only" style="background:#f9f9f9;padding:15px;border-radius:8px;margin-top:16px;border-left:4px solid var(--accent-3)">
+          <h4>Emergency Plan Photos (per factory)</h4>
+          <p class="small" style="text-transform:none;font-weight:500;margin:-4px 0 8px;">Upload the evacuation/emergency plan photo for each factory. Scanning that factory's Assembly Point QR shows this photo with the scanner's current location overlaid — no login required, and it never opens the SOS/contacts page.</p>
+          <div id="emergencyPlanUploadGrid" class="factory-grid"></div>
+        </div>
+
         <div class="officer-only" style="background:#f9f9f9;padding:15px;border-radius:8px;margin:22px 0 18px;border-left:4px solid var(--accent);">
           <h4>Add Contact</h4>
           <form onsubmit="addContact(event)">
@@ -2127,6 +2135,20 @@
 
         <div style="margin-top:20px;text-align:center">
           <button class="btn-danger" onclick="requireAuthAndGo('dashboard')">🚨 Report an Incident Now</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="assemblyPointView" style="display:none" class="container">
+      <div class="card">
+        <h2>📍 Assembly Point — Emergency Plan</h2>
+        <p class="small" style="color:var(--muted);text-transform:none;font-weight:500;" id="apvFactoryLabel">Locating you on the emergency plan…</p>
+        <div id="apvCanvasWrap" style="text-align:center">
+          <canvas id="apvCanvas" style="max-width:100%;border-radius:12px;box-shadow:var(--shadow-sm);background:#eef3f4"></canvas>
+        </div>
+        <p class="small" id="apvLocationText" style="text-align:center;margin-top:10px;color:var(--muted)"></p>
+        <div style="text-align:center;margin-top:12px">
+          <button class="ghost-dark btn-sm" onclick="refreshAssemblyPointLocation()">📍 Refresh My Location</button>
         </div>
       </div>
     </section>
@@ -2343,17 +2365,6 @@
     </div>
   </div>
 
-  <div id="globalSearchModal" onclick="if(event.target.id==='globalSearchModal') closeGlobalSearch()">
-    <div id="globalSearchBox">
-      <div id="globalSearchInputWrap">
-        <span style="font-size:16px">🔍</span>
-        <input id="globalSearchInput" placeholder="Search incidents, PTWs, visitors, documents, contacts..." oninput="runGlobalSearch()" autocomplete="off">
-        <button class="ghost-dark btn-sm" onclick="closeGlobalSearch()">Esc</button>
-      </div>
-      <div id="globalSearchResults"><div class="gs-empty">Start typing to search across the whole portal.</div></div>
-    </div>
-  </div>
-
   <div id="digitalPassModal" onclick="if(event.target.id==='digitalPassModal') this.style.display='none'">
     <div id="digitalPassBox">
       <div id="digitalPassContent"></div>
@@ -2378,7 +2389,7 @@
         </div>
         <div class="two-cols" style="margin-top:6px">
           <input id="ciMobile" placeholder="Mobile Number" required>
-          <input id="ciPersonMeet" placeholder="Person to Meet" required>
+          <select id="ciPersonMeet" required><option value="">Select Person to Meet</option></select>
         </div>
         <input id="ciPurpose" placeholder="Purpose of Visit" required style="margin-top:6px">
         <input id="ciFactory" style="margin-top:6px" readonly>
@@ -2920,6 +2931,10 @@
     // "Target Date" and "Responsible Person/Dept." fields.
     const STATUS_EDITOR_ROLES = ['admin', 'ehsmanager', 'planthead', 'depthead'];
     function canEditStatusFields(user) { return !!(user && STATUS_EDITOR_ROLES.includes(user.role)); }
+    // QR Hub access: restricted to Admin, Safety Manager and Plant Head only —
+    // every other role (Supervisor, Security, ERT, etc.) must not see or open it.
+    const QR_HUB_ROLES = ['admin', 'ehsmanager', 'planthead'];
+    function canAccessQrHub(user) { return !!(user && QR_HUB_ROLES.includes(user.role)); }
 
     let currentUser = JSON.parse(sessionStorage.getItem('hse_user')) || null;
     let myChart = null;
@@ -2987,6 +3002,8 @@
         // Mail permissions (general vs. visitor-pass-only for Security)
         document.body.classList.toggle('is-mail-general', canMailModule(currentUser, 'general'));
         document.body.classList.toggle('is-mail-visitor', canMailModule(currentUser, 'visitor'));
+        // QR Hub link itself is only visible to Admin, Safety Manager, Plant Head.
+        document.body.classList.toggle('is-qrhub-allowed', canAccessQrHub(currentUser));
         if (currentUser) {
             badge.innerText = `${getRoleLabel(currentUser.role)}: ${currentUser.username}`;
             renderMyAvatarEls();
@@ -3245,8 +3262,21 @@
     }
 
     function requireAuthAndGo(id) { if (!currentUser) showLogin(); else navTo(id); }
+    // QR Hub is restricted beyond plain login — only Admin, Safety Manager and
+    // Plant Head may open it (see canAccessQrHub()).
+    function requireQrHubAndGo() {
+      if (!currentUser) { showLogin(); return; }
+      if (!canAccessQrHub(currentUser)) { alert('QR Hub is only accessible to Admin, Safety Manager and Plant Head.'); return; }
+      navTo('qrhub');
+    }
 
     function updateBell() {
+        // Notifications are for logged-in staff/admin only — a normal visitor
+        // (never logged in, e.g. someone who scanned a self-service QR code)
+        // must not see the bell icon or any notification content at all.
+        const bellWrapper = document.querySelector('.bell-wrapper');
+        if (bellWrapper) bellWrapper.style.display = currentUser ? 'flex' : 'none';
+        if (!currentUser) return;
         const legal = LocalDB.get('legal', []);
         const ptw = LocalDB.get('ptw', []);
         const extinguishers = LocalDB.get('extinguishers', []);
@@ -3283,6 +3313,7 @@
     }
 
     function openNotifications(){
+        if (!currentUser) return; // notifications are for logged-in staff/admin only
         const legal = LocalDB.get('legal', []);
         const ptw = LocalDB.get('ptw', []);
         const extinguishers = LocalDB.get('extinguishers', []);
@@ -3994,8 +4025,8 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
       showQR(`Visitor Check-In — ${factory}`, url, 'Visitors scan this at the gate to self check-in and receive a digital pass — no login needed.');
     }
     function generateAssemblyQR(factory) {
-      const url = `${appBaseUrl()}?scan=sos&factory=${encodeURIComponent(factory)}`;
-      showQR(`Assembly Point — ${factory}`, url, 'Post this at the muster point — scanning opens emergency contacts instantly.');
+      const url = `${appBaseUrl()}?scan=assembly&factory=${encodeURIComponent(factory)}`;
+      showQR(`Assembly Point — ${factory}`, url, 'Post this at the muster point — scanning shows the emergency plan photo with the scanner\u2019s current location. It does not open the SOS/contacts page.');
     }
     function generateSosQR() {
       const url = `${appBaseUrl()}?scan=sos`;
@@ -4019,67 +4050,6 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
     }
 
     /* =====================================================================
-       NEW MODULE: GLOBAL SEARCH
-       Builds a flat searchable index from every LocalDB collection in the
-       portal and renders live-filtered results grouped by module. Selecting
-       a result closes the search and navigates straight to that section.
-       ===================================================================== */
-    function buildSearchIndex() {
-      const idx = [];
-      const push = (mod, icon, title, sub, action) => { if (title) idx.push({ mod, icon, title: String(title), sub: String(sub || ''), action }); };
-      LocalDB.get('reports', []).forEach(r => push('Incidents/Accidents', '🚨', `${r.type || 'Report'} — ${r.name || ''}`, `${r.factory || ''} • ${r.date || ''} • ${(r.desc || '').slice(0, 60)}`, `requireAuthAndGo('dashboard')`));
-      LocalDB.get('hira', []).forEach(h => push('HIRA', '⚠️', h.activity || 'HIRA entry', `${h.hazard || ''} • ${h.factory || ''}`, `requireAuthAndGo('hira')`));
-      LocalDB.get('waste', []).forEach(w => push('Waste Mgmt', '♻️', w.type || 'Waste entry', `${w.factory || ''} • ${w.date || ''}`, `requireAuthAndGo('waste')`));
-      LocalDB.get('ppe', []).forEach(p => push('PPE', '🦺', p.name || 'PPE item', `${p.factory || ''} • Stock: ${p.qty || 0} ${p.unit || ''}`, `requireAuthAndGo('ppe')`));
-      LocalDB.get('ptw', []).forEach(p => push('PTW', '📝', `${p.type || 'PTW'} — ${p.requester || ''}`, `${p.factory || ''} • ${p.status || ''}`, `requireAuthAndGo('ptw')`));
-      LocalDB.get('legal', []).forEach(l => push('Legal Register', '⚖️', l.license || 'License', `${l.act || ''} • ${l.factory || ''} • exp ${l.expiry || ''}`, `requireAuthAndGo('legal')`));
-      LocalDB.get('visitors', []).forEach(v => push('Visitors', '🪪', v.name || 'Visitor', `${v.company || ''} • meeting ${v.person || ''} • ${v.factory || ''}`, `requireAuthAndGo('training'); setTimeout(function(){switchTrainingTab('visitor')},60)`));
-      LocalDB.get('extinguishers', []).forEach(x => push('Fire Extinguishers', '🧯', `Extinguisher ${x.extID || ''}`, `${x.factory || ''} • due ${x.due || ''}`, `requireAuthAndGo('adminSection')`));
-      LocalDB.get('contacts', []).forEach(c => push('Contacts', '☎', c.name || 'Contact', c.number || '', `navTo('contact')`));
-      LocalDB.get('blog', []).forEach(b => push('Blog/News', '📰', b.title || 'Post', (b.body || '').slice(0, 60), `navTo('blog')`));
-      LocalDB.get('policies', []).forEach(p => push('Policies', '📄', p.title || 'Policy', '', `navTo('policies')`));
-      LocalDB.get('records', []).forEach(r => push('Training Records', '🎓', r.name || 'Training record', `${r.moduleName || ''} • ${r.location || ''}`, `requireAuthAndGo('training')`));
-      LocalDB.get('inspections', []).forEach(a => push('Audits/Inspections', '🔍', `${a.template || 'Inspection'} — ${a.factory || ''}`, `${a.date || ''} • Score ${a.score || 0}/${a.maxScore || 100}`, `requireAuthAndGo('inspections')`));
-      return idx;
-    }
-    function openGlobalSearch() {
-      document.getElementById('globalSearchModal').style.display = 'flex';
-      const input = document.getElementById('globalSearchInput');
-      input.value = '';
-      document.getElementById('globalSearchResults').innerHTML = '<div class="gs-empty">Start typing to search across the whole portal.</div>';
-      setTimeout(() => input.focus(), 30);
-    }
-    function closeGlobalSearch() { document.getElementById('globalSearchModal').style.display = 'none'; }
-    function goToSearchResult(action) {
-      closeGlobalSearch();
-      try { new Function(action)(); } catch (e) { console.error(e); }
-    }
-    function runGlobalSearch() {
-      const q = document.getElementById('globalSearchInput').value.trim().toLowerCase();
-      const box = document.getElementById('globalSearchResults');
-      if (!q) { box.innerHTML = '<div class="gs-empty">Start typing to search across the whole portal.</div>'; return; }
-      const matches = buildSearchIndex().filter(r => (r.title + ' ' + r.sub).toLowerCase().includes(q)).slice(0, 60);
-      if (!matches.length) { box.innerHTML = '<div class="gs-empty">No results for "' + escapeHtml(q) + '".</div>'; return; }
-      const groups = {};
-      matches.forEach(m => { (groups[m.mod] = groups[m.mod] || []).push(m); });
-      box.innerHTML = Object.keys(groups).map(mod => `
-        <div class="gs-group-label">${escapeHtml(mod)}</div>
-        ${groups[mod].map(m => `<div class="gs-item" onclick="goToSearchResult(${JSON.stringify(m.action).replace(/"/g, '&quot;')})">
-          <div class="gs-item-icon">${m.icon}</div>
-          <div style="flex:1;min-width:0"><div class="gs-item-title">${escapeHtml(m.title)}</div><div class="gs-item-sub">${escapeHtml(m.sub)}</div></div>
-        </div>`).join('')}
-      `).join('');
-    }
-    document.addEventListener('keydown', function (e) {
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
-        e.preventDefault(); openGlobalSearch();
-      } else if (e.key === 'Escape') {
-        const m = document.getElementById('globalSearchModal');
-        if (m && m.style.display === 'flex') closeGlobalSearch();
-      }
-    });
-
-    /* =====================================================================
        NEW MODULE: EMERGENCY SOS
        Reuses the existing Emergency/ERT contacts data (LocalDB 'contacts')
        for a floating one-tap-to-call panel plus a full public SOS page —
@@ -4101,11 +4071,208 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
           <button class="ghost-dark btn-sm" style="margin-top:8px" onclick="generateAssemblyQR('${f}')">🔗 QR for this point</button>
         </div>
       `).join('');
+      renderEmergencyPlanUploadGrid();
 
       const emergency = contacts.filter(c => c.category === 'Emergency');
       const ert = contacts.filter(c => c.category === 'ERT');
       document.getElementById('sosAllContactsGrid').innerHTML = emergency.concat(ert).map(c => contactCard(c, c.category === 'ERT')).join('') ||
         '<p style="color:grey;grid-column:1/-1;text-align:center;padding:16px 0">No contacts yet.</p>';
+    }
+
+    /* =====================================================================
+       NEW MODULE: EMERGENCY PLAN PHOTOS + ASSEMBLY POINT LOCATION OVERLAY
+       Admin uploads one emergency-plan photo per factory. Scanning that
+       factory's Assembly Point QR (see generateAssemblyQR — routes to
+       ?scan=assembly, never ?scan=sos) opens a public, no-login view that
+       draws the photo on a canvas and overlays the scanner's live GPS
+       location on top of it — it never opens the SOS/contacts page.
+       ===================================================================== */
+    function getEmergencyPlans() { return LocalDB.get('emergencyPlans', {}); }
+    function renderEmergencyPlanUploadGrid() {
+      const grid = document.getElementById('emergencyPlanUploadGrid');
+      if (!grid) return;
+      const plans = getEmergencyPlans();
+      grid.innerHTML = FACTORY_LIST.map(f => `
+        <div class="factory-card" style="padding:14px">
+          <h4 style="margin:0 0 4px">${escapeHtml(f)}</h4>
+          ${plans[f] ? `<img src="${plans[f]}" style="width:100%;border-radius:8px;margin:6px 0" alt="Emergency plan — ${escapeHtml(f)}">` : '<p class="small" style="color:grey;margin:6px 0">No photo uploaded yet.</p>'}
+          <input type="file" accept="image/*" id="epFile_${cssId(f)}" style="margin-top:6px">
+          <div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap">
+            <button class="ghost-dark btn-sm" onclick="uploadEmergencyPlanPhoto('${f.replace(/'/g, "")}')">Upload</button>
+            <button class="btn-action btn-sm" onclick="openAssemblyPointView('${f.replace(/'/g, "")}')">Preview</button>
+          </div>
+        </div>
+      `).join('');
+    }
+    function cssId(s) { return String(s).replace(/[^a-zA-Z0-9]/g, '_'); }
+    async function uploadEmergencyPlanPhoto(factory) {
+      const input = document.getElementById('epFile_' + cssId(factory));
+      if (!input || !input.files || !input.files[0]) { alert('Choose a photo first.'); return; }
+      const dataUrl = await readFileAsDataURL(input.files[0]);
+      const plans = getEmergencyPlans();
+      plans[factory] = dataUrl;
+      LocalDB.set('emergencyPlans', plans);
+      logActivity('Emergency plan photo uploaded', factory);
+      renderEmergencyPlanUploadGrid();
+      alert('Emergency plan photo saved for ' + factory + '.');
+    }
+    let apvWatchId = null;
+    function openAssemblyPointView(factory) {
+      navTo('assemblyPointView');
+      document.getElementById('apvFactoryLabel').innerText = factory ? `${factory} — locating you on the emergency plan…` : 'Locating you on the emergency plan…';
+      drawAssemblyPointCanvas(factory);
+      refreshAssemblyPointLocation(factory);
+    }
+    let apvCurrentFactory = '';
+    function drawAssemblyPointCanvas(factory, coordsText) {
+      apvCurrentFactory = factory || apvCurrentFactory;
+      const plans = getEmergencyPlans();
+      const canvas = document.getElementById('apvCanvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      const src = plans[factory];
+      const img = new Image();
+      img.onload = () => {
+        canvas.width = img.naturalWidth; canvas.height = img.naturalHeight;
+        ctx.drawImage(img, 0, 0);
+        drawLocationPin(ctx, canvas, coordsText);
+      };
+      if (src) {
+        img.src = src;
+      } else {
+        canvas.width = 640; canvas.height = 360;
+        ctx.fillStyle = '#eef3f4'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#5b7a84'; ctx.font = '16px Inter, sans-serif'; ctx.textAlign = 'center';
+        ctx.fillText('No emergency plan photo uploaded yet for ' + (factory || 'this factory') + '.', canvas.width / 2, canvas.height / 2);
+        drawLocationPin(ctx, canvas, coordsText);
+      }
+    }
+    function drawLocationPin(ctx, canvas, coordsText) {
+      // Marks the viewer's current position near the centre-bottom of the
+      // photo (an illustrative "you are here" marker — a static photo has
+      // no georeferenced coordinate system to place a pin precisely) and
+      // prints the live GPS coordinates as a readable overlay caption.
+      const x = canvas.width / 2, y = canvas.height * 0.62;
+      ctx.save();
+      ctx.beginPath(); ctx.arc(x, y, 14, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(229,72,77,.92)'; ctx.fill();
+      ctx.lineWidth = 3; ctx.strokeStyle = '#fff'; ctx.stroke();
+      ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI * 2); ctx.fillStyle = '#fff'; ctx.fill();
+      ctx.font = 'bold 14px Inter, sans-serif'; ctx.fillStyle = '#0b2027'; ctx.textAlign = 'center';
+      ctx.strokeStyle = '#fff'; ctx.lineWidth = 4;
+      ctx.strokeText('📍 You are here', x, y - 22);
+      ctx.fillText('📍 You are here', x, y - 22);
+      if (coordsText) {
+        ctx.font = '12px Inter, sans-serif';
+        ctx.strokeText(coordsText, x, canvas.height - 12);
+        ctx.fillText(coordsText, x, canvas.height - 12);
+      }
+      ctx.restore();
+    }
+    function refreshAssemblyPointLocation(factory) {
+      factory = factory || apvCurrentFactory;
+      const label = document.getElementById('apvFactoryLabel');
+      const locText = document.getElementById('apvLocationText');
+      if (!navigator.geolocation) {
+        if (locText) locText.innerText = 'Location services are not available on this device/browser.';
+        drawAssemblyPointCanvas(factory);
+        return;
+      }
+      navigator.geolocation.getCurrentPosition((pos) => {
+        const coords = `Lat ${pos.coords.latitude.toFixed(5)}, Lon ${pos.coords.longitude.toFixed(5)} (±${Math.round(pos.coords.accuracy)}m)`;
+        if (label) label.innerText = factory ? `${factory} — emergency plan` : 'Emergency plan';
+        if (locText) locText.innerHTML = `Your current location: <strong>${coords}</strong> &nbsp;<a href="https://www.google.com/maps?q=${pos.coords.latitude},${pos.coords.longitude}" target="_blank" rel="noopener">Open in Maps</a>`;
+        drawAssemblyPointCanvas(factory, coords);
+      }, (err) => {
+        if (label) label.innerText = factory ? `${factory} — emergency plan` : 'Emergency plan';
+        if (locText) locText.innerText = 'Could not get your location (permission denied or unavailable). Showing the emergency plan photo only.';
+        drawAssemblyPointCanvas(factory);
+      }, { enableHighAccuracy: true, timeout: 10000 });
+    }
+
+    /* =====================================================================
+       NEW MODULE: MEETING PERSONS DIRECTORY (WhatsApp)
+       Admin-maintained list of people visitors can select as "Person to
+       Meet". Each entry carries a WhatsApp number set in advance by Admin —
+       used to automatically notify that person over WhatsApp the moment a
+       visitor's pass is generated for them.
+       ===================================================================== */
+    function getMeetingPersons() { return LocalDB.get('meetingPersons', []); }
+    function getMeetingPersonWhatsapp(name) {
+      const m = getMeetingPersons().find(p => p.name === name);
+      return m ? m.whatsapp : '';
+    }
+    function addMeetingPerson(e) {
+      e.preventDefault();
+      const name = document.getElementById('mpName').value.trim();
+      const whatsapp = document.getElementById('mpWhatsapp').value.trim();
+      if (!name || !whatsapp) return;
+      const list = getMeetingPersons();
+      list.push({ id: Date.now(), name, whatsapp });
+      LocalDB.set('meetingPersons', list);
+      logActivity('Meeting person added', `${name} (${whatsapp})`);
+      e.target.reset();
+      renderMeetingPersons();
+      populateMeetingPersonSelects();
+    }
+    function deleteMeetingPerson(id) {
+      LocalDB.set('meetingPersons', getMeetingPersons().filter(p => p.id !== id));
+      renderMeetingPersons();
+      populateMeetingPersonSelects();
+    }
+    function renderMeetingPersons() {
+      const el = document.getElementById('meetingPersonList');
+      if (!el) return;
+      const list = getMeetingPersons();
+      el.innerHTML = list.map(p => `
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border)">
+          <span><strong>${escapeHtml(p.name)}</strong> — ${escapeHtml(p.whatsapp)}</span>
+          <button class="btn-danger btn-sm" onclick="deleteMeetingPerson(${p.id})">Delete</button>
+        </div>`).join('') || '<p class="small" style="color:grey">No meeting persons added yet.</p>';
+    }
+    function populateMeetingPersonSelects() {
+      const list = getMeetingPersons();
+      ['visPersonMeet', 'ciPersonMeet'].forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        const current = el.value;
+        el.innerHTML = '<option value="">Select Person to Meet</option>' + list.map(p => `<option value="${escapeHtml(p.name)}">${escapeHtml(p.name)}</option>`).join('');
+        if (current && list.some(p => p.name === current)) el.value = current;
+      });
+    }
+
+    /* =====================================================================
+       NEW MODULE: WHATSAPP AUTOMATION (VISITOR PASS)
+       No backend/WhatsApp Business API is available in this front-end-only
+       app, so "automatic" WhatsApp delivery is implemented as an
+       auto-opened, pre-filled wa.me link — the closest a static web app can
+       get to sending automatically. It fires the moment the pass is
+       generated (to the host, via their admin-set number) and the moment
+       checkout completes (to the visitor's own mobile).
+       ===================================================================== */
+    function normalizeWhatsappNumber(num) {
+      if (!num) return '';
+      let digits = String(num).replace(/[^\d]/g, '');
+      if (!digits) return '';
+      if (digits.length === 10) digits = '91' + digits; // assume Indian mobile if no country code given
+      return digits;
+    }
+    function openWhatsAppMessage(number, message) {
+      const digits = normalizeWhatsappNumber(number);
+      if (!digits) return false;
+      window.open(`https://wa.me/${digits}?text=${encodeURIComponent(message)}`, '_blank');
+      return true;
+    }
+    function sendCheckinWhatsAppToHost(v) {
+      const num = getMeetingPersonWhatsapp(v.person);
+      if (!num) return; // Admin hasn't set a WhatsApp number for this person yet
+      const msg = `Visitor Arrival — TARSONS PRODUCTS LTD\nVisitor: ${v.name} (${v.company || '-'})\nPurpose: ${v.purpose || '-'}\nFactory: ${v.factory || '-'}\nTime In: ${v.time || '-'}\nThey are here to meet you.`;
+      openWhatsAppMessage(num, msg);
+    }
+    function sendCheckoutWhatsAppToVisitor(v) {
+      if (!v.mobile) return;
+      const msg = `TARSONS PRODUCTS LTD — HSE Visitor Pass\nHi ${v.name}, you have been checked out.\nTime In: ${v.time || '-'}\nTime Out: ${v.checkoutTime || '-'}\nThank you for visiting ${v.factory || '-'}.`;
+      openWhatsAppMessage(v.mobile, msg);
     }
 
     /* =====================================================================
@@ -4139,15 +4306,16 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
               <div><span>Time In</span> ${escapeHtml(v.time || '-')}</div>
               ${v.checkoutTime ? `<div><span>Time Out</span> ${escapeHtml(v.checkoutTime)}</div>` : ''}
             </div>
-            ${(!publicView && !v.checkoutTime) ? `<button class="btn-danger btn-sm" style="margin-top:14px;width:100%" onclick="checkoutVisitor(${v.id})">Check Out Visitor</button>` : ''}
+            ${(!publicView && currentUser && !v.checkoutTime) ? `<button class="btn-danger btn-sm" style="margin-top:14px;width:100%" onclick="checkoutVisitor(${v.id})">Check Out Visitor</button>` : ''}
+            ${(publicView && !v.checkoutTime) ? `<p class="small" style="margin-top:14px;color:var(--muted)">Check-out can only be done by authorised gate/reception staff.</p>` : ''}
           </div>
           <div class="pass-card-foot">Pass ID TPL-VIS-${String(v.id).slice(-6)} • Valid for date of issue only</div>
         </div>`;
     }
-    function showDigitalPass(id) {
+    function showDigitalPass(id, publicView) {
       const v = LocalDB.get('visitors', []).find(x => x.id === id);
       if (!v) return;
-      document.getElementById('digitalPassContent').innerHTML = digitalPassInnerHtml(v, false);
+      document.getElementById('digitalPassContent').innerHTML = digitalPassInnerHtml(v, !!publicView);
       document.getElementById('digitalPassModal').style.display = 'flex';
     }
     function printDigitalPass() {
@@ -4174,6 +4342,11 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
       w.document.close(); w.focus(); setTimeout(() => w.print(), 400);
     }
     function checkoutVisitor(id) {
+      // Only an authorised, logged-in person (staff/admin) may check a
+      // visitor out — a visitor viewing their own pass via a self-service
+      // QR scan never sees this control (see digitalPassInnerHtml's
+      // publicView gate), but guard here too in case it's ever called directly.
+      if (!currentUser) { alert('Only authorised staff can check out a visitor. Please log in.'); return; }
       const list = LocalDB.get('visitors', []);
       const v = list.find(x => x.id === id);
       if (!v) return;
@@ -4182,6 +4355,7 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
       logActivity('Visitor checked out', `${v.name} (${v.company || ''})`);
       renderVisitors();
       showDigitalPass(id);
+      sendCheckoutWhatsAppToVisitor(v);
     }
 
     /* --- Public visitor self check-in (reached by scanning the QR Hub's
@@ -4190,6 +4364,7 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
     function openSelfCheckin(factory) {
       pendingCheckinFactory = factory || '';
       document.getElementById('ciFactory').value = pendingCheckinFactory || 'Not specified';
+      populateMeetingPersonSelects();
       document.getElementById('checkinModal').style.display = 'flex';
     }
     function submitSelfCheckin(e) {
@@ -4212,7 +4387,8 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
       logActivity('Visitor self check-in', `${v.name} (${v.company || ''}) via QR`);
       document.getElementById('checkinModal').style.display = 'none';
       e.target.reset();
-      showDigitalPass(v.id);
+      showDigitalPass(v.id, true);
+      sendCheckinWhatsAppToHost(v);
     }
 
     /* =====================================================================
@@ -4518,7 +4694,13 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
         navTo('contact');
       } else if (scan === 'pass') {
         const id = parseInt(params.get('id'), 10);
-        if (id) setTimeout(() => showDigitalPass(id), 60);
+        // A visitor scanning their own pass QR (not logged in) only ever gets
+        // the read-only public view — no Check-Out control. An authorised,
+        // logged-in staff member scanning the same QR at the gate gets the
+        // full view with Check-Out available.
+        if (id) setTimeout(() => showDigitalPass(id, !currentUser), 60);
+      } else if (scan === 'assembly') {
+        setTimeout(() => openAssemblyPointView(params.get('factory') || ''), 60);
       }
     }
     document.addEventListener('DOMContentLoaded', () => { setTimeout(handleScanLanding, 400); });
@@ -4921,6 +5103,7 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
       if (t === 'materials') renderTrainingMaterials();
       if (t === 'evaluation') { populateEvalBatchSelect(); renderTrainingEvals(); }
       if (t === 'ehsreport') renderEHSFormsGrid();
+      if (t === 'visitor') { renderMeetingPersons(); populateMeetingPersonSelects(); }
     }
 
     // =========================================================================
@@ -6482,6 +6665,7 @@ for (let i = 0; i < 14; i++) {   // 14 months
         list.unshift(v);
         LocalDB.set('visitors', list);
         renderVisitors(); generateVisitorCertificate(v); e.target.reset();
+        sendCheckinWhatsAppToHost(v);
     }
     function renderVisitors() {
         const list = LocalDB.get('visitors', []);
@@ -7401,10 +7585,6 @@ TARSONS HSE Portal`;
     // --- NEW MODULES: window bindings (module scope, so inline onclick/
     // onsubmit/oninput handlers need these exposed on window explicitly,
     // same as every other function above) ---
-    window.openGlobalSearch = openGlobalSearch;
-    window.closeGlobalSearch = closeGlobalSearch;
-    window.runGlobalSearch = runGlobalSearch;
-    window.goToSearchResult = goToSearchResult;
     window.showQR = showQR;
     window.generateCheckinQR = generateCheckinQR;
     window.generateAssemblyQR = generateAssemblyQR;
@@ -7413,6 +7593,15 @@ TARSONS HSE Portal`;
     window.renderQrHub = renderQrHub;
     window.openSosQuickPanel = openSosQuickPanel;
     window.renderSosPage = renderSosPage;
+    window.renderEmergencyPlanUploadGrid = renderEmergencyPlanUploadGrid;
+    window.uploadEmergencyPlanPhoto = uploadEmergencyPlanPhoto;
+    window.openAssemblyPointView = openAssemblyPointView;
+    window.refreshAssemblyPointLocation = refreshAssemblyPointLocation;
+    window.requireQrHubAndGo = requireQrHubAndGo;
+    window.addMeetingPerson = addMeetingPerson;
+    window.deleteMeetingPerson = deleteMeetingPerson;
+    window.renderMeetingPersons = renderMeetingPersons;
+    window.populateMeetingPersonSelects = populateMeetingPersonSelects;
     window.showDigitalPass = showDigitalPass;
     window.printDigitalPass = printDigitalPass;
     window.checkoutVisitor = checkoutVisitor;
