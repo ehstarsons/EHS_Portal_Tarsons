@@ -68,6 +68,35 @@
     --shadow-sm:0 2px 8px rgba(10,26,47,.06);
     --shadow-md:0 10px 30px rgba(10,26,47,.12);
     --shadow-lg:0 20px 60px rgba(4,10,24,.35);
+
+    /* ---------- Step 1: extended premium-enterprise tokens ----------
+       Additive only — every token above is untouched, so any existing
+       rule referencing var(--shadow-md) etc. keeps working exactly as
+       before. These new tokens are opt-in for redesigned surfaces. */
+    --radius-lg:18px;
+    --radius-xl:22px;
+    --radius-pill:999px;
+    --shadow-xs:0 1px 3px rgba(10,26,47,.05);
+    --shadow-card:0 1px 2px rgba(10,26,47,.04), 0 8px 24px rgba(10,26,47,.08);
+    --shadow-hover:0 4px 10px rgba(10,26,47,.06), 0 16px 40px rgba(10,26,47,.14);
+    --shadow-glow-accent:0 8px 24px rgba(18,183,106,.22);
+    --shadow-glow-info:0 8px 24px rgba(11,125,191,.22);
+    --shadow-glow-warn:0 8px 24px rgba(245,165,36,.22);
+    --shadow-glow-danger:0 8px 24px rgba(229,72,77,.22);
+    --glass-bg:rgba(255,255,255,.72);
+    --glass-border:rgba(255,255,255,.55);
+    --glass-bg-dark:rgba(16,30,44,.6);
+    --glass-border-dark:rgba(255,255,255,.08);
+    --ease-standard:cubic-bezier(.2,.8,.2,1);
+    --ease-spring:cubic-bezier(.2,.9,.3,1.2);
+    --dur-fast:.15s;
+    --dur-base:.22s;
+    --dur-slow:.4s;
+    --kpi-good:#12b76a;
+    --kpi-info:#0b7dbf;
+    --kpi-warn:#f5a524;
+    --kpi-danger:#e5484d;
+    --kpi-violet:#7a5cf0;
   }
   *{box-sizing:border-box}
   html{scroll-behavior:smooth}
@@ -94,10 +123,10 @@
   /* ---------- Header ---------- */
   header{
     position:sticky;top:0;z-index:60;color:white;padding:10px 0 0;
-    background:linear-gradient(100deg,var(--accent-3),var(--accent-2) 70%);
+    background:linear-gradient(100deg,rgba(11,125,191,.92),rgba(14,201,176,.92) 70%);
     box-shadow:0 8px 24px rgba(2,10,20,.35);
-    transition:box-shadow .25s ease, padding .25s ease;
-    backdrop-filter:blur(10px);
+    transition:box-shadow var(--dur-base) var(--ease-standard), padding var(--dur-base) var(--ease-standard);
+    backdrop-filter:blur(16px) saturate(140%);-webkit-backdrop-filter:blur(16px) saturate(140%);
   }
   header.scrolled{padding:7px 0 0;box-shadow:0 12px 34px rgba(2,10,20,.55)}
   .header-top{display:flex;align-items:center;justify-content:space-between;gap:14px;margin:0 8px;flex-wrap:wrap}
@@ -127,7 +156,7 @@
   .nav-strip::after{right:0;background:linear-gradient(270deg,var(--accent-2),transparent)}
   nav a{
     color:rgba(255,255,255,0.92);text-decoration:none;padding:9px 16px;border-radius:999px;
-    font-weight:600;font-size:13.5px;transition:all .18s ease;display:inline-block;white-space:nowrap;
+    font-weight:600;font-size:13.5px;transition:all var(--dur-fast) var(--ease-standard);display:inline-block;white-space:nowrap;
     background:rgba(255,255,255,.08);flex:0 0 auto;
   }
   nav a:hover{background:rgba(255,255,255,0.2);transform:translateY(-1px)}
@@ -234,26 +263,70 @@
   .card{
     background:linear-gradient(180deg,var(--panel),#ffffff);padding:20px;border-radius:var(--radius);
     box-shadow:var(--shadow-lg);margin-bottom:16px;border:1px solid rgba(255,255,255,.6);
-    animation:fadeUp .35s ease both;
+    animation:fadeUp .35s ease both;position:relative;
   }
+  .card::before{content:'';position:absolute;left:20px;right:20px;top:0;height:2px;border-radius:2px;
+    background:linear-gradient(90deg,var(--accent-3),var(--accent-2),var(--accent));opacity:.55}
   @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
   main section{animation:fadeUp .3s ease both}
   .hero{max-width:1200px;margin:20px auto;display:grid;grid-template-columns:1fr;gap:18px;padding:12px}
   .tiles{display:flex;gap:12px;flex-wrap:wrap}
   .tile{
-    flex:1 1 130px;padding:14px 16px;border-radius:14px;position:relative;
-    background:linear-gradient(135deg,rgba(18,183,106,0.1), rgba(11,125,191,0.08));
-    border:1px solid rgba(18,183,106,.15);transition:transform .18s, box-shadow .18s;
+    flex:1 1 130px;padding:16px 16px 15px;border-radius:var(--radius-lg);position:relative;overflow:hidden;
+    background:linear-gradient(180deg,#ffffff,rgba(18,183,106,.05) 180%);
+    border:1px solid rgba(18,183,106,.14);box-shadow:var(--shadow-card);
+    transition:transform var(--dur-base) var(--ease-standard), box-shadow var(--dur-base) var(--ease-standard), border-color var(--dur-base);
   }
-  .tile:hover{transform:translateY(-3px);box-shadow:var(--shadow-md)}
-  .tile-icon{position:absolute;top:12px;right:14px;font-size:18px;opacity:.55;filter:grayscale(.15)}
-  .tile-good{background:linear-gradient(135deg,rgba(18,183,106,.14),rgba(14,201,176,.06));border-color:rgba(18,183,106,.25)}
-  .tile-info{background:linear-gradient(135deg,rgba(11,125,191,.14),rgba(11,125,191,.05));border-color:rgba(11,125,191,.22)}
-  .tile-warn{background:linear-gradient(135deg,rgba(245,165,36,.16),rgba(245,165,36,.05));border-color:rgba(245,165,36,.25)}
+  .tile::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(180deg,var(--accent),var(--accent-2));opacity:.85}
+  .tile:hover{transform:translateY(-4px);box-shadow:var(--shadow-hover);border-color:rgba(18,183,106,.3)}
+  .tile-icon{position:absolute;top:12px;right:12px;font-size:16px;width:30px;height:30px;border-radius:9px;
+    display:flex;align-items:center;justify-content:center;background:rgba(18,183,106,.12);opacity:.9}
+  .tile-good{background:linear-gradient(180deg,#ffffff,rgba(18,183,106,.07) 180%);border-color:rgba(18,183,106,.22)}
+  .tile-good::before{background:linear-gradient(180deg,var(--accent),var(--accent-2))}
+  .tile-info{background:linear-gradient(180deg,#ffffff,rgba(11,125,191,.07) 180%);border-color:rgba(11,125,191,.2)}
+  .tile-info::before{background:linear-gradient(180deg,var(--accent-3),#3aa0e8)}
+  .tile-info .tile-icon{background:rgba(11,125,191,.12)}
+  .tile-warn{background:linear-gradient(180deg,#ffffff,rgba(245,165,36,.09) 180%);border-color:rgba(245,165,36,.22)}
+  .tile-warn::before{background:linear-gradient(180deg,#c97a06,var(--warning))}
+  .tile-warn .tile-icon{background:rgba(245,165,36,.15)}
   .tile-warn .big{background:linear-gradient(115deg,#c97a06,var(--warning));-webkit-background-clip:text;background-clip:text}
+  .tile-danger{background:linear-gradient(180deg,#ffffff,rgba(229,72,77,.08) 180%);border-color:rgba(229,72,77,.22)}
+  .tile-danger::before{background:linear-gradient(180deg,#ff6b6b,var(--danger))}
+  .tile-danger .tile-icon{background:rgba(229,72,77,.13)}
+  .tile-danger .big{background:linear-gradient(115deg,#c22a2f,var(--danger));-webkit-background-clip:text;background-clip:text}
   .big{font-size:24px;font-weight:800;background:linear-gradient(115deg,var(--accent-3),var(--accent));
     -webkit-background-clip:text;background-clip:text;color:transparent}
   .small{color:var(--muted);font-size:12.5px;font-weight:600;text-transform:uppercase;letter-spacing:.3px}
+
+  /* ---------- Step 1: KPI grid + executive components (additive) ---------- */
+  .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit, minmax(168px, 1fr));gap:14px}
+  .kpi-grid .tile{flex:none;padding:18px 16px 16px}
+  .kpi-grid .big{font-size:26px}
+  .tile-trend{position:absolute;bottom:12px;right:14px;font-size:10.5px;font-weight:700;padding:2px 7px 2px 6px;border-radius:var(--radius-pill);display:inline-flex;align-items:center;gap:3px}
+  .tile-trend.up{background:rgba(229,72,77,.12);color:var(--danger)}
+  .tile-trend.down{background:rgba(18,183,106,.12);color:var(--accent)}
+  .tile-trend.flat{background:rgba(91,122,132,.12);color:var(--muted)}
+
+  .section-head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin:26px 0 14px}
+  .section-head h3{margin:0;display:flex;align-items:center;gap:8px}
+  .section-head .sub{margin:0;color:var(--muted);font-size:12.5px;font-weight:500}
+  .live-pill{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;color:var(--accent);
+    background:rgba(18,183,106,.1);padding:4px 10px;border-radius:var(--radius-pill);letter-spacing:.3px}
+  .live-dot{width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 rgba(18,183,106,.5);animation:livePulse 2s infinite}
+  @keyframes livePulse{0%{box-shadow:0 0 0 0 rgba(18,183,106,.45)}70%{box-shadow:0 0 0 7px rgba(18,183,106,0)}100%{box-shadow:0 0 0 0 rgba(18,183,106,0)}}
+
+  /* Circular KPI ring — draws with CSS conic-gradient, value set inline via
+     style="--pct:NN" from JS; no external chart library needed. */
+  .kpi-ring{width:64px;height:64px;border-radius:50%;position:relative;flex:0 0 auto;
+    background:conic-gradient(var(--ring-color, var(--accent)) calc(var(--pct,0) * 1%), rgba(11,26,47,.08) 0);
+    display:flex;align-items:center;justify-content:center;transition:background 1s var(--ease-standard)}
+  .kpi-ring::before{content:'';position:absolute;inset:6px;border-radius:50%;background:var(--panel, #f4faf9)}
+  .kpi-ring span{position:relative;font-size:13px;font-weight:800;color:var(--text-dark)}
+
+  .skel{position:relative;overflow:hidden;background:rgba(11,26,47,.06);border-radius:8px;color:transparent!important}
+  .skel::after{content:'';position:absolute;inset:0;transform:translateX(-100%);
+    background:linear-gradient(90deg,transparent,rgba(255,255,255,.55),transparent);animation:skelShimmer 1.3s infinite}
+  @keyframes skelShimmer{100%{transform:translateX(100%)}}
 
   .factory-grid{display:grid;grid-template-columns:repeat(auto-fit, minmax(210px, 1fr));gap:14px;margin-top:16px}
   .factory-card{
@@ -348,6 +421,23 @@
   table{width:100%;border-collapse:collapse;color:var(--text-dark);margin-top:10px;font-size:13.5px}
   th,td{padding:11px 10px;border-bottom:1px solid var(--border);text-align:left}
   th{background:rgba(11,125,191,.06);font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.3px;color:var(--accent-3)}
+
+  /* ---------- Step 4: table system (additive) ----------
+     Wrap any existing <table> in <div class="table-scroll">...</div> to get
+     a bounded, independently-scrolling table with a header that stays put —
+     no JS required, works with tables exactly as they render today. */
+  .table-scroll{max-height:min(560px,70vh);overflow:auto;border-radius:var(--radius-sm);border:1px solid var(--border)}
+  .table-scroll table{margin-top:0}
+  .table-scroll thead th{position:sticky;top:0;z-index:2;box-shadow:0 1px 0 var(--border)}
+  th.sortable{cursor:pointer;user-select:none;transition:color var(--dur-fast)}
+  th.sortable:hover{color:var(--accent)}
+  th.sortable::after{content:'⇅';margin-left:5px;font-size:10px;opacity:.4}
+  th.sortable.sort-asc::after{content:'↑';opacity:1;color:var(--accent)}
+  th.sortable.sort-desc::after{content:'↓';opacity:1;color:var(--accent)}
+  .table-toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:10px 0}
+  .table-toolbar input[type="search"],.table-toolbar input[type="text"]{max-width:260px}
+  .table-empty{text-align:center;color:var(--muted);padding:34px 12px;font-size:13px}
+  .table-empty .te-icon{font-size:26px;display:block;margin-bottom:6px;opacity:.6}
 
   /* ---------- Dark mode ---------- */
   body.dark-theme{--panel:#132234;--text-dark:#e8f0f2;--border:#24384a;--muted:#8fa3ad}
@@ -462,6 +552,28 @@
   .admin-tab-btn{padding:10px 20px;cursor:pointer;font-weight:700;border-radius:999px;font-size:13.5px;color:var(--muted);transition:all .15s;white-space:nowrap;flex:0 0 auto;background:rgba(0,0,0,.03)}
   .admin-tab-btn:hover{color:var(--text-dark);background:rgba(0,0,0,.06)}
   .admin-tab-btn.active{background:linear-gradient(115deg,var(--accent-3),var(--accent-2));color:white;box-shadow:0 6px 16px rgba(11,125,191,.3)}
+
+  /* ---------- Step 5: global "add record" panel upgrade ----------
+     Every module's add-form wrapper (HIRA, Waste, Extinguishers, CAPA,
+     Audit, PPE, Training, Legal, Policies, Gallery, Blog, Contact, plus
+     the 2 mail-preview boxes) shares the same inline
+     style="background:#f9f9f9;..." — matching the file's own dark-theme
+     override on this pattern (see body.dark-theme rule above). One rule
+     here upgrades every one of those panels to a premium glass surface
+     with a gradient accent bar, with zero HTML changes required. */
+  [style*="background:#f9f9f9"]{
+    background:linear-gradient(180deg,#fbfdfd,#f2f7f6) !important;
+    border:1px solid var(--border) !important;
+    border-left:none !important;
+    box-shadow:var(--shadow-xs);
+    position:relative;padding-left:19px !important;
+  }
+  [style*="background:#f9f9f9"]::before{
+    content:'';position:absolute;left:0;top:0;bottom:0;width:4px;
+    border-radius:8px 0 0 8px;background:linear-gradient(180deg,var(--accent-3),var(--accent-2));
+  }
+  [style*="background:#f9f9f9"] h4{color:var(--accent-3);display:flex;align-items:center;gap:6px;margin-bottom:10px}
+  [style*="background:#f9f9f9"] h4::before{content:'✚';font-size:13px;background:rgba(11,125,191,.12);width:22px;height:22px;border-radius:7px;display:inline-flex;align-items:center;justify-content:center}
 
   /* ---------- My Account ---------- */
   .account-grid{display:grid;grid-template-columns:300px 1fr;gap:16px;align-items:start;max-width:820px}
@@ -931,6 +1043,30 @@
     #mobileMenuBtn{display:flex !important}
   }
 
+  /* ---------- Step 3: mobile bottom navigation (native-app feel) ---------- */
+  #bottomNav{
+    display:none;position:fixed;left:0;right:0;bottom:0;z-index:900;
+    background:rgba(255,255,255,.88);backdrop-filter:blur(14px) saturate(140%);-webkit-backdrop-filter:blur(14px) saturate(140%);
+    border-top:1px solid var(--border);box-shadow:0 -6px 24px rgba(10,26,47,.1);
+    padding:6px 4px calc(6px + env(safe-area-inset-bottom,0px));
+  }
+  #bottomNav ul{list-style:none;margin:0;padding:0;display:flex;justify-content:space-around;align-items:stretch}
+  #bottomNav a{
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+    flex:1 1 0;padding:5px 2px;border-radius:12px;color:var(--muted);text-decoration:none;
+    font-size:10px;font-weight:700;transition:color var(--dur-fast), background var(--dur-fast);
+  }
+  #bottomNav a .bnav-icon{font-size:19px;line-height:1}
+  #bottomNav a.active{color:var(--accent-3);background:rgba(11,125,191,.08)}
+  body.dark-theme #bottomNav{background:rgba(10,20,32,.9);border-color:#24384a}
+  body.dark-theme #bottomNav a{color:#8fa3ad}
+  body.dark-theme #bottomNav a.active{color:#7fd4ff;background:rgba(127,212,255,.1)}
+  @media (max-width:760px){
+    #bottomNav{display:block}
+    body{padding-bottom:66px}
+    #complaintBtn{bottom:78px}
+  }
+
   /* ---------- Complaint / Suggestion Box (hover widget, all pages) ---------- */
   #complaintBtn{
     position:fixed;bottom:25px;left:25px;width:60px;height:60px;
@@ -1017,6 +1153,111 @@
   .toast.toast-success{border-left:4px solid var(--accent)}
   .toast.toast-info{border-left:4px solid var(--accent-3)}
   @media (max-width:480px){ #toastStack{top:auto;bottom:14px} }
+
+  /* ---------- NEW MODULES: Global Search ---------- */
+  #globalSearchModal{position:fixed;left:0;top:0;right:0;bottom:0;background:rgba(4,10,20,0.78);display:none;
+    align-items:flex-start;justify-content:center;z-index:10500;backdrop-filter:blur(4px);padding:12vh 16px 16px;
+    animation:overlayIn .15s ease both;}
+  #globalSearchBox{width:100%;max-width:640px;background:white;border-radius:16px;box-shadow:var(--shadow-lg);
+    overflow:hidden;animation:modalIn .2s cubic-bezier(.2,.9,.3,1.2) both;max-height:74vh;display:flex;flex-direction:column;}
+  body.dark-theme #globalSearchBox{background:#101e2c;color:#e8f0f2}
+  #globalSearchInputWrap{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--border)}
+  body.dark-theme #globalSearchInputWrap{border-color:#24384a}
+  #globalSearchInput{border:none;outline:none;font-size:16px;flex:1;background:transparent;color:inherit}
+  #globalSearchResults{overflow-y:auto;padding:6px}
+  .gs-empty{padding:40px 20px;text-align:center;color:var(--muted);font-size:13.5px}
+  .gs-group-label{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);padding:10px 14px 4px}
+  .gs-item{display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:10px;cursor:pointer;transition:background .12s}
+  .gs-item:hover{background:rgba(11,125,191,.08)}
+  .gs-item-icon{font-size:18px;flex:0 0 auto;width:32px;height:32px;border-radius:9px;background:rgba(11,125,191,.1);display:flex;align-items:center;justify-content:center}
+  .gs-item-title{font-weight:700;font-size:13.5px}
+  .gs-item-sub{font-size:11.5px;color:var(--muted)}
+  .gs-kbd{font-size:10.5px;color:var(--muted);border:1px solid var(--border);border-radius:5px;padding:1px 6px;margin-left:auto}
+  #searchBtn{width:38px;padding:9px 0}
+
+  /* ---------- NEW MODULES: QR Hub ---------- */
+  .qr-hub-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;margin-top:14px}
+  .qr-hub-card{background:white;border:1px solid var(--border);border-radius:14px;padding:16px;text-align:center;box-shadow:var(--shadow-sm);cursor:pointer;transition:transform .15s, box-shadow .15s}
+  .qr-hub-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-md)}
+  body.dark-theme .qr-hub-card{background:#101e2c;border-color:#24384a}
+  .qr-hub-icon{font-size:28px;margin-bottom:6px}
+  .qr-hub-title{font-weight:800;font-size:13.5px}
+  .qr-hub-sub{font-size:11.5px;color:var(--muted);margin-top:2px}
+
+  /* ---------- NEW MODULES: Digital Visitor Pass ---------- */
+  #digitalPassModal, #checkinModal, #inspectionDetailModal, #capaStepModal{position:fixed;left:0;top:0;right:0;bottom:0;background:rgba(4,10,20,0.78);
+    display:none;align-items:center;justify-content:center;z-index:10200;backdrop-filter:blur(4px);padding:16px;animation:overlayIn .18s ease both;}
+  #digitalPassBox{width:100%;max-width:380px}
+  #checkinBox, #inspectionDetailBox, #capaStepBox{width:100%;max-width:560px;background:white;padding:22px;border-radius:18px;color:var(--text-dark);max-height:90vh;overflow-y:auto;box-shadow:var(--shadow-lg);animation:modalIn .22s cubic-bezier(.2,.9,.3,1.2) both}
+  body.dark-theme #checkinBox, body.dark-theme #inspectionDetailBox, body.dark-theme #capaStepBox{background:#101e2c;color:#e8f0f2}
+  .pass-card{background:linear-gradient(150deg,#0b7dbf,#0ec9b0 130%);border-radius:20px;padding:0;overflow:hidden;box-shadow:var(--shadow-lg);color:white}
+  .pass-card-head{padding:18px 20px 14px;display:flex;justify-content:space-between;align-items:flex-start}
+  .pass-card-head .name{font-weight:800;font-size:11px;letter-spacing:.6px;text-transform:uppercase;opacity:.85}
+  .pass-card-status{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;background:rgba(255,255,255,.22);padding:3px 10px;border-radius:20px}
+  .pass-card-status.checked-out{background:rgba(0,0,0,.28)}
+  .pass-card-body{background:white;color:var(--text-dark);margin:0 10px 10px;border-radius:14px;padding:18px;text-align:center}
+  body.dark-theme .pass-card-body{background:#0c1826;color:#e8f0f2}
+  .pass-card-visitor{font-size:19px;font-weight:800;margin-top:4px}
+  .pass-card-company{font-size:12.5px;color:var(--muted);margin-bottom:12px}
+  .pass-card-qr img{width:150px;height:150px;border-radius:10px;border:1px solid var(--border)}
+  .pass-card-fields{text-align:left;margin-top:14px;display:grid;gap:7px;font-size:12.5px}
+  .pass-card-fields div span:first-child{color:var(--muted);font-weight:700;display:inline-block;min-width:110px}
+  .pass-card-foot{padding:12px 20px 18px;text-align:center;font-size:10.5px;opacity:.85}
+
+  /* ---------- NEW MODULES: SOS ---------- */
+  #sosFab{position:fixed;bottom:24px;left:24px;z-index:8500;width:56px;height:56px;border-radius:50%;
+    background:linear-gradient(135deg,#e5484d,#c0272c);color:white;border:none;font-size:22px;font-weight:800;
+    box-shadow:0 8px 24px rgba(229,72,77,.45);cursor:pointer;display:flex;align-items:center;justify-content:center;
+    animation:sosPulse 2.2s ease-in-out infinite;}
+  @keyframes sosPulse{0%,100%{box-shadow:0 8px 24px rgba(229,72,77,.45)}50%{box-shadow:0 8px 30px rgba(229,72,77,.75), 0 0 0 8px rgba(229,72,77,.12)}}
+  #sosFab:hover{transform:scale(1.06)}
+  @media (max-width:480px){ #sosFab{bottom:90px;left:16px;width:48px;height:48px;font-size:18px} }
+  .sos-quick-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:14px}
+  .sos-quick-btn{display:flex;flex-direction:column;align-items:center;gap:4px;padding:16px 8px;border-radius:14px;
+    background:rgba(229,72,77,.08);border:1px solid rgba(229,72,77,.25);text-decoration:none;color:var(--text-dark);font-weight:700;font-size:12.5px}
+  .sos-quick-btn:hover{background:rgba(229,72,77,.16)}
+  body.dark-theme .sos-quick-btn{color:#e8f0f2}
+  .sos-quick-btn .sqi{font-size:24px}
+
+  /* ---------- NEW MODULES: Audits & Inspections ---------- */
+  .insp-score-ring{width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-weight:800;font-size:15px;color:white;flex:0 0 auto;transition:background .25s}
+  .insp-score-bar{display:flex;align-items:center;gap:16px;padding:14px 16px;border-radius:14px;
+    background:linear-gradient(120deg,rgba(11,125,191,.07),rgba(14,201,176,.07));margin-bottom:16px}
+  .insp-checklist-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+  .insp-check-card{background:white;border:1.5px solid var(--border);border-radius:14px;padding:14px;
+    transition:border-color .15s, box-shadow .15s;box-shadow:var(--shadow-sm)}
+  body.dark-theme .insp-check-card{background:#101e2c;border-color:#24384a}
+  .insp-check-card.failed{border-color:var(--danger);background:rgba(229,72,77,.05)}
+  body.dark-theme .insp-check-card.failed{background:rgba(229,72,77,.1)}
+  .insp-check-top{display:flex;gap:10px;align-items:flex-start;margin-bottom:12px}
+  .insp-check-num{flex:0 0 auto;width:24px;height:24px;border-radius:7px;background:rgba(11,125,191,.12);
+    color:var(--accent-3);font-weight:800;font-size:12px;display:flex;align-items:center;justify-content:center}
+  .insp-check-text{font-size:13px;font-weight:600;line-height:1.35}
+  .insp-check-toggle{display:flex;gap:8px}
+  .insp-toggle-btn{flex:1;padding:8px 4px;border-radius:9px;border:1.5px solid var(--border);background:transparent;
+    font-weight:700;font-size:12px;cursor:pointer;color:var(--muted);transition:all .15s}
+  body.dark-theme .insp-toggle-btn{border-color:#24384a}
+  .insp-toggle-btn.pass.active{background:var(--accent);border-color:var(--accent);color:white}
+  .insp-toggle-btn.fail.active{background:var(--danger);border-color:var(--danger);color:white}
+  .insp-finding-card{display:flex;align-items:center;gap:12px;padding:12px;border-radius:12px;
+    background:rgba(229,72,77,.06);margin-bottom:8px}
+  body.dark-theme .insp-finding-card{background:rgba(229,72,77,.12)}
+  .insp-finding-card.untracked{background:rgba(140,150,160,.09)}
+  body.dark-theme .insp-finding-card.untracked{background:rgba(140,150,160,.14)}
+  .insp-finding-num{flex:0 0 auto;width:24px;height:24px;border-radius:50%;background:var(--danger);color:white;
+    font-weight:800;font-size:11.5px;display:flex;align-items:center;justify-content:center}
+  .insp-finding-text{font-size:13px;font-weight:700}
+  .insp-finding-status-select{width:auto;flex:0 0 auto;padding:6px 8px;font-size:12px;border-radius:8px}
+
+  /* ---------- NEW MODULES: Corrective Action (CAPA) selection step ---------- */
+  .capa-step-row{border:1px solid var(--border);border-radius:12px;padding:12px;margin-top:10px}
+  body.dark-theme .capa-step-row{border-color:#24384a}
+  .capa-step-check{display:flex;gap:8px;align-items:flex-start;font-weight:700;font-size:13px;cursor:pointer}
+  .capa-step-check input{margin-top:3px}
+  .capa-step-fields{display:grid;grid-template-columns:1fr 160px;gap:8px;margin-top:8px;transition:opacity .15s}
+  .capa-step-fields input{font-size:12.5px;padding:7px 9px}
+  @media (max-width:480px){ .capa-step-fields{grid-template-columns:1fr} }
 </style>
 </head>
 <body>
@@ -1064,6 +1305,18 @@
     </div>
   </div>
 
+  <button id="sosFab" onclick="openSosQuickPanel()" title="Emergency SOS">SOS</button>
+
+  <nav id="bottomNav" aria-label="Primary">
+    <ul>
+      <li><a href="#" data-nav="home" onclick="navTo('home')"><span class="bnav-icon">🏠</span>Home</a></li>
+      <li><a href="#" data-nav="dashboard" onclick="requireAuthAndGo('dashboard')"><span class="bnav-icon">🚨</span>Report</a></li>
+      <li><a href="#" data-nav="ptw" onclick="requireAuthAndGo('ptw')"><span class="bnav-icon">📝</span>PTW</a></li>
+      <li><a href="#" data-nav="training" onclick="requireAuthAndGo('training')"><span class="bnav-icon">🎓</span>Training</a></li>
+      <li><a href="#" onclick="toggleMobileMenu()"><span class="bnav-icon">☰</span>More</a></li>
+    </ul>
+  </nav>
+
   <header>
     <div class="container header-top">
       <div class="brand">
@@ -1072,6 +1325,7 @@
         <div class="subtitle"><div class="subject">HSE Portal</div></div></div>
       </div>
       <div class="header-actions">
+        <button class="ghost" id="searchBtn" onclick="openGlobalSearch()" title="Search everything (Ctrl+K)">🔍</button>
         <button class="ghost" id="themeToggleBtn" onclick="toggleTheme()" title="Toggle dark mode" style="width:38px;padding:9px 0">🌙</button>
         <div class="bell-wrapper" onclick="openNotifications()">
            <span class="bell-icon">🔔</span>
@@ -1103,7 +1357,9 @@
         <li><a href="#" data-nav="gallery" onclick="navTo('gallery')">🖼️ EHS Gallery</a></li>
         <li><a href="#" data-nav="blog" onclick="navTo('blog')">📰 Blog/News</a></li>
         <li><a href="#" data-nav="policies" onclick="navTo('policies')">📄 Policies</a></li>
-        <li><a href="#" data-nav="contact" onclick="navTo('contact')">☎ Contact</a></li>
+        <li><a href="#" data-nav="contact" onclick="navTo('contact')">🆘 Emergency SOS</a></li>
+        <li><a href="#" data-nav="inspections" onclick="requireAuthAndGo('inspections')">🔍 Audits/Inspections</a></li>
+        <li><a href="#" data-nav="qrhub" onclick="requireAuthAndGo('qrhub')">🔗 QR Hub</a></li>
         <li><a href="#" data-nav="adminSection" onclick="requireAuthAndGo('adminSection')">🛠️ Admin</a></li>
       </ul>
     </nav>
@@ -1122,40 +1378,44 @@
                 </div>
                  <div id="activeNoticesList"></div>
             </div>
-            
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-              <h2>Company-Wide HSE Overview</h2>
+
+            <div class="section-head" style="margin-top:6px">
+              <h3>🎯 Executive Command Center <span class="live-pill"><span class="live-dot"></span>Live</span></h3>
               <div class="officer-only"><button class="btn-action btn-sm" onclick="openSiteStats()">Update Factory Stats</button></div>
             </div>
-            
-            <div class="tiles" style="margin-top:15px">
+            <p class="sub" style="margin:-6px 0 14px;color:var(--muted);font-size:12.5px">Company-wide EHS overview, refreshed automatically as new reports, PTWs and compliance records come in.</p>
+
+            <div class="kpi-grid">
               <div class="tile tile-good"><div class="tile-icon">🛡️</div><div class="small">Safe Days</div><div class="big" id="safeDays">0</div></div>
               <div class="tile tile-info"><div class="tile-icon">📋</div><div class="small">Total Reports</div><div class="big" id="totalReports">0</div></div>
               <div class="tile tile-warn"><div class="tile-icon">⚠️</div><div class="small">Accident Ratio</div><div class="big" id="accRatio">0%</div></div>
               <div class="tile tile-info"><div class="tile-icon">📝</div><div class="small">Open PTWs</div><div class="big" id="openPTWs">0</div></div>
               <div class="tile tile-warn" title="Near Miss + Unsafe Condition reports logged"><div class="tile-icon">👁️</div><div class="small">Near Miss / Unsafe</div><div class="big" id="nearMissTile">0</div></div>
+              <div class="tile tile-warn" title="CAPA items not yet Closed"><div class="tile-icon">🛠️</div><div class="small">Open CAPA</div><div class="big" id="openCapaKpi">0</div></div>
+              <div class="tile tile-danger" title="Statutory licenses expiring within 30 days"><div class="tile-icon">⚖️</div><div class="small">Legal Alerts</div><div class="big" id="legalAlertsKpi">0</div></div>
+              <div class="tile tile-danger" title="Fire extinguishers due for inspection within 30 days"><div class="tile-icon">🧯</div><div class="small">Extinguishers Due</div><div class="big" id="extDueKpi">0</div></div>
             </div>
-            
-            <div style="margin-top:28px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
-              <h3 style="margin:0">🏭 Unit-wise HSE Performance</h3>
-              <p class="small" style="margin:0;color:var(--muted);text-transform:none;font-weight:500;">Safe days, incidents/accidents and reports, broken down by factory/unit.</p>
+
+            <div class="section-head">
+              <h3>🏭 Unit-wise HSE Performance</h3>
+              <p class="sub">Safe days, incidents/accidents and reports, broken down by factory/unit.</p>
             </div>
             <div id="factoriesContainer" class="factory-grid"></div>
             
             <div id="expiryAlertSection"></div>
             
-            <div style="margin-top:24px;">
-              <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
-                <h3 style="margin:0">📈 Incident Trend</h3>
-                <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-                  <span class="small" id="trendDelta" style="font-weight:700"></span>
-                  <select id="trendRange" onchange="renderChart()" style="width:130px;padding:6px 10px;font-size:12.5px">
-                    <option value="6">Last 6 months</option>
-                    <option value="12">Last 12 months</option>
-                  </select>
-                </div>
+            <div class="section-head">
+              <h3>📈 Incident Trend</h3>
+              <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+                <span class="small" id="trendDelta" style="font-weight:700"></span>
+                <select id="trendRange" onchange="renderChart()" style="width:130px;padding:6px 10px;font-size:12.5px">
+                  <option value="6">Last 6 months</option>
+                  <option value="12">Last 12 months</option>
+                </select>
               </div>
-              <div style="height:300px; position:relative; margin-top:10px;">
+            </div>
+            <div class="card" style="box-shadow:var(--shadow-card);margin-bottom:0">
+              <div style="height:300px; position:relative;">
                 <canvas id="incidentChart"></canvas>
               </div>
               <div class="tiles" style="margin-top:12px" id="trendLegendTiles"></div>
@@ -1200,7 +1460,7 @@
           <select id="hiraFilter" onchange="renderHIRA()"><option value="">All Locations</option></select>
         </div>
         <div style="overflow-x:auto">
-          <table id="hiraTable"><thead><tr><th>Factory</th><th>Activity</th><th>Hazard</th><th>Risk Level</th><th>Controls</th><th class="admin-only">Action</th></tr></thead><tbody></tbody></table>
+          <div class="table-scroll"><table id="hiraTable"><thead><tr><th class="sortable" onclick="sortTable(this)">Factory</th><th class="sortable" onclick="sortTable(this)">Activity</th><th class="sortable" onclick="sortTable(this)">Hazard</th><th class="sortable" onclick="sortTable(this)">Risk Level</th><th>Controls</th><th class="admin-only">Action</th></tr></thead><tbody></tbody></table></div>
         </div>
         <button class="ghost-dark btn-sm" onclick="exportTableToExcel('hiraTable','HIRA_Register')" style="margin-top:10px">⬇ Excel</button>
       </div>
@@ -1252,7 +1512,7 @@
           <select id="wasteFilter" onchange="renderWaste()"><option value="">All Locations</option></select>
         </div>
         <div style="overflow-x:auto">
-          <table id="wasteTable"><thead><tr><th>Date</th><th>Factory</th><th>Category</th><th>Entry</th><th>Qty (Kg)</th><th>Location / Vendor</th><th class="admin-only">Action</th></tr></thead><tbody></tbody></table>
+          <div class="table-scroll"><table id="wasteTable"><thead><tr><th class="sortable" onclick="sortTable(this)">Date</th><th class="sortable" onclick="sortTable(this)">Factory</th><th class="sortable" onclick="sortTable(this)">Category</th><th>Entry</th><th class="sortable" onclick="sortTable(this)">Qty (Kg)</th><th>Location / Vendor</th><th class="admin-only">Action</th></tr></thead><tbody></tbody></table></div>
         </div>
         <button class="ghost-dark btn-sm" onclick="exportTableToExcel('wasteTable','Waste_Management_Register')" style="margin-top:10px">⬇ Excel</button>
       </div>
@@ -1265,7 +1525,6 @@
             <div class="admin-tab-btn" id="tabAccount" onclick="switchAdminTab('account')">🔑 My Account</div>
             <div class="admin-tab-btn active" id="tabExt" onclick="switchAdminTab('ext')">Fire Extinguishers</div>
             <div class="admin-tab-btn" id="tabCapa" onclick="switchAdminTab('capa')">CAPA Tracker</div>
-            <div class="admin-tab-btn" id="tabAudit" onclick="switchAdminTab('audit')">Safety Audits</div>
             <div class="admin-tab-btn" id="tabComplaints" onclick="switchAdminTab('complaints')">Complaints/Suggestions</div>
             <div class="admin-tab-btn admin-only" id="tabActivity" onclick="switchAdminTab('activity')">Activity Log</div>
             <div class="admin-tab-btn admin-only" id="tabUsers" onclick="switchAdminTab('users')">Manage Users</div>
@@ -1303,7 +1562,7 @@
                     <button class="ghost-dark" onclick="printExtRegister()">Print Report</button>
                  </div>
             </div>
-            <div style="overflow-x:auto"><table id="extTable"><thead><tr><th>Factory</th><th>ID</th><th>Type</th><th>Capacity</th><th>Installed Area</th><th>Due Date</th><th>Status</th><th>QR</th><th class="admin-only">Action</th></tr></thead><tbody></tbody></table></div>
+            <div style="overflow-x:auto" class="table-scroll"><table id="extTable"><thead><tr><th class="sortable" onclick="sortTable(this)">Factory</th><th class="sortable" onclick="sortTable(this)">ID</th><th class="sortable" onclick="sortTable(this)">Type</th><th>Capacity</th><th>Installed Area</th><th class="sortable" onclick="sortTable(this)">Due Date</th><th class="sortable" onclick="sortTable(this)">Status</th><th>QR</th><th class="admin-only">Action</th></tr></thead><tbody></tbody></table></div>
         </div>
 
         <div id="capaContainer" style="display:none">
@@ -1329,7 +1588,7 @@
                 <h3>Open & Closed Actions</h3>
                 <button class="ghost-dark btn-sm" onclick="exportTableToExcel('capaTable','CAPA_Tracker')">⬇ Excel</button>
             </div>
-            <div style="overflow-x:auto"><table id="capaTable"><thead><tr><th>Factory</th><th>Source</th><th>Description</th><th>Owner</th><th>Due</th><th>Status</th><th class="admin-only">Action</th></tr></thead><tbody></tbody></table></div>
+            <div style="overflow-x:auto" class="table-scroll"><table id="capaTable"><thead><tr><th class="sortable" onclick="sortTable(this)">Factory</th><th class="sortable" onclick="sortTable(this)">Source</th><th>Description</th><th class="sortable" onclick="sortTable(this)">Owner</th><th class="sortable" onclick="sortTable(this)">Due</th><th class="sortable" onclick="sortTable(this)">Status</th><th class="admin-only">Action</th></tr></thead><tbody></tbody></table></div>
         </div>
 
         <div id="activityContainer" style="display:none">
@@ -1340,58 +1599,7 @@
                   <button class="btn-danger btn-sm admin-only" onclick="clearActivityLog()">🗑 Clear Log</button>
                 </div>
             </div>
-            <div style="overflow-x:auto"><table id="activityTable"><thead><tr><th>Time</th><th>User</th><th>Action</th><th>Detail</th></tr></thead><tbody></tbody></table></div>
-        </div>
-
-        <div id="auditContainer" style="display:none">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                <h3>Safety Audit Records</h3>
-                <button class="primary officer-only" onclick="toggleAuditForm()">Conduct New Audit</button>
-            </div>
-            <div id="auditFormBox" style="background:#f9f9f9;padding:15px;border-radius:8px;margin-bottom:15px; display:none;">
-              <h4>New Audit</h4>
-              <form onsubmit="addAudit(event)">
-                <div class="two-cols">
-                  <input id="auditDate" type="date" required>
-                  <select id="auditFactory" required></select>
-                 </div>
-                <div class="two-cols" style="margin-top:5px">
-                  <input id="auditAuditor" placeholder="Auditor" required>
-                  <input id="auditScore" type="number" min="0" max="100" placeholder="Score (0-100)" required readonly>
-                </div>
-                <div style="margin-top:10px; border-top:1px solid #eee; padding-top:10px;">
-                  <h5 style="margin:6px 0">Safety Checklist (20 items · 100 points)</h5>
-                  <div id="auditChecklist" class="audit-checklist">
-                    <label class="audit-item-row"><input type="checkbox" class="audit-item" data-points="5"><span><span class="audit-q-num">1.</span> Are employees wearing the required PPE correctly?</span></label>
-                    <label class="audit-item-row"><input type="checkbox" class="audit-item" data-points="5"><span><span class="audit-q-num">2.</span> Are all emergency exits and escape routes unobstructed?</span></label>
-                    <label class="audit-item-row"><input type="checkbox" class="audit-item" data-points="5"><span><span class="audit-q-num">3.</span> Are fire extinguishers accessible, inspected, and within the validity period?</span></label>
-                    <label class="audit-item-row"><input type="checkbox" class="audit-item" data-points="5"><span><span class="audit-q-num">4.</span> Are machines fitted with proper guards and emergency stop buttons?</span></label>
-                    <label class="audit-item-row"><input type="checkbox" class="audit-item" data-points="5"><span><span class="audit-q-num">5.</span> Is good housekeeping maintained (no oil spills, waste, or trip hazards)?</span></label>
-                    <label class="audit-item-row"><input type="checkbox" class="audit-item" data-points="5"><span><span class="audit-q-num">6.</span> Are chemicals properly labeled, and are SDS/MSDS available at the point of use?</span></label>
-                    <label class="audit-item-row"><input type="checkbox" class="audit-item" data-points="5"><span><span class="audit-q-num">7.</span> Is hazardous waste stored, labeled, and managed correctly?</span></label>
-                    <label class="audit-item-row"><input type="checkbox" class="audit-item" data-points="5"><span><span class="audit-q-num">8.</span> Are electrical panels safe, labeled, and free from exposed wiring?</span></label>
-                    <label class="audit-item-row"><input type="checkbox" class="audit-item" data-points="5"><span><span class="audit-q-num">9.</span> Are emergency contact numbers and evacuation maps displayed?</span></label>
-                    <label class="audit-item-row"><input type="checkbox" class="audit-item" data-points="5"><span><span class="audit-q-num">10.</span> Are first aid boxes available, stocked, and easily accessible?</span></label>
-                    <label class="audit-item-row"><input type="checkbox" class="audit-item" data-points="5"><span><span class="audit-q-num">11.</span> Are permits available and valid for hot work, confined space, work at height, or electrical work (where applicable)?</span></label>
-                    <label class="audit-item-row"><input type="checkbox" class="audit-item" data-points="5"><span><span class="audit-q-num">12.</span> Are unsafe conditions, near misses, and incidents reported and corrective actions implemented?</span></label>
-                    <label class="audit-item-row"><input type="checkbox" class="audit-item" data-points="5"><span><span class="audit-q-num">13.</span> Are employees aware of emergency procedures and the assembly point?</span></label>
-                    <label class="audit-item-row"><input type="checkbox" class="audit-item" data-points="5"><span><span class="audit-q-num">14.</span> Are air, water, oil, or chemical leaks observed during the site visit?</span></label>
-                    <label class="audit-item-row"><input type="checkbox" class="audit-item" data-points="5"><span><span class="audit-q-num">15.</span> Is waste segregation being followed according to the company's procedure?</span></label>
-                    <label class="audit-item-row"><input type="checkbox" class="audit-item" data-points="5"><span><span class="audit-q-num">16.</span> Are forklifts, material handling equipment, and storage racks being used safely?</span></label>
-                    <label class="audit-item-row"><input type="checkbox" class="audit-item" data-points="5"><span><span class="audit-q-num">17.</span> Are safety signs, warning labels, and floor markings visible and maintained?</span></label>
-                    <label class="audit-item-row"><input type="checkbox" class="audit-item" data-points="5"><span><span class="audit-q-num">18.</span> Are SOPs/Work Instructions available and being followed by operators?</span></label>
-                    <label class="audit-item-row"><input type="checkbox" class="audit-item" data-points="5"><span><span class="audit-q-num">19.</span> Are legal and environmental requirements (CTO, hazardous waste, emissions, etc.) being complied with?</span></label>
-                    <label class="audit-item-row"><input type="checkbox" class="audit-item" data-points="5"><span><span class="audit-q-num">20.</span> Are there any unsafe acts or unsafe conditions that require immediate corrective action?</span></label>
-                  </div>
-                </div>
-                 <div style="text-align:right;margin-top:8px">
-                  <button type="button" class="ghost-dark btn-sm" onclick="toggleAuditForm(false)">Cancel</button>
-                  <button type="submit" class="primary btn-sm">Save Audit</button>
-                </div>
-              </form>
-            </div>
-            <div style="overflow-x:auto"><table id="auditTable"><thead><tr><th>Date</th><th>Factory</th><th>Auditor</th><th>Score (/100)</th><th class="admin-only">Action</th></tr></thead><tbody></tbody></table></div>
-            <button class="ghost-dark btn-sm" onclick="exportTableToExcel('auditTable','Audit_Register')" style="margin-top:10px">⬇ Excel</button>
+            <div style="overflow-x:auto" class="table-scroll"><table id="activityTable"><thead><tr><th class="sortable" onclick="sortTable(this)">Time</th><th class="sortable" onclick="sortTable(this)">User</th><th class="sortable" onclick="sortTable(this)">Action</th><th>Detail</th></tr></thead><tbody></tbody></table></div>
         </div>
 
         <div id="complaintsContainer" style="display:none">
@@ -1406,7 +1614,7 @@
                 </div>
             </div>
             <div style="overflow-x:auto; margin-top:12px">
-                <table id="complaintsTable"><thead><tr><th>Type</th><th>Name</th><th>Date</th><th>Location</th><th>Complaint / Suggestion</th><th>Status</th><th>Target Date</th><th>Responsible Person/Dept.</th><th>Action</th></tr></thead><tbody></tbody></table>
+                <div class="table-scroll"><table id="complaintsTable"><thead><tr><th class="sortable" onclick="sortTable(this)">Type</th><th class="sortable" onclick="sortTable(this)">Name</th><th class="sortable" onclick="sortTable(this)">Date</th><th class="sortable" onclick="sortTable(this)">Location</th><th>Complaint / Suggestion</th><th class="sortable" onclick="sortTable(this)">Status</th><th class="sortable" onclick="sortTable(this)">Target Date</th><th>Responsible Person/Dept.</th><th>Action</th></tr></thead><tbody></tbody></table></div>
             </div>
         </div>
 
@@ -1529,7 +1737,7 @@
           <select id="dashFilter" onchange="renderDashboard()"><option value="">All Locations</option></select>
         </div>
         <div style="overflow-x:auto; margin-top:10px">
-          <table id="dashTable"><thead><tr><th>Date</th><th>Type</th><th>Reporter</th><th>Unit/Factory</th><th>Location</th><th>Severity</th><th>Injured Person</th><th>Description</th><th class="admin-only">Action</th></tr></thead><tbody></tbody></table>
+          <div class="table-scroll"><table id="dashTable"><thead><tr><th class="sortable" onclick="sortTable(this)">Date</th><th class="sortable" onclick="sortTable(this)">Type</th><th class="sortable" onclick="sortTable(this)">Reporter</th><th class="sortable" onclick="sortTable(this)">Unit/Factory</th><th class="sortable" onclick="sortTable(this)">Location</th><th class="sortable" onclick="sortTable(this)">Severity</th><th>Injured Person</th><th>Description</th><th class="admin-only">Action</th></tr></thead><tbody></tbody></table></div>
         </div>
         <button class="ghost-dark btn-sm" onclick="exportTableToExcel('dashTable','Incident_Accident_Register')" style="margin-top:15px">⬇ Excel</button>
       </div>
@@ -1554,7 +1762,7 @@
           <select id="ppeFilter" onchange="renderPPE()"><option value="">All Locations</option></select>
         </div>
         <div style="overflow-x:auto; margin-bottom: 20px;">
-            <table id="ppeTable"><thead><tr><th>Item</th><th>Location</th><th>Present Stock</th><th>Unit</th><th>Status</th><th class="ppe-add-only admin-only">Actions</th></tr></thead><tbody></tbody></table>
+            <div class="table-scroll"><table id="ppeTable"><thead><tr><th class="sortable" onclick="sortTable(this)">Item</th><th class="sortable" onclick="sortTable(this)">Location</th><th class="sortable" onclick="sortTable(this)">Present Stock</th><th>Unit</th><th class="sortable" onclick="sortTable(this)">Status</th><th class="ppe-add-only admin-only">Actions</th></tr></thead><tbody></tbody></table></div>
         </div>
         <button class="ghost-dark btn-sm" onclick="exportTableToExcel('ppeTable','PPE_Inventory')" style="margin-bottom:10px">⬇ Excel</button>
         
@@ -1564,7 +1772,7 @@
           <select id="ppeLogFilter" onchange="renderPPELogs()"><option value="">All Locations</option></select>
         </div>
         <div style="overflow-x:auto; max-height:250px;">
-             <table id="ppeLogTable"><thead><tr><th>Date</th><th>Employee</th><th>Emp ID</th><th>Item</th><th>Qty</th><th>Location</th><th class="admin-only">Action</th></tr></thead><tbody></tbody></table>
+             <div class="table-scroll"><table id="ppeLogTable"><thead><tr><th class="sortable" onclick="sortTable(this)">Date</th><th class="sortable" onclick="sortTable(this)">Employee</th><th>Emp ID</th><th class="sortable" onclick="sortTable(this)">Item</th><th class="sortable" onclick="sortTable(this)">Qty</th><th class="sortable" onclick="sortTable(this)">Location</th><th class="admin-only">Action</th></tr></thead><tbody></tbody></table></div>
         </div>
         <button class="ghost-dark btn-sm" onclick="exportTableToExcel('ppeLogTable','PPE_Issue_Log')" style="margin-top:10px">⬇ Excel</button>
       </div>
@@ -1648,10 +1856,10 @@
           </div>
           <h4 style="margin-top:6px">Visitor Log</h4>
           <div style="overflow-x:auto; max-height:240px;">
-            <table id="visitorTable">
-              <thead><tr><th>Name</th><th>Company</th><th>Mobile</th><th>Person to Meet</th><th>Issued Time</th><th>Brief</th><th>PPE</th><th>Factory</th><th>Actions</th></tr></thead>
+            <div class="table-scroll"><table id="visitorTable">
+              <thead><tr><th class="sortable" onclick="sortTable(this)">Name</th><th class="sortable" onclick="sortTable(this)">Company</th><th>Mobile</th><th>Person to Meet</th><th class="sortable" onclick="sortTable(this)">Issued Time</th><th>Brief</th><th>PPE</th><th class="sortable" onclick="sortTable(this)">Factory</th><th>Actions</th></tr></thead>
               <tbody></tbody>
-            </table>
+            </table></div>
           </div>
           <button class="ghost-dark btn-sm" onclick="exportTableToExcel('visitorTable','Visitor_Register')" style="margin-top:10px">⬇ Excel</button>
         </div>
@@ -1704,7 +1912,7 @@
             <button class="ghost-dark btn-sm" onclick="exportTableToExcel('evalTable','Training_Evaluations')">⬇ Excel</button>
           </div>
           <div style="overflow-x:auto;margin-bottom:20px">
-            <table id="evalTable"><thead><tr><th>Trainee</th><th>Module / Topic</th><th>Location</th><th>Training Date</th><th>Evaluation Date</th><th>Trainer</th><th>Score</th><th>Status</th><th>Retraining</th><th class="admin-only">Action</th></tr></thead><tbody></tbody></table>
+            <div class="table-scroll"><table id="evalTable"><thead><tr><th class="sortable" onclick="sortTable(this)">Trainee</th><th class="sortable" onclick="sortTable(this)">Module / Topic</th><th class="sortable" onclick="sortTable(this)">Location</th><th class="sortable" onclick="sortTable(this)">Training Date</th><th class="sortable" onclick="sortTable(this)">Evaluation Date</th><th>Trainer</th><th class="sortable" onclick="sortTable(this)">Score</th><th class="sortable" onclick="sortTable(this)">Status</th><th>Retraining</th><th class="admin-only">Action</th></tr></thead><tbody></tbody></table></div>
           </div>
         </div>
 
@@ -1788,10 +1996,10 @@
              <input id="ptwSearch" placeholder="Search by requester/location/desc" oninput="renderPTWList()" style="width:220px">
           </div>
           <div style="overflow-x:auto;">
-            <table id="ptwTable">
-              <thead><tr><th>ID</th><th>Date</th><th>Type</th><th>Factory</th><th>Location</th><th>Requester</th><th>Status</th><th class="ptw-add-only">Actions</th></tr></thead>
+            <div class="table-scroll"><table id="ptwTable">
+              <thead><tr><th class="sortable" onclick="sortTable(this)">ID</th><th class="sortable" onclick="sortTable(this)">Date</th><th class="sortable" onclick="sortTable(this)">Type</th><th class="sortable" onclick="sortTable(this)">Factory</th><th>Location</th><th class="sortable" onclick="sortTable(this)">Requester</th><th class="sortable" onclick="sortTable(this)">Status</th><th class="ptw-add-only">Actions</th></tr></thead>
               <tbody></tbody>
-             </table>
+             </table></div>
           </div>
           <button class="ghost-dark btn-sm" onclick="exportTableToExcel('ptwTable','PTW_Register')" style="margin-top:10px">⬇ Excel</button>
         </div>
@@ -1825,7 +2033,7 @@
           <select id="legFilter" onchange="renderLegalRegister()"><option value="">All Locations</option></select>
         </div>
         <div style="overflow-x:auto">
-          <table id="legalTable"><thead><tr><th>Act/Rule</th><th>License/Permit No.</th><th>Factory</th><th>Issue date</th><th>Expiry</th><th>Status</th><th class="admin-only">Action</th></tr></thead><tbody></tbody></table>
+          <div class="table-scroll"><table id="legalTable"><thead><tr><th class="sortable" onclick="sortTable(this)">Act/Rule</th><th>License/Permit No.</th><th class="sortable" onclick="sortTable(this)">Factory</th><th class="sortable" onclick="sortTable(this)">Issue date</th><th class="sortable" onclick="sortTable(this)">Expiry</th><th class="sortable" onclick="sortTable(this)">Status</th><th class="admin-only">Action</th></tr></thead><tbody></tbody></table></div>
         </div>
       </div>
     </section>
@@ -1881,7 +2089,17 @@
 
     <section id="contact" style="display:none" class="container">
       <div class="card">
-        <div class="officer-only" style="background:#f9f9f9;padding:15px;border-radius:8px;margin-bottom:18px;border-left:4px solid var(--accent);">
+        <h2>🆘 Emergency SOS</h2>
+        <p class="small" style="color:var(--muted);text-transform:none;font-weight:500;">Tap any number below to call immediately. This page works without logging in.</p>
+        <div id="sosQuickGrid" class="sos-quick-grid"></div>
+
+        <div class="section-head" style="margin-top:22px">
+          <h3>📍 Assembly Points</h3>
+          <p class="sub">In an emergency, proceed calmly to your factory's assembly point.</p>
+        </div>
+        <div id="sosAssemblyGrid" class="factory-grid"></div>
+
+        <div class="officer-only" style="background:#f9f9f9;padding:15px;border-radius:8px;margin:22px 0 18px;border-left:4px solid var(--accent);">
           <h4>Add Contact</h4>
           <form onsubmit="addContact(event)">
             <div class="two-cols">
@@ -1902,11 +2120,61 @@
           </form>
         </div>
 
-        <h1>☎ Emergency Contacts</h1>
-        <div class="contact-grid" id="emergencyContactsGrid"></div>
+        <div class="section-head" style="margin-top:8px">
+          <h3>☎ All Emergency & ERT Contacts</h3>
+        </div>
+        <div class="contact-grid" id="sosAllContactsGrid"></div>
 
-        <h1 style="margin-top:26px">🛡️ Factory ERT Members</h1>
-        <div class="contact-grid" id="ertContactsGrid"></div>
+        <div style="margin-top:20px;text-align:center">
+          <button class="btn-danger" onclick="requireAuthAndGo('dashboard')">🚨 Report an Incident Now</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="inspections" style="display:none" class="container">
+      <div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center;flex-wrap:wrap;gap:8px">
+          <h2>🔍 Audits & Inspections</h2>
+          <button class="primary officer-only" onclick="toggleInspectionForm()">+ New Inspection</button>
+        </div>
+        <p class="small" style="color:var(--muted);text-transform:none;font-weight:500;">Multi-template audits — non-compliant items automatically create tracked actions in the Admin ▸ CAPA Tracker.</p>
+
+        <div id="inspectionFormBox" style="background:#f9f9f9;padding:15px;border-radius:8px;margin-bottom:15px;display:none">
+          <h4>New Inspection</h4>
+          <form onsubmit="submitInspection(event)">
+            <div class="two-cols">
+              <select id="inspTemplate" onchange="renderInspectionChecklist()" required>
+                <option value="">Select Template</option>
+              </select>
+              <select id="inspFactory" required></select>
+            </div>
+            <div class="two-cols" style="margin-top:8px">
+              <input id="inspDate" type="date" required>
+              <input id="inspAuditor" placeholder="Auditor / Inspector Name" required>
+            </div>
+            <div id="inspChecklistWrap" style="margin-top:16px"></div>
+            <div style="text-align:right;margin-top:10px">
+              <button type="button" class="ghost-dark btn-sm" onclick="toggleInspectionForm(false)">Cancel</button>
+              <button type="submit" class="primary btn-sm">Save Inspection</button>
+            </div>
+          </form>
+        </div>
+
+        <div style="overflow-x:auto" class="table-scroll">
+          <table id="inspectionTable">
+            <thead><tr><th class="sortable" onclick="sortTable(this)">Date</th><th class="sortable" onclick="sortTable(this)">Template</th><th class="sortable" onclick="sortTable(this)">Factory</th><th>Auditor</th><th class="sortable" onclick="sortTable(this)">Score</th><th>Open Findings</th><th>Actions</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <button class="ghost-dark btn-sm" onclick="exportTableToExcel('inspectionTable','Audits_Inspections')" style="margin-top:10px">⬇ Excel</button>
+      </div>
+    </section>
+
+    <section id="qrhub" style="display:none" class="container">
+      <div class="card">
+        <h2>🔗 QR Hub</h2>
+        <p class="small" style="color:var(--muted);text-transform:none;font-weight:500;">Generate scannable QR codes that deep-link straight into the portal — print and post them on-site.</p>
+        <div id="qrHubGrid" class="qr-hub-grid"></div>
       </div>
     </section>
   </main>
@@ -2070,8 +2338,82 @@
     <div style="width:90%;max-width:320px;background:white;padding:20px;border-radius:12px;text-align:center;">
       <h4 id="qrModalLabel" style="margin-bottom:10px"></h4>
       <img id="qrModalImg" src="" alt="QR code" style="width:100%;max-width:240px;border-radius:8px">
-      <p class="small" style="margin-top:8px;color:var(--muted)">Scan or print this tag and attach it near the extinguisher.</p>
+      <p class="small" id="qrModalHint" style="margin-top:8px;color:var(--muted)">Scan or print this tag and attach it near the extinguisher.</p>
       <button class="primary btn-sm" style="margin-top:8px" onclick="document.getElementById('qrModal').style.display='none'">Close</button>
+    </div>
+  </div>
+
+  <div id="globalSearchModal" onclick="if(event.target.id==='globalSearchModal') closeGlobalSearch()">
+    <div id="globalSearchBox">
+      <div id="globalSearchInputWrap">
+        <span style="font-size:16px">🔍</span>
+        <input id="globalSearchInput" placeholder="Search incidents, PTWs, visitors, documents, contacts..." oninput="runGlobalSearch()" autocomplete="off">
+        <button class="ghost-dark btn-sm" onclick="closeGlobalSearch()">Esc</button>
+      </div>
+      <div id="globalSearchResults"><div class="gs-empty">Start typing to search across the whole portal.</div></div>
+    </div>
+  </div>
+
+  <div id="digitalPassModal" onclick="if(event.target.id==='digitalPassModal') this.style.display='none'">
+    <div id="digitalPassBox">
+      <div id="digitalPassContent"></div>
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <button class="ghost-dark" style="flex:1;background:white" onclick="printDigitalPass()">🖨️ Print / Save PDF</button>
+        <button class="ghost-dark" style="flex:1;background:white" onclick="document.getElementById('digitalPassModal').style.display='none'">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="checkinModal">
+    <div id="checkinBox">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <h3>🪪 Visitor Self Check-In</h3>
+        <button class="ghost-dark btn-sm" onclick="document.getElementById('checkinModal').style.display='none'">Close</button>
+      </div>
+      <p class="small" style="color:var(--muted);text-transform:none;font-weight:500;">Scanned at the gate — please fill in your details to receive your digital visitor pass.</p>
+      <form onsubmit="submitSelfCheckin(event)">
+        <div class="two-cols" style="margin-top:8px">
+          <input id="ciName" placeholder="Visitor Name" required>
+          <input id="ciCompany" placeholder="Company Name" required>
+        </div>
+        <div class="two-cols" style="margin-top:6px">
+          <input id="ciMobile" placeholder="Mobile Number" required>
+          <input id="ciPersonMeet" placeholder="Person to Meet" required>
+        </div>
+        <input id="ciPurpose" placeholder="Purpose of Visit" required style="margin-top:6px">
+        <input id="ciFactory" style="margin-top:6px" readonly>
+        <div style="text-align:right;margin-top:10px">
+          <button type="submit" class="primary">Check In & Get Pass</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="inspectionDetailModal" onclick="if(event.target.id==='inspectionDetailModal') this.style.display='none'">
+    <div id="inspectionDetailBox">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <h3>Inspection Findings</h3>
+        <button class="ghost-dark btn-sm" onclick="document.getElementById('inspectionDetailModal').style.display='none'">Close</button>
+      </div>
+      <div id="inspectionDetailMeta" style="margin:10px 0"></div>
+      <div id="inspectionDetailFindings"></div>
+      <div style="text-align:right;margin-top:14px">
+        <button class="primary btn-sm officer-only" onclick="openFindingInCapa()">Open in CAPA Tracker →</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="capaStepModal">
+    <div id="capaStepBox">
+      <h3>⚠️ Non-Compliant Items Found</h3>
+      <p class="small" id="capaStepMeta" style="color:var(--muted);text-transform:none;font-weight:500;"></p>
+      <form onsubmit="confirmCapaStep(event)">
+        <div id="capaStepList"></div>
+        <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px">
+          <button type="button" class="ghost-dark btn-sm" onclick="skipCapaStep()">Save Inspection Only (No CAPA)</button>
+          <button type="submit" class="primary btn-sm">Save Inspection & Create CAPA</button>
+        </div>
+      </form>
     </div>
   </div>
 
@@ -2783,6 +3125,29 @@
 
     function safeCall(fn) { try { fn(); } catch (err) { console.error('Render error:', err); } }
 
+    // Step 4: generic column sorter — attach with onclick="sortTable(this)"
+    // on any <th>. Reorders the existing <tbody> rows in place by that
+    // column's rendered text (numeric-aware), toggling asc/desc on repeat
+    // clicks. Doesn't know or care what render function filled the table.
+    function sortTable(th) {
+        const table = th.closest('table');
+        const tbody = table && table.tBodies[0];
+        if (!tbody || !tbody.rows.length) return;
+        const idx = Array.prototype.indexOf.call(th.parentElement.children, th);
+        const asc = th.dataset.sortDir !== 'asc';
+        const rows = Array.from(tbody.rows);
+        rows.sort((a, b) => {
+            const av = (a.cells[idx] && a.cells[idx].innerText || '').trim();
+            const bv = (b.cells[idx] && b.cells[idx].innerText || '').trim();
+            const cmp = av.localeCompare(bv, undefined, { numeric: true, sensitivity: 'base' });
+            return asc ? cmp : -cmp;
+        });
+        rows.forEach(r => tbody.appendChild(r));
+        table.querySelectorAll('th.sortable').forEach(h => { h.classList.remove('sort-asc', 'sort-desc'); delete h.dataset.sortDir; });
+        th.dataset.sortDir = asc ? 'asc' : 'desc';
+        th.classList.add(asc ? 'sort-asc' : 'sort-desc');
+    }
+
     // ---------- Toast notifications ----------
     // Replaces the jarring native alert() dialog with an in-app, auto-dismissing
     // toast. window.alert itself is redirected to this below, so every existing
@@ -2839,7 +3204,7 @@
         if(!target) return;
         lastNavId = id;
         target.style.display = 'block';
-        document.querySelectorAll('#desktopNav a[data-nav]').forEach(a => {
+        document.querySelectorAll('#desktopNav a[data-nav], #bottomNav a[data-nav]').forEach(a => {
             const isActive = a.getAttribute('data-nav') === id;
             a.classList.toggle('active', isActive);
             // Only scroll the nav pill into view for a real click on the nav —
@@ -2848,7 +3213,7 @@
             // back to the header every ~60s (or right after any realtime
             // event) regardless of what the user was doing, interrupting
             // anyone mid-entry in a form further down the page.
-            if (isActive && !silent) a.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+            if (isActive && !silent && a.closest('#desktopNav')) a.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
         });
         
         if (id === 'home') {
@@ -2874,6 +3239,8 @@
         if (id === 'hira') { safeCall(populateFactorySelects); safeCall(renderHIRA); }
         if (id === 'waste') { safeCall(populateFactorySelects); safeCall(renderWaste); }
         if (id === 'contact') { safeCall(populateFactorySelects); safeCall(renderContacts); }
+        if (id === 'inspections') { safeCall(populateFactorySelects); safeCall(renderInspectionTemplateOptions); safeCall(renderInspections); }
+        if (id === 'qrhub') safeCall(renderQrHub);
         safeCall(updateBell);
     }
 
@@ -3094,6 +3461,19 @@
         const severe = actualIncidents.filter(r => r.sev === 'High' || r.sev === 'Fatal').length;
         const ratio = actualIncidents.length > 0 ? ((severe / actualIncidents.length) * 100).toFixed(1) : '0';
         animateCount(document.getElementById('accRatio'), ratio, '%');
+
+        // Executive Command Center — three additional KPI cards. Same source
+        // data + 30-day threshold as renderExpiryAlerts()/updateBell(), just
+        // surfaced as headline numbers on Home instead of buried in a list.
+        const capa = LocalDB.get('capa', []);
+        const legal = LocalDB.get('legal', []);
+        const extinguishers = LocalDB.get('extinguishers', []);
+        const openCapaEl = document.getElementById('openCapaKpi');
+        if (openCapaEl) animateCount(openCapaEl, capa.filter(x => x.status !== 'Closed').length);
+        const legalAlertsEl = document.getElementById('legalAlertsKpi');
+        if (legalAlertsEl) animateCount(legalAlertsEl, legal.filter(x => daysBetweenKolkata(x.expiry) <= 30).length);
+        const extDueEl = document.getElementById('extDueKpi');
+        if (extDueEl) animateCount(extDueEl, extinguishers.filter(x => x.due && daysBetweenKolkata(x.due) <= 30).length);
     }
 
     function renderChart() {
@@ -3204,11 +3584,11 @@
     function populateFactorySelects() {
         const factories = FACTORY_LIST;
         const selectIds = [
-            'factorySelect', 'extFactory', 'extFilter', 'auditFactory', 'rFactory',
+            'factorySelect', 'extFactory', 'extFilter', 'rFactory',
             'visFactory', 'ptwFactory', 'ptwFactoryFilter', 'legFactorySelect', 'issueLocation',
             'hiraFactory', 'wasteFactory', 'capaFactory', 'contFactory',
             'legFilter', 'dashFilter', 'ppeFactory', 'ppeFilter', 'ppeLogFilter', 'hiraFilter', 'wasteFilter',
-            'recLocation', 'evalLocFilter'
+            'recLocation', 'evalLocFilter', 'inspFactory'
         ];
 
         selectIds.forEach(id => {
@@ -3314,9 +3694,9 @@
 
     function switchAdminTab(t) {
         if ((t === 'activity' || t === 'users') && !isAdminTier(currentUser)) t = 'ext';
-        const tabs = ['account','ext','capa','audit','complaints','activity','users'];
-        const idMap = { account:'tabAccount', ext:'tabExt', capa:'tabCapa', audit:'tabAudit', complaints:'tabComplaints', activity:'tabActivity', users:'tabUsers' };
-        const containerMap = { account:'accountContainer', ext:'extContainer', capa:'capaContainer', audit:'auditContainer', complaints:'complaintsContainer', activity:'activityContainer', users:'usersContainer' };
+        const tabs = ['account','ext','capa','complaints','activity','users'];
+        const idMap = { account:'tabAccount', ext:'tabExt', capa:'tabCapa', complaints:'tabComplaints', activity:'tabActivity', users:'tabUsers' };
+        const containerMap = { account:'accountContainer', ext:'extContainer', capa:'capaContainer', complaints:'complaintsContainer', activity:'activityContainer', users:'usersContainer' };
         const adminOnlyTabs = ['activity', 'users'];
         tabs.forEach(id => {
             const base = t === id ? 'admin-tab-btn active' : 'admin-tab-btn';
@@ -3584,8 +3964,564 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
       const url = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${data}`;
       document.getElementById('qrModalImg').src = url;
       document.getElementById('qrModalLabel').innerText = `${factory} — ${extID}`;
+      const hint = document.getElementById('qrModalHint');
+      if (hint) hint.innerText = 'Scan or print this tag and attach it near the extinguisher.';
       document.getElementById('qrModal').style.display = 'flex';
     }
+
+    /* =====================================================================
+       NEW MODULE: QR SYSTEM
+       Generalizes the extinguisher QR modal into a reusable helper, plus a
+       "QR Hub" that generates deep-link QR codes (using the same qrserver.com
+       image API already used above) that open this very page with a
+       ?scan=... query string. handleScanLanding() below reads that query
+       string on load and jumps straight to the right screen — so a phone
+       camera scan can open a visitor self-check-in form, a digital pass,
+       a document, or the SOS page without the visitor ever touching the nav.
+       ===================================================================== */
+    function appBaseUrl() { return location.origin + location.pathname; }
+    function showQR(title, urlOrText, hint) {
+      const data = encodeURIComponent(urlOrText);
+      const url = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${data}`;
+      document.getElementById('qrModalImg').src = url;
+      document.getElementById('qrModalLabel').innerText = title;
+      const hintEl = document.getElementById('qrModalHint');
+      if (hintEl) hintEl.innerText = hint || 'Scan with any phone camera to open.';
+      document.getElementById('qrModal').style.display = 'flex';
+    }
+    function generateCheckinQR(factory) {
+      const url = `${appBaseUrl()}?scan=checkin&factory=${encodeURIComponent(factory)}`;
+      showQR(`Visitor Check-In — ${factory}`, url, 'Visitors scan this at the gate to self check-in and receive a digital pass — no login needed.');
+    }
+    function generateAssemblyQR(factory) {
+      const url = `${appBaseUrl()}?scan=sos&factory=${encodeURIComponent(factory)}`;
+      showQR(`Assembly Point — ${factory}`, url, 'Post this at the muster point — scanning opens emergency contacts instantly.');
+    }
+    function generateSosQR() {
+      const url = `${appBaseUrl()}?scan=sos`;
+      showQR('Emergency SOS Card', url, 'Scan to reach emergency & ERT contacts instantly, from any phone, without logging in.');
+    }
+    function generatePassQR(id) {
+      const url = `${appBaseUrl()}?scan=pass&id=${id}`;
+      showQR('Digital Visitor Pass', url, 'Scan at the gate/reception to verify this visitor\u2019s pass.');
+    }
+    function renderQrHub() {
+      populateFactorySelects();
+      const cards = [];
+      FACTORY_LIST.forEach(f => cards.push({ icon: '🪪', title: `Visitor Check-In — ${f}`, sub: 'Self-service kiosk QR', action: `generateCheckinQR('${f}')` }));
+      FACTORY_LIST.forEach(f => cards.push({ icon: '📍', title: `Assembly Point — ${f}`, sub: 'Emergency muster point QR', action: `generateAssemblyQR('${f}')` }));
+      cards.push({ icon: '🆘', title: 'Emergency SOS Card', sub: 'Opens the SOS page directly', action: 'generateSosQR()' });
+      const exts = LocalDB.get('extinguishers', []);
+      exts.forEach(x => cards.push({ icon: '🧯', title: `Extinguisher ${x.extID || ''}`, sub: x.factory || '', action: `showExtinguisherQR('${String(x.factory || '').replace(/'/g, "")}','${String(x.extID || '').replace(/'/g, "")}')` }));
+      document.getElementById('qrHubGrid').innerHTML = cards.map(c =>
+        `<div class="qr-hub-card" onclick="${c.action}"><div class="qr-hub-icon">${c.icon}</div><div class="qr-hub-title">${escapeHtml(c.title)}</div><div class="qr-hub-sub">${escapeHtml(c.sub || '')}</div></div>`
+      ).join('') || '<p style="color:grey">Nothing to generate yet — add extinguishers first.</p>';
+    }
+
+    /* =====================================================================
+       NEW MODULE: GLOBAL SEARCH
+       Builds a flat searchable index from every LocalDB collection in the
+       portal and renders live-filtered results grouped by module. Selecting
+       a result closes the search and navigates straight to that section.
+       ===================================================================== */
+    function buildSearchIndex() {
+      const idx = [];
+      const push = (mod, icon, title, sub, action) => { if (title) idx.push({ mod, icon, title: String(title), sub: String(sub || ''), action }); };
+      LocalDB.get('reports', []).forEach(r => push('Incidents/Accidents', '🚨', `${r.type || 'Report'} — ${r.name || ''}`, `${r.factory || ''} • ${r.date || ''} • ${(r.desc || '').slice(0, 60)}`, `requireAuthAndGo('dashboard')`));
+      LocalDB.get('hira', []).forEach(h => push('HIRA', '⚠️', h.activity || 'HIRA entry', `${h.hazard || ''} • ${h.factory || ''}`, `requireAuthAndGo('hira')`));
+      LocalDB.get('waste', []).forEach(w => push('Waste Mgmt', '♻️', w.type || 'Waste entry', `${w.factory || ''} • ${w.date || ''}`, `requireAuthAndGo('waste')`));
+      LocalDB.get('ppe', []).forEach(p => push('PPE', '🦺', p.name || 'PPE item', `${p.factory || ''} • Stock: ${p.qty || 0} ${p.unit || ''}`, `requireAuthAndGo('ppe')`));
+      LocalDB.get('ptw', []).forEach(p => push('PTW', '📝', `${p.type || 'PTW'} — ${p.requester || ''}`, `${p.factory || ''} • ${p.status || ''}`, `requireAuthAndGo('ptw')`));
+      LocalDB.get('legal', []).forEach(l => push('Legal Register', '⚖️', l.license || 'License', `${l.act || ''} • ${l.factory || ''} • exp ${l.expiry || ''}`, `requireAuthAndGo('legal')`));
+      LocalDB.get('visitors', []).forEach(v => push('Visitors', '🪪', v.name || 'Visitor', `${v.company || ''} • meeting ${v.person || ''} • ${v.factory || ''}`, `requireAuthAndGo('training'); setTimeout(function(){switchTrainingTab('visitor')},60)`));
+      LocalDB.get('extinguishers', []).forEach(x => push('Fire Extinguishers', '🧯', `Extinguisher ${x.extID || ''}`, `${x.factory || ''} • due ${x.due || ''}`, `requireAuthAndGo('adminSection')`));
+      LocalDB.get('contacts', []).forEach(c => push('Contacts', '☎', c.name || 'Contact', c.number || '', `navTo('contact')`));
+      LocalDB.get('blog', []).forEach(b => push('Blog/News', '📰', b.title || 'Post', (b.body || '').slice(0, 60), `navTo('blog')`));
+      LocalDB.get('policies', []).forEach(p => push('Policies', '📄', p.title || 'Policy', '', `navTo('policies')`));
+      LocalDB.get('records', []).forEach(r => push('Training Records', '🎓', r.name || 'Training record', `${r.moduleName || ''} • ${r.location || ''}`, `requireAuthAndGo('training')`));
+      LocalDB.get('inspections', []).forEach(a => push('Audits/Inspections', '🔍', `${a.template || 'Inspection'} — ${a.factory || ''}`, `${a.date || ''} • Score ${a.score || 0}/${a.maxScore || 100}`, `requireAuthAndGo('inspections')`));
+      return idx;
+    }
+    function openGlobalSearch() {
+      document.getElementById('globalSearchModal').style.display = 'flex';
+      const input = document.getElementById('globalSearchInput');
+      input.value = '';
+      document.getElementById('globalSearchResults').innerHTML = '<div class="gs-empty">Start typing to search across the whole portal.</div>';
+      setTimeout(() => input.focus(), 30);
+    }
+    function closeGlobalSearch() { document.getElementById('globalSearchModal').style.display = 'none'; }
+    function goToSearchResult(action) {
+      closeGlobalSearch();
+      try { new Function(action)(); } catch (e) { console.error(e); }
+    }
+    function runGlobalSearch() {
+      const q = document.getElementById('globalSearchInput').value.trim().toLowerCase();
+      const box = document.getElementById('globalSearchResults');
+      if (!q) { box.innerHTML = '<div class="gs-empty">Start typing to search across the whole portal.</div>'; return; }
+      const matches = buildSearchIndex().filter(r => (r.title + ' ' + r.sub).toLowerCase().includes(q)).slice(0, 60);
+      if (!matches.length) { box.innerHTML = '<div class="gs-empty">No results for "' + escapeHtml(q) + '".</div>'; return; }
+      const groups = {};
+      matches.forEach(m => { (groups[m.mod] = groups[m.mod] || []).push(m); });
+      box.innerHTML = Object.keys(groups).map(mod => `
+        <div class="gs-group-label">${escapeHtml(mod)}</div>
+        ${groups[mod].map(m => `<div class="gs-item" onclick="goToSearchResult(${JSON.stringify(m.action).replace(/"/g, '&quot;')})">
+          <div class="gs-item-icon">${m.icon}</div>
+          <div style="flex:1;min-width:0"><div class="gs-item-title">${escapeHtml(m.title)}</div><div class="gs-item-sub">${escapeHtml(m.sub)}</div></div>
+        </div>`).join('')}
+      `).join('');
+    }
+    document.addEventListener('keydown', function (e) {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault(); openGlobalSearch();
+      } else if (e.key === 'Escape') {
+        const m = document.getElementById('globalSearchModal');
+        if (m && m.style.display === 'flex') closeGlobalSearch();
+      }
+    });
+
+    /* =====================================================================
+       NEW MODULE: EMERGENCY SOS
+       Reuses the existing Emergency/ERT contacts data (LocalDB 'contacts')
+       for a floating one-tap-to-call panel plus a full public SOS page —
+       both work without logging in, same as the Contact page.
+       ===================================================================== */
+    function openSosQuickPanel() { navTo('contact'); if (!currentUser) { /* public page, no login needed */ } }
+    function renderSosPage() {
+      let contacts = LocalDB.get('contacts', null);
+      if (!contacts) { contacts = DEFAULT_CONTACTS.slice(); LocalDB.set('contacts', contacts); }
+      const priority = contacts.filter(c => c.category === 'Emergency').slice(0, 6);
+      document.getElementById('sosQuickGrid').innerHTML = priority.map(c => `
+        <a class="sos-quick-btn" href="tel:${escapeHtml(c.number)}"><span class="sqi">${getContactIcon(c.name)}</span>${escapeHtml(c.name)}<span style="font-weight:400;opacity:.8">${escapeHtml(c.number)}</span></a>
+      `).join('') || '<p style="color:grey;grid-column:1/-1">No emergency contacts configured yet.</p>';
+
+      document.getElementById('sosAssemblyGrid').innerHTML = FACTORY_LIST.map(f => `
+        <div class="factory-card" style="padding:14px">
+          <h4 style="margin:0 0 4px">${escapeHtml(f)}</h4>
+          <p class="small" style="color:var(--muted);margin:0">Proceed to the designated open-ground assembly point. Do not use lifts.</p>
+          <button class="ghost-dark btn-sm" style="margin-top:8px" onclick="generateAssemblyQR('${f}')">🔗 QR for this point</button>
+        </div>
+      `).join('');
+
+      const emergency = contacts.filter(c => c.category === 'Emergency');
+      const ert = contacts.filter(c => c.category === 'ERT');
+      document.getElementById('sosAllContactsGrid').innerHTML = emergency.concat(ert).map(c => contactCard(c, c.category === 'ERT')).join('') ||
+        '<p style="color:grey;grid-column:1/-1;text-align:center;padding:16px 0">No contacts yet.</p>';
+    }
+
+    /* =====================================================================
+       NEW MODULE: DIGITAL VISITOR PASS
+       Every visitor added (via the staff form, or the public self-check-in
+       QR flow below) gets a visual digital pass with an embedded QR code
+       that links to a public, read-only verification view of that same
+       pass — plus a Check-Out button that stamps an exit time.
+       ===================================================================== */
+    function passStatusOf(v) { return v.checkoutTime ? 'Checked Out' : 'Checked In'; }
+    function digitalPassInnerHtml(v, publicView) {
+      const passUrl = `${appBaseUrl()}?scan=pass&id=${v.id}`;
+      const qrImg = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(passUrl)}`;
+      const status = passStatusOf(v);
+      return `
+        <div class="pass-card">
+          <div class="pass-card-head">
+            <div class="name">TARSONS PRODUCTS LTD<br>HSE Visitor Pass</div>
+            <div class="pass-card-status ${v.checkoutTime ? 'checked-out' : ''}">${status}</div>
+          </div>
+          <div class="pass-card-body">
+            <div class="pass-card-qr"><img src="${qrImg}" alt="Pass QR"></div>
+            <div class="pass-card-visitor">${escapeHtml(v.name)}</div>
+            <div class="pass-card-company">${escapeHtml(v.company || '-')}</div>
+            <div class="pass-card-fields">
+              <div><span>Meeting</span> ${escapeHtml(v.person || '-')}</div>
+              <div><span>Purpose</span> ${escapeHtml(v.purpose || '-')}</div>
+              <div><span>Factory</span> ${escapeHtml(v.factory || '-')}</div>
+              <div><span>Mobile</span> ${escapeHtml(v.mobile || '-')}</div>
+              <div><span>PPE Issued</span> ${escapeHtml(v.ppe || 'None')}</div>
+              <div><span>Time In</span> ${escapeHtml(v.time || '-')}</div>
+              ${v.checkoutTime ? `<div><span>Time Out</span> ${escapeHtml(v.checkoutTime)}</div>` : ''}
+            </div>
+            ${(!publicView && !v.checkoutTime) ? `<button class="btn-danger btn-sm" style="margin-top:14px;width:100%" onclick="checkoutVisitor(${v.id})">Check Out Visitor</button>` : ''}
+          </div>
+          <div class="pass-card-foot">Pass ID TPL-VIS-${String(v.id).slice(-6)} • Valid for date of issue only</div>
+        </div>`;
+    }
+    function showDigitalPass(id) {
+      const v = LocalDB.get('visitors', []).find(x => x.id === id);
+      if (!v) return;
+      document.getElementById('digitalPassContent').innerHTML = digitalPassInnerHtml(v, false);
+      document.getElementById('digitalPassModal').style.display = 'flex';
+    }
+    function printDigitalPass() {
+      const html = document.getElementById('digitalPassContent').innerHTML;
+      const w = window.open('', '_blank');
+      if (!w) { alert('Popup blocked! Please allow popups to print the pass.'); return; }
+      w.document.write(`<html><head><title>Digital Visitor Pass</title><style>
+        body{font-family:'Segoe UI',Arial,sans-serif;background:#f4f7f8;padding:24px;display:flex;justify-content:center}
+        .pass-card{max-width:360px;border-radius:20px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.15);
+          background:linear-gradient(150deg,#0b7dbf,#0ec9b0 130%);color:white}
+        .pass-card-head{padding:18px 20px 14px;display:flex;justify-content:space-between;align-items:flex-start}
+        .pass-card-head .name{font-weight:800;font-size:11px;letter-spacing:.6px;text-transform:uppercase;opacity:.85}
+        .pass-card-status{font-size:10px;font-weight:800;text-transform:uppercase;background:rgba(255,255,255,.22);padding:3px 10px;border-radius:20px}
+        .pass-card-body{background:white;color:#0b2027;margin:0 10px 10px;border-radius:14px;padding:18px;text-align:center}
+        .pass-card-qr img{width:150px;height:150px;border-radius:10px}
+        .pass-card-visitor{font-size:19px;font-weight:800;margin-top:4px}
+        .pass-card-company{font-size:12.5px;color:#5b7a84;margin-bottom:12px}
+        .pass-card-fields{text-align:left;margin-top:14px;display:grid;gap:7px;font-size:12.5px}
+        .pass-card-fields div span:first-child{color:#5b7a84;font-weight:700;display:inline-block;min-width:110px}
+        .pass-card-foot{padding:12px 20px 18px;text-align:center;font-size:10.5px;opacity:.85}
+        button{display:none}
+        @media print{body{background:white}}
+      </style></head><body>${html}</body></html>`);
+      w.document.close(); w.focus(); setTimeout(() => w.print(), 400);
+    }
+    function checkoutVisitor(id) {
+      const list = LocalDB.get('visitors', []);
+      const v = list.find(x => x.id === id);
+      if (!v) return;
+      v.checkoutTime = nowInKolkata().toLocaleTimeString('en-IN');
+      LocalDB.set('visitors', list);
+      logActivity('Visitor checked out', `${v.name} (${v.company || ''})`);
+      renderVisitors();
+      showDigitalPass(id);
+    }
+
+    /* --- Public visitor self check-in (reached by scanning the QR Hub's
+       "Visitor Check-In" code — no login required) --- */
+    let pendingCheckinFactory = '';
+    function openSelfCheckin(factory) {
+      pendingCheckinFactory = factory || '';
+      document.getElementById('ciFactory').value = pendingCheckinFactory || 'Not specified';
+      document.getElementById('checkinModal').style.display = 'flex';
+    }
+    function submitSelfCheckin(e) {
+      e.preventDefault();
+      const v = {
+        id: Date.now(),
+        name: document.getElementById('ciName').value,
+        company: document.getElementById('ciCompany').value,
+        mobile: document.getElementById('ciMobile').value,
+        person: document.getElementById('ciPersonMeet').value,
+        purpose: document.getElementById('ciPurpose').value,
+        factory: pendingCheckinFactory || 'Not specified',
+        brief: 'No',
+        ppe: '',
+        time: nowInKolkata().toLocaleTimeString('en-IN')
+      };
+      const list = LocalDB.get('visitors', []);
+      list.unshift(v);
+      LocalDB.set('visitors', list);
+      logActivity('Visitor self check-in', `${v.name} (${v.company || ''}) via QR`);
+      document.getElementById('checkinModal').style.display = 'none';
+      e.target.reset();
+      showDigitalPass(v.id);
+    }
+
+    /* =====================================================================
+       NEW MODULE: AUDITS & INSPECTIONS
+       Multi-template checklist audits (separate from the legacy single
+       Safety Audit tab under Admin, which is left untouched). Any unchecked
+       checklist item automatically becomes a "finding" that can carry a
+       corrective action, responsible person, due date and status.
+       ===================================================================== */
+    const INSPECTION_TEMPLATES = {
+      'Safety Audit': [
+        'Are employees wearing the required PPE correctly?',
+        'Are all emergency exits and escape routes unobstructed?',
+        'Are fire extinguishers accessible, inspected, and within the validity period?',
+        'Are machines fitted with proper guards and emergency stop buttons?',
+        'Is good housekeeping maintained (no oil spills, waste, or trip hazards)?',
+        'Are chemicals properly labeled, and are SDS/MSDS available at the point of use?',
+        'Is hazardous waste stored, labeled, and managed correctly?',
+        'Are electrical panels safe, labeled, and free from exposed wiring?',
+        'Are emergency contact numbers and evacuation maps displayed?',
+        'Are first aid boxes available, stocked, and easily accessible?'
+      ],
+      'Fire Safety Inspection': [
+        'Are all fire extinguishers charged, tagged and within inspection date?',
+        'Are fire alarm panels and detectors functioning?',
+        'Are fire exits clearly marked, illuminated and unobstructed?',
+        'Is the fire hydrant/hose reel system accessible and pressurized?',
+        'Are flammable materials stored away from ignition sources?',
+        'Are hot-work permits followed for welding/cutting activities?',
+        'Is the assembly point clearly marked and known to employees?',
+        'Are electrical installations free of overloading/exposed wiring?',
+        'Is smoking restricted to designated areas only?',
+        'Has a fire drill been conducted in the last 6 months?'
+      ],
+      '5S Housekeeping Inspection': [
+        'Sort — Are unnecessary items removed from the work area?',
+        'Set in Order — Are tools/materials arranged and labeled logically?',
+        'Shine — Is the work area clean and free of spills/dust?',
+        'Standardize — Are 5S standards visibly displayed/followed?',
+        'Sustain — Is there evidence of regular 5S audits/discipline?',
+        'Are walkways and floor markings clearly visible?',
+        'Are aisles and exits free of obstruction?',
+        'Is waste segregated and bins clearly labeled?',
+        'Are tools returned to their designated storage after use?',
+        'Are notice boards/signage current and relevant?'
+      ]
+    };
+    function renderInspectionTemplateOptions() {
+      const sel = document.getElementById('inspTemplate');
+      if (!sel) return;
+      sel.innerHTML = '<option value="">Select Template</option>' + Object.keys(INSPECTION_TEMPLATES).map(t => `<option>${t}</option>`).join('');
+    }
+    function toggleInspectionForm(show) {
+      const box = document.getElementById('inspectionFormBox');
+      const willShow = show === undefined ? box.style.display === 'none' : show;
+      box.style.display = willShow ? 'block' : 'none';
+      if (willShow) { renderInspectionTemplateOptions(); document.getElementById('inspChecklistWrap').innerHTML = ''; }
+    }
+    // --- Graphical checklist: each item is a Pass/Fail toggle card instead of
+    // a plain checkbox, with a live-updating colour-coded score ring above. ---
+    function renderInspectionChecklist() {
+      const t = document.getElementById('inspTemplate').value;
+      const wrap = document.getElementById('inspChecklistWrap');
+      const items = INSPECTION_TEMPLATES[t] || [];
+      if (!items.length) { wrap.innerHTML = ''; return; }
+      const pts = Math.round(100 / items.length);
+      wrap.innerHTML = `
+        <div class="insp-score-bar">
+          <div class="insp-score-ring" id="inspLiveRing" style="background:var(--accent)">100%</div>
+          <div>
+            <div style="font-weight:800;font-size:14px">${items.length} checklist items · ${pts} pts each</div>
+            <div class="small" style="color:var(--muted)">Tap Pass / Fail for each item — the score updates live.</div>
+          </div>
+        </div>
+        <div class="insp-checklist-grid">
+          ${items.map((q, i) => `
+            <div class="insp-check-card" data-points="${pts}" data-text="${escapeHtml(q)}" data-pass="true">
+              <div class="insp-check-top">
+                <div class="insp-check-num">${i + 1}</div>
+                <div class="insp-check-text">${escapeHtml(q)}</div>
+              </div>
+              <div class="insp-check-toggle">
+                <button type="button" class="insp-toggle-btn pass active" onclick="setInspItemStatus(this,true)">✔ Pass</button>
+                <button type="button" class="insp-toggle-btn fail" onclick="setInspItemStatus(this,false)">✘ Fail</button>
+              </div>
+            </div>`).join('')}
+        </div>`;
+      updateInspLiveScore();
+    }
+    function setInspItemStatus(btn, passVal) {
+      const card = btn.closest('.insp-check-card');
+      card.dataset.pass = passVal ? 'true' : 'false';
+      card.classList.toggle('failed', !passVal);
+      card.querySelectorAll('.insp-toggle-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      updateInspLiveScore();
+    }
+    function updateInspLiveScore() {
+      const ring = document.getElementById('inspLiveRing');
+      if (!ring) return;
+      const cards = Array.from(document.querySelectorAll('#inspChecklistWrap .insp-check-card'));
+      let score = 0;
+      cards.forEach(c => { if (c.dataset.pass === 'true') score += parseInt(c.dataset.points, 10) || 0; });
+      score = Math.min(100, score);
+      ring.textContent = score + '%';
+      ring.style.background = scoreRingColor(score);
+    }
+    // Step 1 of submission: score the checklist and, if anything failed,
+    // hand off to the Corrective Action step instead of silently creating
+    // CAPA entries for every failed item — the auditor picks which
+    // non-conformities need a tracked action, and sets owner + due date.
+    let pendingInspection = null;
+    function submitInspection(e) {
+      e.preventDefault();
+      const template = document.getElementById('inspTemplate').value;
+      if (!template) { alert('Select a template first'); return; }
+      const factory = document.getElementById('inspFactory').value;
+      const auditor = document.getElementById('inspAuditor').value;
+      const date = document.getElementById('inspDate').value;
+      const cards = Array.from(document.querySelectorAll('#inspChecklistWrap .insp-check-card'));
+      if (!cards.length) { alert('Select a template to load its checklist first'); return; }
+      let score = 0;
+      const failed = [];
+      cards.forEach(c => {
+        const pts = parseInt(c.dataset.points, 10) || 0;
+        if (c.dataset.pass === 'true') score += pts;
+        else failed.push({ text: c.dataset.text });
+      });
+      pendingInspection = { template, factory, auditor, date, score: Math.min(100, score), maxScore: 100 };
+      if (!failed.length) {
+        finalizeInspection([]);
+        return;
+      }
+      openCapaStep(failed);
+    }
+    function openCapaStep(failed) {
+      const box = document.getElementById('capaStepList');
+      const today = todayKolkataStr();
+      box.innerHTML = failed.map((f, i) => `
+        <div class="capa-step-row">
+          <label class="capa-step-check"><input type="checkbox" id="capaTrack_${i}" checked onchange="document.getElementById('capaFields_${i}').style.opacity=this.checked?'1':'.4'; document.getElementById('capaFields_${i}').style.pointerEvents=this.checked?'auto':'none'">
+            <span>${escapeHtml(f.text)}</span></label>
+          <div class="capa-step-fields" id="capaFields_${i}">
+            <input id="capaOwner_${i}" placeholder="Responsible person" value="${escapeHtml(pendingInspection.auditor || '')}">
+            <input id="capaDue_${i}" type="date" min="${today}" required>
+          </div>
+        </div>`).join('');
+      document.getElementById('capaStepMeta').textContent = `${failed.length} non-compliant item${failed.length === 1 ? '' : 's'} found in "${pendingInspection.template}" at ${pendingInspection.factory}. Choose which ones need a tracked corrective action.`;
+      window._pendingFailedItems = failed;
+      document.getElementById('capaStepModal').style.display = 'flex';
+    }
+    function confirmCapaStep(e) {
+      e.preventDefault();
+      const failed = window._pendingFailedItems || [];
+      const findings = [];
+      const capaList = LocalDB.get('capa', []);
+      let missingDue = false;
+      failed.forEach((f, i) => {
+        const track = document.getElementById('capaTrack_' + i).checked;
+        if (!track) { findings.push({ text: f.text, capaId: null }); return; }
+        const due = document.getElementById('capaDue_' + i).value;
+        const owner = document.getElementById('capaOwner_' + i).value.trim();
+        if (!due) { missingDue = true; return; }
+        const capaEntry = {
+          id: Date.now() + i + Math.floor(Math.random() * 1000),
+          factory: pendingInspection.factory, source: 'Inspection',
+          desc: `[${pendingInspection.template}] ${f.text}`,
+          owner, due, status: 'Open'
+        };
+        capaList.push(capaEntry);
+        findings.push({ text: f.text, capaId: capaEntry.id });
+      });
+      if (missingDue) { alert('Pick a due date for every item you\u2019re tracking as CAPA (or untick it if it doesn\u2019t need one).'); return; }
+      LocalDB.set('capa', capaList);
+      document.getElementById('capaStepModal').style.display = 'none';
+      finalizeInspection(findings);
+    }
+    function skipCapaStep() {
+      // Recorded as non-compliances but nothing tracked — can still be
+      // added to CAPA later from the inspection detail view.
+      const findings = (window._pendingFailedItems || []).map(f => ({ text: f.text, capaId: null }));
+      document.getElementById('capaStepModal').style.display = 'none';
+      finalizeInspection(findings);
+    }
+    function finalizeInspection(findings) {
+      const inspection = { id: Date.now(), ...pendingInspection, findings };
+      const list = LocalDB.get('inspections', []);
+      list.unshift(inspection);
+      LocalDB.set('inspections', list);
+      const tracked = findings.filter(f => f.capaId).length;
+      logActivity('Inspection conducted', `${inspection.template} at ${inspection.factory} — score ${inspection.score}`);
+      if (tracked) logActivity('CAPA created from inspection', `${tracked} action(s) from ${inspection.template} at ${inspection.factory}`);
+      document.getElementById('inspectionFormBox').querySelector('form').reset();
+      toggleInspectionForm(false);
+      pendingInspection = null;
+      renderInspections();
+      updateBell();
+    }
+    function scoreRingColor(score) { return score >= 80 ? 'var(--accent)' : score >= 50 ? 'var(--warning)' : 'var(--danger)'; }
+    function renderInspections() {
+      const list = LocalDB.get('inspections', []);
+      document.querySelector('#inspectionTable tbody').innerHTML = list.map(a => {
+        const capaList = LocalDB.get('capa', []);
+        const openFindings = (a.findings || []).filter(f => {
+          if (!f.capaId) return false;
+          const c = capaList.find(x => x.id === f.capaId);
+          return !c || c.status !== 'Closed';
+        }).length;
+        return `<tr><td>${escapeHtml(a.date || '')}</td><td>${escapeHtml(a.template || '')}</td><td>${escapeHtml(a.factory || '')}</td><td>${escapeHtml(a.auditor || '')}</td>
+          <td>${escapeHtml(String(a.score))}/${escapeHtml(String(a.maxScore || 100))}</td>
+          <td>${openFindings ? `<span class="status-badge status-warning">${openFindings} open</span>` : `<span class="status-badge status-safe">None</span>`}</td>
+          <td style="white-space:nowrap"><button class="ghost-dark btn-sm" onclick="openInspectionDetail(${a.id})">View</button>
+          <button class="btn-danger btn-sm admin-only" onclick="deleteInspection(${a.id})">Delete</button></td></tr>`;
+      }).join('') || '<tr><td colspan="7" style="text-align:center;color:grey">No inspections recorded yet.</td></tr>';
+    }
+    function deleteInspection(id) {
+      if (!confirm('Delete this inspection? Any CAPA entries it already created will remain in the CAPA Tracker.')) return;
+      LocalDB.set('inspections', LocalDB.get('inspections', []).filter(a => a.id !== id));
+      renderInspections();
+    }
+    let openInspectionId = null;
+    function openInspectionDetail(id) {
+      const a = LocalDB.get('inspections', []).find(x => x.id === id);
+      if (!a) return;
+      openInspectionId = id;
+      document.getElementById('inspectionDetailMeta').innerHTML =
+        `<div class="insp-score-ring" style="background:${scoreRingColor(a.score)};float:right;margin-left:10px">${a.score}%</div>
+         <b>${escapeHtml(a.template)}</b><br><span class="small" style="color:var(--muted)">${escapeHtml(a.factory)} • ${escapeHtml(a.date)} • Auditor: ${escapeHtml(a.auditor)}</span>`;
+      const findings = a.findings || [];
+      const capaList = LocalDB.get('capa', []);
+      const canManage = isOfficerTierUp(currentUser);
+      document.getElementById('inspectionDetailFindings').innerHTML = findings.length ? findings.map((f, i) => {
+        const c = f.capaId ? capaList.find(x => x.id === f.capaId) : null;
+        if (c) {
+          const cls = c.status === 'Closed' ? 'status-safe' : c.status === 'In Progress' ? 'status-warning' : 'status-expired';
+          return `<div class="insp-finding-card">
+            <div class="insp-finding-num">${i + 1}</div>
+            <div style="flex:1;min-width:0">
+              <div class="insp-finding-text">${escapeHtml(f.text)}</div>
+              <div class="small" style="color:var(--muted)">${c.owner ? `Owner: ${escapeHtml(c.owner)}` : 'No owner set'}${c.due ? ` • Due: ${escapeHtml(c.due)}` : ' • No due date'}</div>
+            </div>
+            ${canManage ? `<select class="insp-finding-status-select" onchange="updateFindingCapaStatus(${c.id}, this.value, ${a.id})">
+              <option value="Open" ${c.status === 'Open' ? 'selected' : ''}>Open</option>
+              <option value="In Progress" ${c.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
+              <option value="Closed" ${c.status === 'Closed' ? 'selected' : ''}>Closed</option>
+            </select>` : `<span class="status-badge ${cls}">${c.status}</span>`}
+          </div>`;
+        }
+        return `<div class="insp-finding-card untracked">
+          <div class="insp-finding-num" style="background:var(--muted)">${i + 1}</div>
+          <div style="flex:1;min-width:0">
+            <div class="insp-finding-text">${escapeHtml(f.text)}</div>
+            <div class="small" style="color:var(--muted)">Not tracked as a CAPA action</div>
+          </div>
+          ${canManage ? `<div style="display:flex;gap:6px;align-items:center">
+            <input type="date" id="trackDue_${i}" style="width:126px;font-size:11.5px;padding:5px 6px" min="${todayKolkataStr()}">
+            <button class="ghost-dark btn-sm" onclick="trackFindingAsCapa(${a.id}, ${i})">+ Track</button>
+          </div>` : ''}
+        </div>`;
+      }).join('') : '<p style="color:grey;text-align:center;padding:10px 0">No findings — all checklist items passed. 🎉</p>';
+      document.getElementById('inspectionDetailModal').style.display = 'flex';
+    }
+    function updateFindingCapaStatus(capaId, status, inspectionId) {
+      updateCAPAStatus(capaId, status);
+      openInspectionDetail(inspectionId);
+    }
+    function trackFindingAsCapa(inspectionId, idx) {
+      const due = document.getElementById('trackDue_' + idx).value;
+      if (!due) { alert('Pick a due date first'); return; }
+      const list = LocalDB.get('inspections', []);
+      const insp = list.find(x => x.id === inspectionId);
+      if (!insp || !insp.findings || !insp.findings[idx]) return;
+      const f = insp.findings[idx];
+      const capaList = LocalDB.get('capa', []);
+      const entry = { id: Date.now() + Math.floor(Math.random() * 1000), factory: insp.factory, source: 'Inspection', desc: `[${insp.template}] ${f.text}`, owner: insp.auditor || '', due, status: 'Open' };
+      capaList.push(entry);
+      LocalDB.set('capa', capaList);
+      f.capaId = entry.id;
+      LocalDB.set('inspections', list);
+      logActivity('CAPA created from finding', `${f.text} (${insp.factory})`);
+      openInspectionDetail(inspectionId);
+      renderInspections();
+      updateBell();
+    }
+    function openFindingInCapa() {
+      document.getElementById('inspectionDetailModal').style.display = 'none';
+      requireAuthAndGo('adminSection');
+      setTimeout(() => switchAdminTab('capa'), 60);
+    }
+
+    /* =====================================================================
+       QR SCAN LANDING — reads ?scan=... from the URL on load and jumps
+       straight to the relevant screen, so a phone camera scan of any QR
+       Hub code opens the right place with no navigation required.
+       ===================================================================== */
+    function handleScanLanding() {
+      const params = new URLSearchParams(location.search);
+      const scan = params.get('scan');
+      if (!scan) return;
+      if (scan === 'checkin') {
+        openSelfCheckin(params.get('factory') || '');
+      } else if (scan === 'sos') {
+        navTo('contact');
+      } else if (scan === 'pass') {
+        const id = parseInt(params.get('id'), 10);
+        if (id) setTimeout(() => showDigitalPass(id), 60);
+      }
+    }
+    document.addEventListener('DOMContentLoaded', () => { setTimeout(handleScanLanding, 400); });
 
     // --- Dark mode ---
     function toggleTheme() {
@@ -3790,40 +4726,6 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
       w.focus();
       setTimeout(() => { w.print(); w.close(); }, 250);
     }
-
-    function toggleAuditForm(force){
-      const box = document.getElementById('auditFormBox');
-      box.style.display = (force === false) ? 'none' : (box.style.display === 'none' || box.style.display === '' ? 'block' : 'none');
-    }
-    async function addAudit(e){
-      e.preventDefault();
-      // 20 checklist questions, each carrying data-points="5" (100 max), so the
-      // score is a straight sum of the checked items' points.
-      const items = Array.from(document.querySelectorAll('.audit-item'));
-      const score = items.reduce((sum, i) => sum + (i.checked ? (parseInt(i.dataset.points, 10) || 0) : 0), 0);
-      const audit = {
-          id: Date.now(),
-          date: document.getElementById('auditDate').value,
-          factory: document.getElementById('auditFactory').value,
-          auditor: document.getElementById('auditAuditor').value,
-          score: score
-      };
-      document.getElementById('auditScore').value = audit.score;
-      const list = LocalDB.get('audits', []);
-      list.unshift(audit);
-      LocalDB.set('audits', list);
-      e.target.reset();
-      toggleAuditForm(false);
-      renderAudits();
-    }
-    function renderAudits(){
-      const list = LocalDB.get('audits', []);
-      document.querySelector('#auditTable tbody').innerHTML = list.map(a => `
-        <tr><td>${escapeHtml(a.date)}</td><td>${escapeHtml(a.factory)}</td><td>${escapeHtml(a.auditor)}</td><td>${escapeHtml(String(a.score))}</td>
-        <td class="admin-only"><button class="btn-danger btn-sm" onclick="deleteAudit(${a.id})">Delete</button></td></tr>
-      `).join('');
-    }
-    function deleteAudit(id){ LocalDB.set('audits', LocalDB.get('audits', []).filter(a => a.id !== id)); renderAudits(); }
 
     function reportTypeBadge(type) {
       const t = type || 'Incident';
@@ -5587,6 +6489,8 @@ for (let i = 0; i < 14; i++) {   // 14 months
             <tr><td>${escapeHtml(v.name)}</td><td>${escapeHtml(v.company)}</td><td>${escapeHtml(v.mobile||'')}</td>
               <td>${escapeHtml(v.person||'-')}</td><td>${escapeHtml(v.time)}</td><td>${escapeHtml(v.brief||'No')}</td><td>${escapeHtml(v.ppe||'')}</td><td>${escapeHtml(v.factory)}</td>
               <td style="white-space:nowrap"><button class="ghost-dark btn-sm" onclick="reprintVisitorCertificate(${v.id})">🖨️ Certificate</button>
+              <button class="btn-action btn-sm" onclick="showDigitalPass(${v.id})">🪪 Digital Pass</button>
+              ${v.checkoutTime ? `<span class="status-badge status-safe">Checked Out</span>` : `<button class="ghost-dark btn-sm" onclick="checkoutVisitor(${v.id})">Check Out</button>`}
               <button class="btn-action btn-sm mail-visitor-only" onclick="openMailVisitorPass(${v.id})">✉ Mail Pass</button>
               <button class="btn-danger btn-sm admin-only" onclick="deleteVisitor(${v.id})">Delete</button></td></tr>
         `).join('') || '<tr><td colspan="9" style="text-align:center;color:grey">No visitors logged yet.</td></tr>';
@@ -5702,14 +6606,10 @@ TARSONS HSE Portal`;
       </div>`;
     }
     function renderContacts() {
-      let contacts = LocalDB.get('contacts', null);
-      if (!contacts) { contacts = DEFAULT_CONTACTS.slice(); LocalDB.set('contacts', contacts); }
-      const emergency = contacts.filter(c => c.category === 'Emergency');
-      const ert = contacts.filter(c => c.category === 'ERT');
-      document.getElementById('emergencyContactsGrid').innerHTML = emergency.map(c => contactCard(c, false)).join('') ||
-        '<p style="color:grey;grid-column:1/-1;text-align:center;padding:16px 0">No emergency contacts yet.</p>';
-      document.getElementById('ertContactsGrid').innerHTML = ert.map(c => contactCard(c, true)).join('') ||
-        '<p style="color:grey;grid-column:1/-1;text-align:center;padding:16px 0">No ERT members yet.</p>';
+      // Contact and Emergency SOS were merged into a single page — renderSosPage()
+      // builds the quick-call grid, assembly points, and the combined
+      // Emergency+ERT contacts grid that this page now shares.
+      renderSosPage();
     }
     function addContact(e) {
       e.preventDefault();
@@ -6412,9 +7312,6 @@ TARSONS HSE Portal`;
     window.renderExtinguisherList = renderExtinguisherList;
     window.deleteExtinguisher = deleteExtinguisher;
     window.printExtRegister = printExtRegister;
-    window.toggleAuditForm = toggleAuditForm;
-    window.addAudit = addAudit;
-    window.deleteAudit = deleteAudit;
     window.deleteReport = deleteReport;
     window.submitIncident = submitIncident;
     window.addPPEItem = addPPEItem;
@@ -6500,6 +7397,40 @@ TARSONS HSE Portal`;
     window.openResetUserPassword = openResetUserPassword;
     window.closeResetUserPassword = closeResetUserPassword;
     window.submitResetUserPassword = submitResetUserPassword;
+
+    // --- NEW MODULES: window bindings (module scope, so inline onclick/
+    // onsubmit/oninput handlers need these exposed on window explicitly,
+    // same as every other function above) ---
+    window.openGlobalSearch = openGlobalSearch;
+    window.closeGlobalSearch = closeGlobalSearch;
+    window.runGlobalSearch = runGlobalSearch;
+    window.goToSearchResult = goToSearchResult;
+    window.showQR = showQR;
+    window.generateCheckinQR = generateCheckinQR;
+    window.generateAssemblyQR = generateAssemblyQR;
+    window.generateSosQR = generateSosQR;
+    window.generatePassQR = generatePassQR;
+    window.renderQrHub = renderQrHub;
+    window.openSosQuickPanel = openSosQuickPanel;
+    window.renderSosPage = renderSosPage;
+    window.showDigitalPass = showDigitalPass;
+    window.printDigitalPass = printDigitalPass;
+    window.checkoutVisitor = checkoutVisitor;
+    window.openSelfCheckin = openSelfCheckin;
+    window.submitSelfCheckin = submitSelfCheckin;
+    window.renderInspectionTemplateOptions = renderInspectionTemplateOptions;
+    window.toggleInspectionForm = toggleInspectionForm;
+    window.renderInspectionChecklist = renderInspectionChecklist;
+    window.setInspItemStatus = setInspItemStatus;
+    window.submitInspection = submitInspection;
+    window.renderInspections = renderInspections;
+    window.deleteInspection = deleteInspection;
+    window.openInspectionDetail = openInspectionDetail;
+    window.openFindingInCapa = openFindingInCapa;
+    window.confirmCapaStep = confirmCapaStep;
+    window.skipCapaStep = skipCapaStep;
+    window.updateFindingCapaStatus = updateFindingCapaStatus;
+    window.trackFindingAsCapa = trackFindingAsCapa;
   </script>
   <script>
     // Installable/offline support — only works when served over http(s), not opened as a local file:// path.
