@@ -2152,7 +2152,9 @@
         <p class="small" id="apvLocationText" style="text-align:center;margin-top:10px;color:var(--muted)"></p>
         <div style="text-align:center;margin-top:12px">
           <button class="ghost-dark btn-sm" onclick="refreshAssemblyPointLocation()">📍 Restart Live Tracking</button>
+          <button class="ghost-dark btn-sm" onclick="toggleApvDiagnostics()">🔧 Diagnostics</button>
         </div>
+        <div id="apvDiagnostics" style="display:none;margin-top:12px;padding:12px 14px;border-radius:12px;background:rgba(11,26,47,.04);font-size:12.5px;font-family:ui-monospace,monospace;text-align:left;white-space:pre-wrap;color:var(--text-dark)"></div>
       </div>
     </section>
 
@@ -3299,6 +3301,7 @@
         const extinguishers = LocalDB.get('extinguishers', []);
         const capa = LocalDB.get('capa', []);
         const complaints = LocalDB.get('complaints', []);
+        const ppe = LocalDB.get('ppe', []);
         const today = nowInKolkata();
         
         let count = 0;
@@ -3319,6 +3322,9 @@
         });
         complaints.forEach(x => {
             if (x.status === 'Pending') count++;
+        });
+        ppe.forEach(x => {
+            if (typeof x.qty === 'number' && typeof x.reorder === 'number' && x.qty <= x.reorder) count++;
         });
         const badge = document.getElementById('bellBadge');
         if(count > 0){
@@ -3377,6 +3383,15 @@
             html += '<h4>📝 Pending PTW Approvals</h4><ul style="padding-left:20px">';
             pending.forEach(p => {
                 html += `<li><b>${escapeHtml(p.id)}</b>: ${escapeHtml(p.type)} at ${p.factory}</li>`;
+            });
+            html += '</ul>';
+        }
+        const ppe = LocalDB.get('ppe', []);
+        const lowStock = ppe.filter(x => typeof x.qty === 'number' && typeof x.reorder === 'number' && x.qty <= x.reorder);
+        if (lowStock.length > 0) {
+            html += '<h4>🦺 PPE Low Stock</h4><ul style="padding-left:20px;margin-bottom:10px">';
+            lowStock.forEach(x => {
+                html += `<li><b>${escapeHtml(x.name)}</b> (${escapeHtml(x.factory||'All factories')}) — ${x.qty} ${escapeHtml(x.unit||'')} left, reorder level is ${x.reorder}</li>`;
             });
             html += '</ul>';
         }
@@ -5255,6 +5270,7 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
         logActivity('PPE stock updated', `${name} — +${addQty} ${unit} at ${factory}`);
         e.target.reset();
         renderPPE();
+        updateBell();
     }
 
     function renderPPE() {
@@ -5289,6 +5305,7 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
         item.qty += addQty;
         LocalDB.set('ppe', list);
         renderPPE();
+        updateBell();
     }
 
     function deletePPEItem(id) {
@@ -5339,6 +5356,7 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
         e.target.reset();
         renderPPE();
         renderPPELogs();
+        updateBell();
     }
     
     function renderPPELogs(){
