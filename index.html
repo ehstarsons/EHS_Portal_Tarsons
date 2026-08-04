@@ -2677,7 +2677,17 @@
     function refreshCurrentView() {
       const visible = Array.from(document.querySelectorAll('main section'))
         .find(s => s.style.display !== 'none');
-      navTo(visible ? visible.id : lastNavId, true);
+      const activeId = visible ? visible.id : lastNavId;
+      if (activeId === 'assemblyPointView') {
+        // A plain navTo() only toggles section visibility — it doesn't reload
+        // the photo/calibration/GPS pipeline. Someone who scanned the QR
+        // before this device's first cloud sync finished needs that reload,
+        // or an emergency-plan photo/calibration uploaded moments earlier by
+        // Admin on another device would never actually appear for them.
+        openAssemblyPointView(apvCurrentFactory);
+      } else {
+        navTo(activeId, true);
+      }
       // BUGFIX: the self-checkin kiosk modal (#checkinModal) isn't a <section>,
       // so the line above never reaches it — it stays open independently of
       // section navigation. Refresh its "Person to Meet" dropdown here too,
@@ -4118,17 +4128,55 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
       }).join('');
     }
     function cssId(s) { return String(s).replace(/[^a-zA-Z0-9]/g, '_'); }
+    // Downscale + recompress before storing: the raw photo from a phone camera
+    // can be 3-8MB, and the WHOLE emergencyPlans object (every factory's photo,
+    // as base64) is synced to Supabase as one JSON value on every save. A
+    // multi-megabyte blob is slow/unreliable to push and can silently fail to
+    // reach other devices — which is exactly why a photo scanned by someone
+    // else sometimes didn't show up. A resized, ~85%-quality JPEG is plenty
+    // sharp for an assembly-point plan and shrinks this to a few hundred KB.
+    function compressImageForStorage(dataUrl, maxDim, quality) {
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+          let { width, height } = img;
+          if (width > maxDim || height > maxDim) {
+            const scale = maxDim / Math.max(width, height);
+            width = Math.round(width * scale); height = Math.round(height * scale);
+          }
+          const c = document.createElement('canvas');
+          c.width = width; c.height = height;
+          c.getContext('2d').drawImage(img, 0, 0, width, height);
+          resolve(c.toDataURL('image/jpeg', quality || 0.85));
+        };
+        img.onerror = () => resolve(dataUrl); // fall back to the original if it won't decode as an <img>
+        img.src = dataUrl;
+      });
+    }
     async function uploadEmergencyPlanPhoto(factory) {
       const input = document.getElementById('epFile_' + cssId(factory));
       if (!input || !input.files || !input.files[0]) { alert('Choose a photo first.'); return; }
-      const dataUrl = await readFileAsDataURL(input.files[0]);
+      const rawDataUrl = await readFileAsDataURL(input.files[0]);
+      const dataUrl = await compressImageForStorage(rawDataUrl, 1600, 0.85);
+      // Prefer real object storage (a small public URL gets synced) over
+      // embedding the photo as base64 inside the shared emergencyPlans JSON
+      // row: that row holds every factory's photo at once, and a multi-MB
+      // blob is slow to push and can silently fail to reach other devices —
+      // which is exactly why a photo scanned by someone else sometimes
+      // didn't show up. Falls back to storing the (compressed) base64
+      // directly only if cloud storage is unavailable.
+      const cloudUrl = await uploadImageToCloud(dataUrl, `emergency-plan-${cssId(factory)}.jpg`, 'image/jpeg');
       const plans = getEmergencyPlans();
-      plans[factory] = dataUrl;
+      plans[factory] = cloudUrl || dataUrl;
       LocalDB.set('emergencyPlans', plans);
       clearAssemblyCalibration(factory); // a new photo invalidates any prior pixel calibration
       logActivity('Emergency plan photo uploaded', factory);
       renderEmergencyPlanUploadGrid();
-      alert('Emergency plan photo saved for ' + factory + '. Calibrate it with real GPS points so the live location pin lands on the correct spot.');
+      if (cloudUrl) {
+        alert('Emergency plan photo saved for ' + factory + ' and shared with all devices. Now calibrate it with real GPS points so the live location pin lands on the correct spot.');
+      } else {
+        alert('Cloud storage isn\'t available right now, so this photo is saved to this browser only (not shared with other devices) until cloud sync is set up. Calibrate it with real GPS points so the live location pin lands on the correct spot.');
+      }
     }
 
     /* ---------- Geo math: real lat/lon <-> photo pixel space ----------
@@ -4183,15 +4231,38 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
       if (!calibState) return;
       if (!navigator.geolocation) { alert('Location services are not available on this device/browser.'); return; }
       const btn = document.getElementById('calibCaptureBtn');
-      btn.disabled = true; btn.innerText = '📡 Getting your GPS fix…';
-      navigator.geolocation.getCurrentPosition((pos) => {
-        calibState.pendingGeo = { lat: pos.coords.latitude, lon: pos.coords.longitude };
-        btn.disabled = true; btn.innerText = '✅ GPS captured — now tap that spot on the photo';
-        document.getElementById('calibHint').innerText = 'Tap the exact spot on the photo below that matches where you are standing.';
-      }, () => {
-        btn.disabled = false; btn.innerText = '📍 Capture my GPS here';
-        alert('Could not get your GPS position (permission denied or unavailable). Please allow location access and try again.');
-      }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 });
+      btn.disabled = true; btn.innerText = '📡 Getting the best GPS fix…';
+      // Take the single best (lowest-error) reading over a short sampling
+      // window instead of whatever the very first fix happens to be — the
+      // first fix after enabling GPS is often the least accurate one (can
+      // easily be 30-60m+ off), which is why calibrating against it made the
+      // live pin land in the wrong place no matter how carefully the photo
+      // was tapped. Settles early once a good (<=8m) fix arrives.
+      const GOOD_ENOUGH_M = 8, MAX_WAIT_MS = 8000;
+      let best = null, done = false;
+      const watchId = navigator.geolocation.watchPosition((pos) => {
+        if (!best || pos.coords.accuracy < best.coords.accuracy) best = pos;
+        if (!done) btn.innerText = `📡 Refining GPS fix… (±${Math.round(pos.coords.accuracy)}m so far)`;
+        if (pos.coords.accuracy <= GOOD_ENOUGH_M) finish();
+      }, () => { /* keep waiting — a transient error doesn't mean no fix will ever arrive */ }, { enableHighAccuracy: true, maximumAge: 0, timeout: MAX_WAIT_MS });
+      const timeoutId = setTimeout(finish, MAX_WAIT_MS);
+      function finish() {
+        if (done) return;
+        done = true;
+        clearTimeout(timeoutId);
+        navigator.geolocation.clearWatch(watchId);
+        if (!best) {
+          btn.disabled = false; btn.innerText = '📍 Capture my GPS here';
+          alert('Could not get your GPS position. Please allow location access and try again — ideally outdoors or near a window, since GPS is much less accurate deep indoors.');
+          return;
+        }
+        calibState.pendingGeo = { lat: best.coords.latitude, lon: best.coords.longitude };
+        const acc = Math.round(best.coords.accuracy);
+        btn.disabled = true; btn.innerText = `✅ GPS captured (±${acc}m) — now tap that spot on the photo`;
+        const hint = document.getElementById('calibHint');
+        hint.innerText = 'Tap the exact spot on the photo below that matches where you are standing.' +
+          (acc > 15 ? ` Note: this fix is only accurate to about ${acc}m — for a more precise result, try again outdoors or near a window/door.` : '');
+      }
     }
     function calibCanvasClick(e) {
       if (!calibState || !calibState.pendingGeo) return;
@@ -4222,15 +4293,29 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
       });
     }
     function finishCalibration() {
-      const t = buildCalibTransform({ p1: calibState.points[0], p2: calibState.points[1] });
+      const p1 = calibState.points[0], p2 = calibState.points[1];
+      const t = buildCalibTransform({ p1, p2 });
       if (!t) {
-        alert('Points A and B were captured at (almost) the same real-world spot, so a scale/rotation can\u2019t be worked out. Please recalibrate from two spots further apart.');
+        alert('Points A and B were captured at (almost) the exact same real-world spot, so a scale/rotation can\u2019t be worked out. Please recalibrate from two spots further apart.');
         calibState.points = [];
         drawCalibMarkers();
         calibSetStep(1);
         return;
       }
-      saveAssemblyCalibration(calibState.factory, { p1: calibState.points[0], p2: calibState.points[1] });
+      // A short real-world distance between A and B means ordinary GPS noise
+      // (a few metres either way) swings the computed rotation/scale wildly —
+      // this is the most common reason a calibration "looks done" but the
+      // live pin still lands nowhere near the right spot. 15m keeps that
+      // noise down to a small, stable error.
+      const baselineM = Math.hypot((p2.lon - p1.lon) * t.m.lon, (p2.lat - p1.lat) * t.m.lat);
+      if (baselineM < 15) {
+        alert(`Points A and B are only about ${Math.round(baselineM)}m apart in real life — that's too close for an accurate result, since ordinary GPS noise gets amplified into a much bigger error on the photo. Please recalibrate from two spots at least 15-20m apart (further apart is more accurate).`);
+        calibState.points = [];
+        drawCalibMarkers();
+        calibSetStep(1);
+        return;
+      }
+      saveAssemblyCalibration(calibState.factory, { p1, p2 });
       logActivity('Assembly point GPS calibrated', calibState.factory);
       const factory = calibState.factory;
       closeCalibrateModal();
@@ -7390,7 +7475,12 @@ TARSONS HSE Portal`;
         // feeling frozen/slow to open on mobile connections. Cloud data is
         // fetched in the background and the view refreshes once it lands.
         checkAuth();
-        navTo('home');
+        // Skip the default Home landing when this load came from a QR scan
+        // (?scan=...) — handleScanLanding (below) owns navigation in that
+        // case. Forcing navTo('home') here could win a race against it on a
+        // slow connection and silently bounce the scanner back to Home right
+        // after they'd landed on the Assembly Point / check-in / pass view.
+        if (!new URLSearchParams(location.search).get('scan')) navTo('home');
         const badge = document.getElementById('cloudSyncBadge');
         if (badge && CLOUD_SYNC_ENABLED) {
             badge.style.display = 'inline-flex';
