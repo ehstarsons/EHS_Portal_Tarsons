@@ -1095,32 +1095,37 @@
   @media (max-width:760px){
     #bottomNav{display:block}
     body{padding-bottom:66px}
-    #complaintBtn{bottom:78px}
+    /* SOS sits lowest, complaint stacks directly above it, both on the
+       left and clear of the bottom nav bar below them — see the desktop
+       rules on #sosFab/#complaintBtn/#complaintBox for the full story. */
+    #sosFab{bottom:78px;left:16px;width:44px;height:44px;font-size:16px}
+    #complaintBtn{bottom:132px;left:16px;width:44px;height:44px}
+    #complaintBox{bottom:186px;left:16px}
     /* Back-to-top used to float bottom-right at the same spot as the
-       bottom nav bar's "More" tab (and, below 480px, on top of the
-       complaint button too), blocking both. The bottom nav's own
+       bottom nav bar's "More" tab, blocking it. The bottom nav's own
        "Home" link already gets people back to the top of the page,
        so just hide this button once the bottom nav is showing. */
     #backToTop{display:none !important}
   }
 
   /* ---------- Complaint / Suggestion Box (hover widget, all pages) ----------
-     Placed on the RIGHT so it never overlaps the Emergency SOS button
-     (#sosFab), which is fixed to the LEFT — the two used to sit at almost
-     identical bottom-left coordinates and stack on top of each other. */
+     Stacked on the LEFT directly above the Emergency SOS button (#sosFab),
+     with a gap between them so they never touch. Back-to-top (#backToTop)
+     stays on the right, so none of the three floating buttons compete for
+     the same corner any more. */
   #complaintBtn{
-    position:fixed;bottom:25px;right:25px;width:60px;height:60px;
+    position:fixed;bottom:82px;left:20px;width:48px;height:48px;
     background:linear-gradient(135deg,var(--warning),#ef8354);
     border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;
     box-shadow:0 10px 28px rgba(0,0,0,.35);z-index:10000;transition:all .3s cubic-bezier(0.175,0.885,0.32,1.275);
   }
   #complaintBtn:hover{transform:scale(1.1) rotate(-5deg)}
   #complaintBox{
-    position:fixed;bottom:95px;right:25px;width:360px;max-width:92vw;max-height:80vh;overflow-y:auto;
+    position:fixed;bottom:142px;left:20px;width:360px;max-width:92vw;max-height:80vh;overflow-y:auto;
     background:#fff;border-radius:20px;box-shadow:var(--shadow-lg);display:none;flex-direction:column;
     z-index:10000;border:1px solid rgba(0,0,0,.08);animation:modalIn .2s ease both;color:var(--text-dark);
   }
-  @media (max-width:480px){ #complaintBox{width:92vw;right:4vw;max-height:75vh;bottom:90px} }
+  @media (max-width:480px){ #complaintBox{width:92vw;max-height:75vh} }
   #complaintHeader{background:linear-gradient(100deg,var(--warning),#ef8354);color:white;padding:16px;font-weight:800;display:flex;justify-content:space-between;align-items:center;border-radius:20px 20px 0 0}
   #complaintBoxBody{padding:16px}
   body.dark-theme #complaintBox{background:#101e2c}
@@ -1208,13 +1213,12 @@
   .pass-card-foot{padding:12px 20px 18px;text-align:center;font-size:10.5px;opacity:.85}
 
   /* ---------- NEW MODULES: SOS ---------- */
-  #sosFab{position:fixed;bottom:24px;left:24px;z-index:8500;width:56px;height:56px;border-radius:50%;
-    background:linear-gradient(135deg,#e5484d,#c0272c);color:white;border:none;font-size:22px;font-weight:800;
+  #sosFab{position:fixed;bottom:22px;left:20px;z-index:8500;width:48px;height:48px;border-radius:50%;
+    background:linear-gradient(135deg,#e5484d,#c0272c);color:white;border:none;font-size:16px;font-weight:800;
     box-shadow:0 8px 24px rgba(229,72,77,.45);cursor:pointer;display:flex;align-items:center;justify-content:center;
     animation:sosPulse 2.2s ease-in-out infinite;}
   @keyframes sosPulse{0%,100%{box-shadow:0 8px 24px rgba(229,72,77,.45)}50%{box-shadow:0 8px 30px rgba(229,72,77,.75), 0 0 0 8px rgba(229,72,77,.12)}}
   #sosFab:hover{transform:scale(1.06)}
-  @media (max-width:480px){ #sosFab{bottom:90px;left:16px;width:48px;height:48px;font-size:18px} }
   .sos-quick-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:14px}
   .sos-quick-btn{display:flex;flex-direction:column;align-items:center;gap:4px;padding:16px 8px;border-radius:14px;
     background:rgba(229,72,77,.08);border:1px solid rgba(229,72,77,.25);text-decoration:none;color:var(--text-dark);font-weight:700;font-size:12.5px}
@@ -1308,7 +1312,7 @@
     </div>
   </div>
 
-  <button id="sosFab" onclick="openSosQuickPanel()" title="Emergency SOS">SOS</button>
+  <button id="sosFab" onclick="openSosQuickPanel()" title="Emergency SOS" aria-label="Emergency SOS">SOS</button>
 
   <nav id="bottomNav" aria-label="Primary">
     <ul>
@@ -2551,8 +2555,8 @@
 
   <button id="backToTop" onclick="window.scrollTo({top:0,behavior:'smooth'})" title="Back to top" aria-label="Scroll to top">↑</button>
 
-  <div id="complaintBtn" onclick="toggleComplaintBox()" title="Complaint / Suggestion Box">
-    <span style="font-size:27px;line-height:1">📢</span>
+  <div id="complaintBtn" onclick="toggleComplaintBox()" title="Complaint / Suggestion Box" role="button" tabindex="0" aria-label="Open complaint or suggestion box">
+    <span style="font-size:20px;line-height:1">📢</span>
   </div>
 
   <div id="complaintBox">
@@ -4463,6 +4467,36 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
       if (apvAnimFrame) { cancelAnimationFrame(apvAnimFrame); apvAnimFrame = null; }
     }
     window.addEventListener('pagehide', stopApvWatch);
+
+    // Shows/hides a plain-text readout of what the live-tracking pin is
+    // currently doing — useful when a factory reports "the dot looks wrong"
+    // and you need to see the raw numbers without opening devtools.
+    function toggleApvDiagnostics() {
+      const box = document.getElementById('apvDiagnostics');
+      if (!box) return;
+      const willShow = box.style.display === 'none' || !box.style.display;
+      if (!willShow) { box.style.display = 'none'; return; }
+      const calib = apvCurrentFactory ? getAssemblyCalibration(apvCurrentFactory) : null;
+      const lines = [
+        `Factory: ${apvCurrentFactory || '(none)'}`,
+        `Geolocation supported: ${navigator.geolocation ? 'yes' : 'no'}`,
+        `Live tracking active: ${apvWatchId !== null ? 'yes' : 'no'}`,
+        `Calibrated: ${calib ? 'yes' : 'no — pin position is only illustrative'}`,
+      ];
+      if (apvTargetPixel) {
+        lines.push(
+          `Target pixel: x=${Math.round(apvTargetPixel.x)}, y=${Math.round(apvTargetPixel.y)}`,
+          `Accuracy (px): ${apvTargetPixel.accuracyPx ? Math.round(apvTargetPixel.accuracyPx) : '0'}`,
+          `Outside plan area: ${apvTargetPixel.offCanvas ? 'yes' : 'no'}`,
+          `Approximate (uncalibrated) placement: ${apvTargetPixel.approx ? 'yes' : 'no'}`
+        );
+      } else {
+        lines.push('No position received yet.');
+      }
+      box.innerText = lines.join('\n');
+      box.style.display = 'block';
+    }
+    window.toggleApvDiagnostics = toggleApvDiagnostics;
 
     /* =====================================================================
        NEW MODULE: MEETING PERSONS DIRECTORY (WhatsApp)
@@ -7686,7 +7720,7 @@ TARSONS HSE Portal`;
           : `<div class="blog-card-noimg">📰</div>`;
         const excerpt = (p.content||'').length > 120 ? escapeHtml(p.content.substring(0,120)) + '…' : escapeHtml(p.content||'');
         return `<div class="blog-card" onclick="openBlogPost(${p.id})">
-          ${isAdmin ? `<div class="blog-del" onclick="event.stopPropagation();deleteBlogPost(${p.id})">X</div>` : ''}
+          ${isAdmin ? `<div class="blog-del" onclick="event.stopPropagation();deleteBlogPost(${p.id})" role="button" tabindex="0" aria-label="Delete this post">X</div>` : ''}
           ${img}
           <div class="blog-card-body">
             <div class="blog-card-title">${escapeHtml(p.title)}</div>
