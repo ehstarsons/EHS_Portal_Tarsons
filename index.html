@@ -1100,16 +1100,24 @@
        phones the (taller) nav bar covered the last bit of page content.
        Growing this the same way keeps content clear of the real nav height. */
     body{padding-bottom:calc(66px + env(safe-area-inset-bottom,0px))}
-    /* Same problem hit these three: fixed offsets didn't account for the
-       safe-area bottom inset, so on phones with a home indicator the nav
-       bar was taller than expected and swallowed the bottom of these
-       buttons. Adding the inset here lifts them clear of the real nav
-       height on every device, not just ones without a notch. SOS sits
-       lowest, complaint stacks directly above it — see the desktop rules
-       on #sosFab/#complaintBtn/#complaintBox for the full story. */
-    #sosFab{bottom:calc(78px + env(safe-area-inset-bottom,0px));left:16px;width:44px;height:44px;font-size:16px}
-    #complaintBtn{bottom:calc(132px + env(safe-area-inset-bottom,0px));left:16px;width:44px;height:44px}
-    #complaintBox{bottom:calc(186px + env(safe-area-inset-bottom,0px));left:16px}
+    /* IMPORTANT — the actual bug, finally found: this mobile block sits
+       BEFORE the plain desktop rules for #sosFab/#complaintBtn/#complaintBox
+       further down this file. Since both target the same #id (equal CSS
+       specificity), the tie is broken by source order — whichever rule
+       comes LAST in the file wins, even though this one is behind a media
+       query that matches. The desktop rules were always winning here,
+       which is why raising these numbers repeatedly never visibly changed
+       anything on a phone. !important below sidesteps that ordering trap
+       entirely (the same trick #backToTop already used, successfully,
+       right below this comment) — safe-area-inset-bottom still adds extra
+       clearance on notched phones on top of these fixed minimums, but even
+       browsers reporting 0 for that (plain Safari, no PWA/notch) now get
+       real clearance above the nav bar. SOS sits lowest, complaint stacks
+       directly above it — see the desktop rules on
+       #sosFab/#complaintBtn/#complaintBox for the full story. */
+    #sosFab{bottom:calc(90px + env(safe-area-inset-bottom,0px)) !important;left:16px !important;width:44px !important;height:44px !important;font-size:16px !important}
+    #complaintBtn{bottom:calc(148px + env(safe-area-inset-bottom,0px)) !important;left:16px !important;width:44px !important;height:44px !important}
+    #complaintBox{bottom:calc(206px + env(safe-area-inset-bottom,0px)) !important;left:16px !important}
     /* Back-to-top used to float bottom-right at the same spot as the
        bottom nav bar's "More" tab, blocking it. The bottom nav's own
        "Home" link already gets people back to the top of the page,
