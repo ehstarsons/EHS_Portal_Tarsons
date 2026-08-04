@@ -2178,9 +2178,7 @@
         <p class="small" id="apvLocationText" style="text-align:center;margin-top:10px;color:var(--muted)"></p>
         <div style="text-align:center;margin-top:12px">
           <button class="ghost-dark btn-sm" onclick="refreshAssemblyPointLocation()">📍 Restart Live Tracking</button>
-          <button class="ghost-dark btn-sm" onclick="toggleApvDiagnostics()">🔧 Diagnostics</button>
         </div>
-        <div id="apvDiagnostics" style="display:none;margin-top:12px;padding:12px 14px;border-radius:12px;background:rgba(11,26,47,.04);font-size:12.5px;font-family:ui-monospace,monospace;text-align:left;white-space:pre-wrap;color:var(--text-dark)"></div>
       </div>
     </section>
 
@@ -4484,36 +4482,6 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
       if (apvAnimFrame) { cancelAnimationFrame(apvAnimFrame); apvAnimFrame = null; }
     }
     window.addEventListener('pagehide', stopApvWatch);
-
-    // Shows/hides a plain-text readout of what the live-tracking pin is
-    // currently doing — useful when a factory reports "the dot looks wrong"
-    // and you need to see the raw numbers without opening devtools.
-    function toggleApvDiagnostics() {
-      const box = document.getElementById('apvDiagnostics');
-      if (!box) return;
-      const willShow = box.style.display === 'none' || !box.style.display;
-      if (!willShow) { box.style.display = 'none'; return; }
-      const calib = apvCurrentFactory ? getAssemblyCalibration(apvCurrentFactory) : null;
-      const lines = [
-        `Factory: ${apvCurrentFactory || '(none)'}`,
-        `Geolocation supported: ${navigator.geolocation ? 'yes' : 'no'}`,
-        `Live tracking active: ${apvWatchId !== null ? 'yes' : 'no'}`,
-        `Calibrated: ${calib ? 'yes' : 'no — pin position is only illustrative'}`,
-      ];
-      if (apvTargetPixel) {
-        lines.push(
-          `Target pixel: x=${Math.round(apvTargetPixel.x)}, y=${Math.round(apvTargetPixel.y)}`,
-          `Accuracy (px): ${apvTargetPixel.accuracyPx ? Math.round(apvTargetPixel.accuracyPx) : '0'}`,
-          `Outside plan area: ${apvTargetPixel.offCanvas ? 'yes' : 'no'}`,
-          `Approximate (uncalibrated) placement: ${apvTargetPixel.approx ? 'yes' : 'no'}`
-        );
-      } else {
-        lines.push('No position received yet.');
-      }
-      box.innerText = lines.join('\n');
-      box.style.display = 'block';
-    }
-    window.toggleApvDiagnostics = toggleApvDiagnostics;
 
     /* =====================================================================
        NEW MODULE: MEETING PERSONS DIRECTORY (WhatsApp)
