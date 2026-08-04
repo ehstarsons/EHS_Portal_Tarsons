@@ -1096,6 +1096,12 @@
     #bottomNav{display:block}
     body{padding-bottom:66px}
     #complaintBtn{bottom:78px}
+    /* Back-to-top used to float bottom-right at the same spot as the
+       bottom nav bar's "More" tab (and, below 480px, on top of the
+       complaint button too), blocking both. The bottom nav's own
+       "Home" link already gets people back to the top of the page,
+       so just hide this button once the bottom nav is showing. */
+    #backToTop{display:none !important}
   }
 
   /* ---------- Complaint / Suggestion Box (hover widget, all pages) ----------
@@ -1142,7 +1148,6 @@
   }
   #backToTop:hover{transform:translateY(-3px);opacity:1}
   #backToTop.show{display:flex}
-  @media (max-width:480px){ #backToTop{bottom:90px;right:16px;width:40px;height:40px} }
 
   /* ---------- Small polish: accessible focus, tile accent, tactile buttons ---------- */
   a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, [tabindex]:focus-visible{
