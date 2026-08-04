@@ -3779,7 +3779,7 @@
       const log = LocalDB.get('auditLog', []);
       document.querySelector('#activityTable tbody').innerHTML = log.map(e => `
         <tr><td>${formatKolkataDateTime(e.ts)}</td><td>${escapeHtml(e.user)}</td><td>${escapeHtml(e.action)}</td><td>${escapeHtml(e.detail)}</td></tr>
-      `).join('') || '<tr><td colspan="4" style="text-align:center;color:grey">No activity recorded yet.</td></tr>';
+      `).join('') || tableEmptyRow(4, 'No activity recorded yet.', '🕓');
     }
     function clearActivityLog() {
       if (!isAdminTier(currentUser)) return;
@@ -3829,7 +3829,7 @@
           </select> <span class="status-pill ${st.cls}">${st.label}</span>
         </td>
         <td class="admin-only"><button class="btn-danger btn-sm" onclick="deleteCAPA(${x.id})">Del</button></td></tr>`;
-      }).join('') || '<tr><td colspan="7" style="text-align:center;color:grey">No CAPA items yet.</td></tr>';
+      }).join('') || tableEmptyRow(7, 'No CAPA items yet.', '🛠️');
     }
     function updateCAPAStatus(id, status) {
       const list = LocalDB.get('capa', []);
@@ -4793,7 +4793,7 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
           <td>${openFindings ? `<span class="status-badge status-warning">${openFindings} open</span>` : `<span class="status-badge status-safe">None</span>`}</td>
           <td style="white-space:nowrap"><button class="ghost-dark btn-sm" onclick="openInspectionDetail(${a.id})">View</button>
           <button class="btn-danger btn-sm admin-only" onclick="deleteInspection(${a.id})">Delete</button></td></tr>`;
-      }).join('') || '<tr><td colspan="7" style="text-align:center;color:grey">No inspections recorded yet.</td></tr>';
+      }).join('') || tableEmptyRow(7, 'No inspections recorded yet.', '🔍');
     }
     function deleteInspection(id) {
       if (!confirm('Delete this inspection? Any CAPA entries it already created will remain in the CAPA Tracker.')) return;
@@ -5204,7 +5204,7 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
                     <button class="btn-danger btn-sm admin-only" onclick="deletePPEItem(${p.id})">Delete</button>
                 </td>
             </tr>
-        `).join('');
+        `).join('') || tableEmptyRow(6, 'No PPE stock items added yet.', '🦺');
         checkAuth();
     }
 
@@ -5280,7 +5280,7 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
                 <td>${l.date}</td><td>${escapeHtml(l.empName)}</td><td>${escapeHtml(l.empID)}</td><td>${escapeHtml(l.item)}</td><td>${l.qty}</td><td>${escapeHtml(l.location)}</td>
                 <td class="admin-only"><button class="btn-danger btn-sm" onclick="deletePPELog(${l.id})">Delete</button></td>
             </tr>
-        `).join('');
+        `).join('') || tableEmptyRow(6, 'No PPE has been issued yet.', '🦺');
     }
 
     function deletePPELog(id) {
@@ -5946,7 +5946,7 @@ for (let i = 0; i < 14; i++) {   // 14 months
           <td><button class="ghost-dark btn-sm" onclick="downloadEHSRecordPDF('${cfg.id}',${r.id})">📄</button></td>
           <td class="admin-only"><button class="btn-danger btn-sm" onclick="deleteEHSRow('${cfg.id}',${r.id})">✕</button></td></tr>`;
         }).join('') ||
-          `<tr><td colspan="${cfg.columns.length + (cfg.criticalCheck ? 6 : 5)}" style="text-align:center;color:grey;padding:14px">No entries match the current filter.</td></tr>`}</tbody>`;
+          tableEmptyRow(cfg.columns.length + (cfg.criticalCheck ? 6 : 5), 'No entries match the current filter.', '📋')}</tbody>`;
     }
 
     // ---- Style: inspection (fixed Yes/No/NA questions, one row per visit) ----
@@ -6015,7 +6015,7 @@ for (let i = 0; i < 14; i++) {   // 14 months
             <td>${escapeHtml(r.submittedBy || '')}</td>
             <td><button class="ghost-dark btn-sm" onclick="downloadEHSRecordPDF('${cfg.id}',${r.id})">📄</button></td>
             <td class="admin-only"><button class="btn-danger btn-sm" onclick="deleteEHSRow('${cfg.id}',${r.id})">✕</button></td></tr>`;
-        }).join('') || `<tr><td colspan="${cfg.meta.length + 6}" style="text-align:center;color:grey;padding:14px">No inspections match the current filter.</td></tr>`}</tbody>`;
+        }).join('') || tableEmptyRow(cfg.meta.length + 6, 'No inspections match the current filter.', '📋')}</tbody>`;
     }
 
     // ---- Style: matrix (meta + a small fixed row/column grid, one per month) ----
@@ -6113,7 +6113,7 @@ for (let i = 0; i < 14; i++) {   // 14 months
           <td>${escapeHtml(r.submittedBy || '')}</td>
           <td><button class="ghost-dark btn-sm" onclick="downloadEHSRecordPDF('${cfg.id}',${r.id})">📄</button></td>
           <td class="admin-only"><button class="btn-danger btn-sm" onclick="deleteEHSRow('${cfg.id}',${r.id})">✕</button></td></tr>`).join('') ||
-          `<tr><td colspan="${metaCols.length + 5}" style="text-align:center;color:grey;padding:14px">No monthly records match the current filter.</td></tr>`}</tbody>`;
+          tableEmptyRow(metaCols.length + 5, 'No monthly records match the current filter.', '📋')}</tbody>`;
     }
 
     // ---- PDF generation (jsPDF) ----
@@ -6455,7 +6455,7 @@ for (let i = 0; i < 14; i++) {   // 14 months
           </div>
           <div class="module-records-panel" id="moduleRecords_${m.id}" style="display:${open ? 'block' : 'none'}"></div>
         </div>`;
-      }).join('') || '<p style="color:grey;text-align:center;padding:20px 0">No training modules defined yet — add one above.</p>';
+      }).join('') || `<div class="table-empty"><span class="te-icon">🎓</span>No training modules defined yet — add one above.</div>`;
       if (wrap.dataset.openModule) renderModuleRecordGroups(wrap.dataset.openModule);
     }
 
@@ -6778,7 +6778,7 @@ for (let i = 0; i < 14; i++) {   // 14 months
           <td><span class="status-badge ${ev.retrain ? 'status-expired' : 'status-safe'}">${ev.retrain ? 'Yes' : 'No'}</span></td>
           <td class="admin-only"><button class="btn-danger btn-sm" onclick="deleteTrainingEval(${ev.id})">Delete</button></td>
         </tr>`;
-      }).join('') || '<tr><td colspan="10" style="text-align:center;color:grey">No evaluations recorded yet.</td></tr>';
+      }).join('') || tableEmptyRow(10, 'No evaluations recorded yet.', '🎓');
     }
     function deleteTrainingEval(id) {
       if (!confirm('Delete this evaluation?')) return;
@@ -6875,7 +6875,7 @@ for (let i = 0; i < 14; i++) {   // 14 months
               ${v.checkoutTime ? `<span class="status-badge status-safe">Checked Out</span>` : `<button class="ghost-dark btn-sm" onclick="checkoutVisitor(${v.id})">Check Out</button>`}
               <button class="btn-action btn-sm mail-visitor-only" onclick="openMailVisitorPass(${v.id})">✉ Mail Pass</button>
               <button class="btn-danger btn-sm admin-only" onclick="deleteVisitor(${v.id})">Delete</button></td></tr>
-        `).join('') || '<tr><td colspan="9" style="text-align:center;color:grey">No visitors logged yet.</td></tr>';
+        `).join('') || tableEmptyRow(9, 'No visitors logged yet.', '🪪');
     }
     // Scrolls to and briefly highlights one visitor's row in the Visitor Log —
     // used when a shared Visitor Log link (see sendCheckinWhatsAppToHost) lands
@@ -7129,7 +7129,7 @@ TARSONS HSE Portal`;
               <button class="btn-action btn-sm" onclick="updatePTWStatus('${p.id}','Approved')">Approve</button>
               <button class="btn-danger btn-sm" onclick="updatePTWStatus('${p.id}','Rejected')">Reject</button>` : ''}
               <button class="btn-danger btn-sm admin-only" onclick="deletePTW('${p.id}')" style="margin-left:4px">X</button></td></tr>
-        `).join('');
+        `).join('') || tableEmptyRow(8, 'No permits to show yet.', '📝');
         refreshStats();
     }
     function updatePTWStatus(id, status){
@@ -7164,7 +7164,7 @@ TARSONS HSE Portal`;
               <td><span class="status-badge ${cls}">${status}</span></td>
               <td class="admin-only"><button class="btn-danger btn-sm" onclick="deleteLegalItem(${item.id})">Delete</button></td>
             </tr>`;
-        }).join('');
+        }).join('') || tableEmptyRow(7, 'No legal/license records to show yet.', '📜');
         checkAuth();
     }
     async function addLegalItem(e) {
@@ -7236,7 +7236,7 @@ TARSONS HSE Portal`;
         document.querySelector('#hiraTable tbody').innerHTML = list.map(h => {
              const cls = h.risk === 'High' ? 'risk-high' : (h.risk === 'Medium' ? 'risk-med' : 'risk-low');
              return `<tr class="${cls}"><td>${escapeHtml(h.factory)}</td><td>${escapeHtml(h.activity)}</td><td>${escapeHtml(h.hazard)}</td><td>${h.risk}</td><td>${escapeHtml(h.controls)}</td><td class="admin-only"><button class="btn-danger btn-sm" onclick="deleteHIRA(${h.id})">Delete</button></td></tr>`;
-        }).join('');
+        }).join('') || tableEmptyRow(6, 'No hazard/risk entries logged yet.', '⚠️');
     }
     function deleteHIRA(id){ if(!confirm('Delete risk entry?')) return; LocalDB.set('hira', LocalDB.get('hira', []).filter(h => h.id !== id)); renderHIRA(); }
     function printHIRA(){
@@ -7311,7 +7311,7 @@ TARSONS HSE Portal`;
              <td><span class="status-badge ${badgeCls}">${escapeHtml(entryType)}</span></td>
              <td>${w.qty}</td><td>${escapeHtml(w.method)}</td>
              <td class="admin-only"><button class="btn-danger btn-sm" onclick="deleteWaste(${w.id})">Delete</button></td></tr>`;
-        }).join('') || '<tr><td colspan="7" style="text-align:center;color:grey">No waste entries logged yet.</td></tr>';
+        }).join('') || tableEmptyRow(7, 'No waste entries logged yet.', '♻️');
     }
     function deleteWaste(id){ if(!confirm('Delete waste record?')) return; LocalDB.set('waste', LocalDB.get('waste', []).filter(w => w.id !== id)); renderWaste(); }
 
@@ -7377,6 +7377,13 @@ TARSONS HSE Portal`;
     }
 
     function readFileAsDataURL(file){ return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(file);});
+    }
+    // Reusable empty-state row for tables — matches the existing .table-empty
+    // visual language used elsewhere, so every register/log looks the same
+    // (a friendly note + icon) instead of an unexplained blank body when no
+    // rows exist yet or a filter matches nothing.
+    function tableEmptyRow(colspan, message, icon) {
+      return `<tr><td colspan="${colspan}" style="border-bottom:none"><div class="table-empty"><span class="te-icon">${icon || '📭'}</span>${escapeHtml(message)}</div></td></tr>`;
     }
     function escapeHtml(s){ return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
     }
