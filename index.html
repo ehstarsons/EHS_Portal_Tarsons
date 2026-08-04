@@ -377,19 +377,6 @@
   textarea{min-height:80px;resize:vertical}
   label{font-size:13px}
 
-  /* Lightweight toast utility — any part of the app can call
-     `showToast('Saved', 'success')` to give quiet, non-blocking
-     confirmation instead of a jarring alert() dialog. Purely additive:
-     nothing existing calls it yet, so it changes no current behaviour. */
-  #toastHost{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);z-index:10001;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none}
-  .toast{pointer-events:auto;display:flex;align-items:center;gap:8px;padding:10px 18px;border-radius:var(--radius-pill);
-    background:#101e2c;color:#fff;font-size:13px;font-weight:600;box-shadow:var(--shadow-lg);
-    animation:toastIn var(--dur-base) var(--ease-spring) both;}
-  .toast.leaving{animation:toastOut var(--dur-base) var(--ease-standard) both}
-  .toast-success{background:linear-gradient(115deg,var(--accent),var(--accent-2))}
-  .toast-error{background:linear-gradient(115deg,#ff6b6b,var(--danger))}
-  @keyframes toastIn{from{opacity:0;transform:translateY(10px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}
-  @keyframes toastOut{to{opacity:0;transform:translateY(6px) scale(.98)}}
 
   .admin-only[style*="background"], div.admin-only{border-radius:14px !important}
 
@@ -2380,8 +2367,6 @@
       <button class="primary btn-sm" style="margin-top:8px" onclick="document.getElementById('qrModal').style.display='none'">Close</button>
     </div>
   </div>
-
-  <div id="toastHost" aria-live="polite"></div>
 
   <div id="calibModal" onclick="if(event.target.id==='calibModal') closeCalibrateModal()">
     <div id="calibBox">
@@ -7387,22 +7372,6 @@ TARSONS HSE Portal`;
     }
     function escapeHtml(s){ return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
     }
-    // Reusable non-blocking confirmation micro-interaction — available for any
-    // module to use instead of alert() going forward; existing alert() calls
-    // are left exactly as-is so current behaviour never changes underfoot.
-    function showToast(message, kind) {
-      const host = document.getElementById('toastHost');
-      if (!host) { return; }
-      const el = document.createElement('div');
-      el.className = 'toast' + (kind === 'success' ? ' toast-success' : kind === 'error' ? ' toast-error' : '');
-      el.textContent = message;
-      host.appendChild(el);
-      setTimeout(() => {
-        el.classList.add('leaving');
-        setTimeout(() => el.remove(), 220);
-      }, 2600);
-    }
-    window.showToast = showToast;
 
     // Supabase Storage public URLs (https://<project>.supabase.co/storage/v1/object/public/hse-uploads/...)
     // work directly as <img src> / <iframe src> with no ID extraction or
