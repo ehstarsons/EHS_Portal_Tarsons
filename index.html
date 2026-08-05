@@ -1426,18 +1426,18 @@
         <li><a href="#" data-nav="home" onclick="navTo('home')">🏠 Home</a></li>
         <li><a href="#" data-nav="dashboard" onclick="requireAuthAndGo('dashboard')">🚨 Incidents/Accidents</a></li>
         <li><a href="#" data-nav="hira" onclick="requireAuthAndGo('hira')">⚠️ HIRA</a></li>
-        <li><a href="#" data-nav="waste" onclick="requireAuthAndGo('waste')">♻️ Waste Mgmt</a></li>
+        <li><a href="#" data-nav="waste" onclick="requireAuthAndGo('waste')">♻️ Waste Management</a></li>
         <li><a href="#" data-nav="ppe" onclick="requireAuthAndGo('ppe')">🦺 PPE</a></li>
         <li><a href="#" data-nav="ptw" onclick="requireAuthAndGo('ptw')">📝 PTW</a></li>
         <li><a href="#" data-nav="training" onclick="requireAuthAndGo('training')">🎓 Training</a></li>
         <li><a href="#" data-nav="legal" onclick="requireAuthAndGo('legal')">⚖️ Legal</a></li>
         <li><a href="#" data-nav="gallery" onclick="navTo('gallery')">🖼️ EHS Gallery</a></li>
-        <li><a href="#" data-nav="blog" onclick="navTo('blog')">📰 Blog/News</a></li>
+        <li><a href="#" data-nav="blog" onclick="navTo('blog')">📰 News & Updates</a></li>
         <li><a href="#" data-nav="policies" onclick="navTo('policies')">📄 Policies</a></li>
         <li><a href="#" data-nav="contact" onclick="navTo('contact')">🆘 Emergency SOS</a></li>
         <li><a href="#" data-nav="inspections" onclick="requireAuthAndGo('inspections')">🔍 Audits/Inspections</a></li>
         <li class="qrhub-only"><a href="#" data-nav="qrhub" onclick="requireQrHubAndGo()">🔗 QR Hub</a></li>
-        <li><a href="#" data-nav="adminSection" onclick="requireAuthAndGo('adminSection')">🛠️ Admin</a></li>
+        <li><a href="#" data-nav="adminSection" onclick="requireAuthAndGo('adminSection')">🛠️ Administration</a></li>
       </ul>
     </nav>
   </header>
@@ -1460,14 +1460,14 @@
               <h3>🎯 Executive Command Center <span class="live-pill"><span class="live-dot"></span>Live</span></h3>
               <div class="officer-only"><button class="btn-action btn-sm" onclick="openSiteStats()">Update Factory Stats</button></div>
             </div>
-            <p class="sub" style="margin:-6px 0 14px;color:var(--muted);font-size:12.5px">Company-wide EHS overview, refreshed automatically as new reports, PTWs and compliance records come in.</p>
+            <p class="sub" style="margin:-6px 0 14px;color:var(--muted);font-size:12.5px">Real-time overview of company-wide EHS performance, incidents, permits, compliance, and operational metrics.</p>
 
             <div class="kpi-grid">
               <div class="tile tile-good"><div class="tile-icon">🛡️</div><div class="small">Safe Days</div><div class="big" id="safeDays">0</div></div>
               <div class="tile tile-info"><div class="tile-icon">📋</div><div class="small">Total Reports</div><div class="big" id="totalReports">0</div></div>
               <div class="tile tile-warn"><div class="tile-icon">⚠️</div><div class="small">Accident Ratio</div><div class="big" id="accRatio">0%</div></div>
               <div class="tile tile-info"><div class="tile-icon">📝</div><div class="small">Open PTWs</div><div class="big" id="openPTWs">0</div></div>
-              <div class="tile tile-warn" title="Near Miss + Unsafe Condition reports logged"><div class="tile-icon">👁️</div><div class="small">Near Miss / Unsafe</div><div class="big" id="nearMissTile">0</div></div>
+              <div class="tile tile-warn" title="Near Miss + Unsafe Condition reports logged"><div class="tile-icon">👁️</div><div class="small">Near Misses & Unsafe Conditions</div><div class="big" id="nearMissTile">0</div></div>
               <div class="tile tile-warn" title="CAPA items not yet Closed"><div class="tile-icon">🛠️</div><div class="small">Open CAPA</div><div class="big" id="openCapaKpi">0</div></div>
               <div class="tile tile-danger" id="legalAlertsTile" title="Statutory licenses expiring within 30 days"><div class="tile-icon">⚖️</div><div class="small">Legal Alerts</div><div class="big" id="legalAlertsKpi">0</div></div>
               <div class="tile tile-danger" id="extDueTile" title="Fire extinguishers due for inspection within 30 days"><div class="tile-icon">🧯</div><div class="small">Extinguishers Due</div><div class="big" id="extDueKpi">0</div></div>
@@ -1600,7 +1600,7 @@
         <h2>Admin Management</h2>
         <div class="admin-tabs">
             <div class="admin-tab-btn" id="tabAccount" onclick="switchAdminTab('account')">🔑 My Account</div>
-            <div class="admin-tab-btn active" id="tabExt" onclick="switchAdminTab('ext')">Fire Extinguishers</div>
+            <div class="admin-tab-btn active" id="tabExt" onclick="switchAdminTab('ext')">🧯 Fire Extinguishers</div>
             <div class="admin-tab-btn" id="tabCapa" onclick="switchAdminTab('capa')">CAPA Tracker</div>
             <div class="admin-tab-btn" id="tabComplaints" onclick="switchAdminTab('complaints')">Complaints/Suggestions</div>
             <div class="admin-tab-btn admin-only" id="tabActivity" onclick="switchAdminTab('activity')">Activity Log</div>
@@ -1718,7 +1718,7 @@
                   </select>
                 </div>
                 <div class="two-cols" style="margin-top:10px">
-                    <input id="newEmpId" placeholder="Employee ID (Login ID)" required>
+                    <input id="newEmpId" placeholder="Employee ID / Username" required>
                     <input id="newPassword" placeholder="Password" required>
                 </div>
                 <div style="text-align:right;margin-top:8px">
@@ -1726,7 +1726,7 @@
                 </div>
               </form>
             </div>
-            <h3>Users</h3>
+            <h3>User Directory</h3>
             <div style="max-height: 400px; overflow-y: auto;">
                 <ul id="usersList" style="list-style: none; padding: 0;"></ul>
             </div>
@@ -1868,16 +1868,16 @@
 
         <div id="trainingMainContainer">
           <div class="training-add-only" style="background:#f9f9f9;padding:15px;border-radius:8px;margin-bottom:15px">
-              <h4>Define Module</h4>
+              <h4>Create Training Module</h4>
               <form onsubmit="addModule(event)">
                    <div class="two-cols"><input id="modName" placeholder="Module Name" required><input id="modFreq" type="number" placeholder="Frequency (Months)" required></div>
-                  <button type="submit" class="primary" style="margin-top:5px">Save Module</button>
+                  <button type="submit" class="primary" style="margin-top:5px">Create Module</button>
               </form>
           </div>
 
           <div class="training-add-only" style="background:#f9f9f9;padding:15px;border-radius:8px;margin-bottom:18px">
                <h4>Record Completion — Group Entry</h4>
-               <p class="small" style="text-transform:none;font-weight:500;margin:-4px 0 8px;">Pick the module and date once, then list everyone who was trained together — one name per line (or comma-separated).</p>
+               <p class="small" style="text-transform:none;font-weight:500;margin:-4px 0 8px;">Select the training module, training date, and location, then enter the employee names (one name per line or comma-separated).</p>
               <form onsubmit="addRecord(event)">
                   <div class="two-cols"><select id="recMod" required><option value="">Select Module</option></select><input id="recDate" type="date" required></div>
                   <select id="recLocation" required style="margin-top:8px"><option value="">Select Location</option></select>
@@ -3334,7 +3334,7 @@
             safeCall(renderNotices); safeCall(renderFactories); safeCall(refreshStats);
             safeCall(renderChart); safeCall(renderExpiryAlerts);
         }
-        if (id === 'adminSection') { safeCall(populateFactorySelects); safeCall(renderAdminSection); safeCall(renderAudits); safeCall(renderComplaints); }
+        if (id === 'administration') { safeCall(populateFactorySelects); safeCall(renderAdminSection); safeCall(renderAudits); safeCall(renderComplaints); }
         if (id === 'dashboard') { safeCall(populateFactorySelects); safeCall(renderDashboard); }
         if (id === 'ppe') { safeCall(renderPPE); safeCall(renderPPELogs); }
         if (id === 'legal') safeCall(renderLegalRegister);
@@ -3563,7 +3563,7 @@
                 <div class="stat-row"><span>Incidents/Accidents</span><strong>${fIncidents.length}</strong></div>
                 <div class="stat-row"><span>Near Miss/Unsafe</span><strong>${fNearMiss}</strong></div>
                 <div class="stat-row"><span>Open PTWs</span><strong>${fPTWOpen}</strong></div>
-                <div class="factory-section-label">Site Info</div>
+                <div class="factory-section-label">Site Information</div>
                 <div class="stat-row"><span>Manpower</span><strong>${facData.manpower}</strong></div>
                 <div class="stat-row"><span>FirstAid</span><strong>${facData.firstAid}</strong></div>
                 <div class="stat-row"><span>Extinguishers</span><strong>${facData.fire}</strong></div>
