@@ -1704,7 +1704,7 @@
                    <input id="newUsername" placeholder="Name" required>
                   <select id="newRole" required>
                     <option value="">Select Role</option>
-                    <option value="admin">👑 Super Admin</option>
+                    <option value="admin" id="roleOptAdmin">👑 Super Admin</option>
                     <option value="ehsmanager">⛑️ Safety Manager</option>
                     <option value="ehsofficer">👷 EHS Officer</option>
                     <option value="ert">🛡️ ERT Member</option>
@@ -3794,6 +3794,12 @@
         LocalDB.set('users', list);
       }
       const isMaster = !!(currentUser && currentUser.isMaster);
+      // Only a Super Admin can grant Super Admin — Safety Manager reaches
+      // this same tab (both pass isAdminTier) but shouldn't be able to
+      // create another Super Admin account from here. Enforced again in
+      // addUser() below; this just keeps the option from being offered.
+      const roleOptAdmin = document.getElementById('roleOptAdmin');
+      if (roleOptAdmin) roleOptAdmin.style.display = (currentUser && currentUser.role === 'admin') ? '' : 'none';
       // The Manage Users tab is reachable by both Super Admin and Safety
       // Manager (both pass isAdminTier) — but a Super Admin account should
       // only be visible in this directory to another Super Admin, not to
@@ -3829,6 +3835,10 @@
       const empId = document.getElementById('newEmpId').value.trim();
       const password = document.getElementById('newPassword').value.trim();
       if(!username || !role || !empId || !password) { alert('All fields are required'); return; }
+      if (role === 'admin' && !(currentUser && currentUser.role === 'admin')) {
+        alert('Only a Super Admin can create another Super Admin account.');
+        return;
+      }
       const users = LocalDB.get('users', []);
       if (!Array.isArray(users) || users.length === 0) users.push({ id: 1, user: 'admin', role: 'admin', empId: '001' });
       if(users.some(u => u.empId === empId || u.user.toLowerCase() === username.toLowerCase())){
@@ -3842,8 +3852,12 @@
       renderUsers();
     }
     function deleteUser(id){
-      if(!confirm('Delete this user?')) return;
       const target = LocalDB.get('users', []).find(u => u.id === id);
+      if (target && target.role === 'admin' && !(currentUser && currentUser.role === 'admin')) {
+        alert('Only a Super Admin can remove a Super Admin account.');
+        return;
+      }
+      if(!confirm('Delete this user?')) return;
       const users = LocalDB.get('users', []).filter(u => u.id !== id);
       LocalDB.set('users', users);
       if (target) logActivity('User deleted', target.user);
