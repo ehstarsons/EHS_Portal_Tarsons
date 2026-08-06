@@ -2961,6 +2961,61 @@
       return d.toLocaleDateString('en-IN', { timeZone: APP_TIMEZONE, day: '2-digit', month: 'short', year: 'numeric' });
     }
 
+    // Ensures a single, timezone-correct "tracking start" baseline exists in
+    // storage (used as the Safe Days baseline when a scope has never had an
+    // incident). BUGFIX: this used to be set with `new Date().toISOString()`
+    // duplicated in two separate places, which reads the UTC calendar date,
+    // not the Kolkata one — for roughly 5.5 hours every evening
+    // (~18:30-23:59 UTC) Kolkata has already rolled over to the next date
+    // while UTC hasn't, so the stored baseline could silently start one day
+    // early depending on the moment the portal was first opened. Now sourced
+    // from todayKolkataStr() and computed in exactly one place.
+    function getTrackingStart() {
+      let trackingStart = LocalDB.get('trackingStart', null);
+      if (!trackingStart) { trackingStart = todayKolkataStr(); LocalDB.set('trackingStart', trackingStart); }
+      return trackingStart;
+    }
+
+    // Safe Days = whole calendar days since the most recent actual incident
+    // (or since tracking started, if there's never been one), for a given
+    // list of incident reports already filtered to the desired scope
+    // (company-wide or a single factory/unit).
+    // BUGFIX: previously computed as
+    //   Math.floor((nowInKolkata() - parseKolkataDate(baseline)) / 86400000)
+    // — nowInKolkata() carries the live clock time while parseKolkataDate()
+    // normalizes the baseline to Kolkata noon, so the two sides of the
+    // subtraction had mismatched time-of-day components. That made the count
+    // silently swing by a day depending on what time you happened to load
+    // the page (e.g. an incident "yesterday" showed 0 safe days before noon
+    // and 1 after noon on the same day). Both sides are now normalized to
+    // Kolkata noon via parseKolkataDate(), so the day count is a stable
+    // calendar-date difference no matter what time of day it's viewed.
+    function computeSafeDays(incidentReports) {
+      const trackingStart = getTrackingStart();
+      let lastIncidentDate = null; // "yyyy-mm-dd" of the most recent incident in this scope
+      incidentReports.forEach(r => {
+        if (r.date && !isNaN(parseKolkataDate(r.date)) && (!lastIncidentDate || r.date > lastIncidentDate)) lastIncidentDate = r.date;
+      });
+      const baseline = lastIncidentDate ? parseKolkataDate(lastIncidentDate) : parseKolkataDate(trackingStart.slice(0, 10));
+      const today = parseKolkataDate(todayKolkataStr());
+      return Math.max(0, Math.round((today - baseline) / (1000 * 60 * 60 * 24)));
+    }
+
+    // Reports count as an "actual incident" (as opposed to a proactive/
+    // preventive Near Miss or Unsafe Condition report) if explicitly typed
+    // Incident/Accident, or if they predate the type field entirely — kept
+    // identical here and in the per-factory tally so a legacy untyped report
+    // affects a factory's Safe Days the same way it affects the company-wide
+    // figure. BUGFIX: the factory-level filter previously required
+    // r.type === 'Incident'/'Accident' with no fallback, while the
+    // company-wide tally treated untyped legacy reports as incidents too —
+    // so a factory with old untyped incident records could show a *higher*
+    // Safe Days count at the unit level than it actually contributed to the
+    // company-wide baseline.
+    function isActualIncidentReport(r) {
+      return !r.type || r.type === 'Incident' || r.type === 'Accident';
+    }
+
     // --- STANDARD APP LOGIC ---
 
     // Role structure: each role carries a display label + icon (ROLE_META)
@@ -3541,24 +3596,18 @@
         const reports = LocalDB.get('reports', []);
         const ptws = LocalDB.get('ptw', []);
 
-        // Same "Safe Days" baseline as the company-wide tile in refreshStats(),
-        // just filtered per factory so each unit gets its own count.
-        let trackingStart = LocalDB.get('trackingStart', null);
-        if (!trackingStart) { trackingStart = new Date().toISOString(); LocalDB.set('trackingStart', trackingStart); }
-
+        // Same "Safe Days" baseline and calculation as the company-wide tile
+        // in refreshStats(), just filtered per factory so each unit gets its
+        // own count — see computeSafeDays()/isActualIncidentReport() for the
+        // bugfix details.
         container.innerHTML = factoryNames.map(name => {
             const facData = data[name] || { manpower: 0, fire: 0, firstAid: 0 };
             const fReports = reports.filter(r => r.factory === name);
-            const fIncidents = fReports.filter(r => r.type === 'Incident' || r.type === 'Accident');
+            const fIncidents = fReports.filter(isActualIncidentReport);
             const fNearMiss = fReports.filter(r => r.type === 'Near Miss' || r.type === 'Unsafe Condition').length;
             const fPTWOpen = ptws.filter(p => p.factory === name && p.status === 'Pending').length;
 
-            let lastIncidentDate = null; // "yyyy-mm-dd" of the most recent incident at this factory
-            fIncidents.forEach(r => {
-                if (r.date && !isNaN(parseKolkataDate(r.date)) && (!lastIncidentDate || r.date > lastIncidentDate)) lastIncidentDate = r.date;
-            });
-            const baseline = lastIncidentDate ? parseKolkataDate(lastIncidentDate) : parseKolkataDate(trackingStart.slice(0, 10));
-            const safeDays = Math.max(0, Math.floor((nowInKolkata() - baseline) / (1000*60*60*24)));
+            const safeDays = computeSafeDays(fIncidents);
 
             return `
             <div class="factory-card">
@@ -3586,21 +3635,15 @@
         // "Incident" and "Accident" reports count toward safety metrics — Near Miss and
         // Unsafe Condition are proactive/preventive reports, not actual injuries/damage.
         // Older records without a type are treated as Incident for backward compatibility.
-        const actualIncidents = reports.filter(r => !r.type || r.type === 'Incident' || r.type === 'Accident');
+        const actualIncidents = reports.filter(isActualIncidentReport);
         const nearMissCount = reports.filter(r => r.type === 'Near Miss').length;
         const unsafeCount = reports.filter(r => r.type === 'Unsafe Condition').length;
         const nmTile = document.getElementById('nearMissTile');
         if (nmTile) animateCount(nmTile, nearMissCount + unsafeCount);
 
-        // Safe Days = days since the most recent actual incident (near misses don't reset this)
-        let trackingStart = LocalDB.get('trackingStart', null);
-        if (!trackingStart) { trackingStart = new Date().toISOString(); LocalDB.set('trackingStart', trackingStart); }
-        let lastIncidentDate = null; // "yyyy-mm-dd" of the most recent incident company-wide
-        actualIncidents.forEach(r => {
-            if (r.date && !isNaN(parseKolkataDate(r.date)) && (!lastIncidentDate || r.date > lastIncidentDate)) lastIncidentDate = r.date;
-        });
-        const baseline = lastIncidentDate ? parseKolkataDate(lastIncidentDate) : parseKolkataDate(trackingStart.slice(0, 10));
-        const safeDays = Math.max(0, Math.floor((nowInKolkata() - baseline) / (1000*60*60*24)));
+        // Safe Days = calendar days since the most recent actual incident
+        // (near misses don't reset this) — see computeSafeDays() for the bugfix details.
+        const safeDays = computeSafeDays(actualIncidents);
         animateCount(document.getElementById('safeDays'), safeDays);
 
         // Accident Ratio = share of actual incidents rated High or Fatal severity
