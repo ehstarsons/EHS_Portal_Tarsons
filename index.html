@@ -1600,6 +1600,7 @@
         <h2>Admin Management</h2>
         <div class="admin-tabs">
             <div class="admin-tab-btn" id="tabAccount" onclick="switchAdminTab('account')">🔑 My Account</div>
+            <div class="admin-tab-btn" id="tabVisitor" onclick="switchAdminTab('visitor')">🪪 Visitor Safety Induction</div>
             <div class="admin-tab-btn active" id="tabExt" onclick="switchAdminTab('ext')">🧯 Fire Extinguishers</div>
             <div class="admin-tab-btn" id="tabCapa" onclick="switchAdminTab('capa')">📋 CAPA Tracker</div>
             <div class="admin-tab-btn" id="tabComplaints" onclick="switchAdminTab('complaints')">📝 Complaints/Suggestions</div>
@@ -1777,6 +1778,65 @@
               </div>
             </div>
         </div>
+
+        <div id="visitorContainer" style="display:none">
+          <p style="margin:6px 0 16px;color:var(--muted)">Record visitor induction, issue PPE and generate visitor induction certificate.</p>
+
+          <div class="admin-only" style="background:#f9f9f9;padding:15px;border-radius:8px;margin-bottom:18px;border-left:4px solid var(--accent-3)">
+            <h4>Meeting Persons — WhatsApp Directory</h4>
+            <p class="small" style="text-transform:none;font-weight:500;margin:-4px 0 8px;">Add the people visitors can select as "Person to Meet". Their WhatsApp number is set here by Admin only — when a visitor's pass is generated, that person is notified automatically on WhatsApp.</p>
+            <form onsubmit="addMeetingPerson(event)">
+              <div class="two-cols">
+                <input id="mpName" placeholder="Person's Name" required>
+                <input id="mpWhatsapp" placeholder="WhatsApp Number (e.g. 9198xxxxxxx)" required>
+              </div>
+              <div style="text-align:right;margin-top:8px"><button type="submit" class="primary btn-sm">Add Person</button></div>
+            </form>
+            <div id="meetingPersonList" style="margin-top:10px"></div>
+          </div>
+
+          <div style="display:grid; gap:8px; margin-bottom:12px;">
+            <form id="visitorForm" class="visitor-add-only" onsubmit="addVisitor(event)">
+              <div class="two-cols">
+                <input id="visName" placeholder="Visitor Name" required>
+                <input id="visCompany" placeholder="Company Name" required>
+              </div>
+              <div class="two-cols" style="margin-top:6px">
+                <select id="visPersonMeet" required><option value="">Select Person to Meet</option></select>
+                <input id="visPersonEmail" type="email" placeholder="Email of Person to Meet (optional)">
+              </div>
+              <div class="two-cols" style="margin-top:6px">
+                <input id="visMobile" placeholder="Visitor Mobile Number" required>
+                <select id="visFactory" required></select>
+              </div>
+              <input id="visPurpose" placeholder="Purpose of Visit" required style="margin-top:6px">
+              <div style="margin-top:8px; display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+                <label><input type="checkbox" id="visBrief"> Safety Briefing Given</label>
+              </div>
+              <div style="margin-top:8px; display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+                <label style="font-weight:700; margin-right:8px">PPE Issued:</label>
+                <label><input type="checkbox" name="ppe" value="Helmet"> Helmet</label>
+                <label><input type="checkbox" name="ppe" value="Safety Shoe"> Safety Shoe</label>
+                <label><input type="checkbox" name="ppe" value="Vest"> Vest</label>
+                <label><input type="checkbox" name="ppe" value="Goggles"> Goggles</label>
+                <label><input type="checkbox" id="visPPEOtherChk" name="ppe" value="Other"> Other</label>
+                <input id="visPPEOtherText" placeholder="Other PPE (if any)" style="width:200px;">
+              </div>
+              <div style="margin-top:10px; display:flex; justify-content:flex-end; gap:8px;">
+                <button type="button" class="ghost-dark" onclick="document.getElementById('visitorForm').reset()">Reset</button>
+                <button type="submit" class="primary">Save & Generate Certificate</button>
+              </div>
+            </form>
+          </div>
+          <h4 style="margin-top:6px">Visitor Log</h4>
+          <div style="overflow-x:auto; max-height:240px;">
+            <div class="table-scroll"><table id="visitorTable">
+              <thead><tr><th class="sortable" onclick="sortTable(this)">Name</th><th class="sortable" onclick="sortTable(this)">Company</th><th>Mobile</th><th>Person to Meet</th><th class="sortable" onclick="sortTable(this)">Issued Time</th><th>Brief</th><th>PPE</th><th class="sortable" onclick="sortTable(this)">Factory</th><th>Actions</th></tr></thead>
+              <tbody></tbody>
+            </table></div>
+          </div>
+          <button class="ghost-dark btn-sm" onclick="exportTableToExcel('visitorTable','Visitor_Register')" style="margin-top:10px">⬇ Excel</button>
+        </div>
       </div>
     </section>
   
@@ -1860,7 +1920,6 @@
         <h2>🎓 Safety Training</h2>
         <div class="admin-tabs">
           <div class="admin-tab-btn active" id="tabTrainingMain" onclick="switchTrainingTab('main')">🎓 Safety Training</div>
-          <div class="admin-tab-btn" id="tabTrainingVisitor" onclick="switchTrainingTab('visitor')">🪪 Visitor Safety Induction</div>
           <div class="admin-tab-btn" id="tabTrainingMaterials" onclick="switchTrainingTab('materials')">📚 Training Materials</div>
           <div class="admin-tab-btn" id="tabTrainingEval" onclick="switchTrainingTab('evaluation')">📝 Training Evaluation</div>
           <div class="admin-tab-btn" id="tabTrainingEHS" onclick="switchTrainingTab('ehsreport')">🧾 EHS Monthly Report</div>
@@ -1894,65 +1953,6 @@
           <!-- Hidden flat tables kept only so the Excel export helper (which reads a real <table>) has something to read from -->
           <table id="modTable" style="display:none"><thead><tr><th>Module</th><th>Frequency</th><th class="admin-only">Actions</th></tr></thead><tbody></tbody></table>
           <table id="recTable" style="display:none"><thead><tr><th>Employee</th><th>Module</th><th>Location</th><th>Date</th><th>Next Due</th><th class="admin-only">Actions</th></tr></thead><tbody></tbody></table>
-        </div>
-
-        <div id="trainingVisitorContainer" style="display:none">
-          <p style="margin:6px 0 16px;color:var(--muted)">Record visitor induction, issue PPE and generate visitor induction certificate.</p>
-
-          <div class="admin-only" style="background:#f9f9f9;padding:15px;border-radius:8px;margin-bottom:18px;border-left:4px solid var(--accent-3)">
-            <h4>Meeting Persons — WhatsApp Directory</h4>
-            <p class="small" style="text-transform:none;font-weight:500;margin:-4px 0 8px;">Add the people visitors can select as "Person to Meet". Their WhatsApp number is set here by Admin only — when a visitor's pass is generated, that person is notified automatically on WhatsApp.</p>
-            <form onsubmit="addMeetingPerson(event)">
-              <div class="two-cols">
-                <input id="mpName" placeholder="Person's Name" required>
-                <input id="mpWhatsapp" placeholder="WhatsApp Number (e.g. 9198xxxxxxx)" required>
-              </div>
-              <div style="text-align:right;margin-top:8px"><button type="submit" class="primary btn-sm">Add Person</button></div>
-            </form>
-            <div id="meetingPersonList" style="margin-top:10px"></div>
-          </div>
-
-          <div style="display:grid; gap:8px; margin-bottom:12px;">
-            <form id="visitorForm" class="visitor-add-only" onsubmit="addVisitor(event)">
-              <div class="two-cols">
-                <input id="visName" placeholder="Visitor Name" required>
-                <input id="visCompany" placeholder="Company Name" required>
-              </div>
-              <div class="two-cols" style="margin-top:6px">
-                <select id="visPersonMeet" required><option value="">Select Person to Meet</option></select>
-                <input id="visPersonEmail" type="email" placeholder="Email of Person to Meet (optional)">
-              </div>
-              <div class="two-cols" style="margin-top:6px">
-                <input id="visMobile" placeholder="Visitor Mobile Number" required>
-                <select id="visFactory" required></select>
-              </div>
-              <input id="visPurpose" placeholder="Purpose of Visit" required style="margin-top:6px">
-              <div style="margin-top:8px; display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
-                <label><input type="checkbox" id="visBrief"> Safety Briefing Given</label>
-              </div>
-              <div style="margin-top:8px; display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
-                <label style="font-weight:700; margin-right:8px">PPE Issued:</label>
-                <label><input type="checkbox" name="ppe" value="Helmet"> Helmet</label>
-                <label><input type="checkbox" name="ppe" value="Safety Shoe"> Safety Shoe</label>
-                <label><input type="checkbox" name="ppe" value="Vest"> Vest</label>
-                <label><input type="checkbox" name="ppe" value="Goggles"> Goggles</label>
-                <label><input type="checkbox" id="visPPEOtherChk" name="ppe" value="Other"> Other</label>
-                <input id="visPPEOtherText" placeholder="Other PPE (if any)" style="width:200px;">
-              </div>
-              <div style="margin-top:10px; display:flex; justify-content:flex-end; gap:8px;">
-                <button type="button" class="ghost-dark" onclick="document.getElementById('visitorForm').reset()">Reset</button>
-                <button type="submit" class="primary">Save & Generate Certificate</button>
-              </div>
-            </form>
-          </div>
-          <h4 style="margin-top:6px">Visitor Log</h4>
-          <div style="overflow-x:auto; max-height:240px;">
-            <div class="table-scroll"><table id="visitorTable">
-              <thead><tr><th class="sortable" onclick="sortTable(this)">Name</th><th class="sortable" onclick="sortTable(this)">Company</th><th>Mobile</th><th>Person to Meet</th><th class="sortable" onclick="sortTable(this)">Issued Time</th><th>Brief</th><th>PPE</th><th class="sortable" onclick="sortTable(this)">Factory</th><th>Actions</th></tr></thead>
-              <tbody></tbody>
-            </table></div>
-          </div>
-          <button class="ghost-dark btn-sm" onclick="exportTableToExcel('visitorTable','Visitor_Register')" style="margin-top:10px">⬇ Excel</button>
         </div>
 
         <div id="trainingMaterialsContainer" style="display:none">
@@ -3334,12 +3334,17 @@
             safeCall(renderNotices); safeCall(renderFactories); safeCall(refreshStats);
             safeCall(renderChart); safeCall(renderExpiryAlerts);
         }
-        if (id === 'administration') { safeCall(populateFactorySelects); safeCall(renderAdminSection); safeCall(renderAudits); safeCall(renderComplaints); }
+        if (id === 'adminSection') {
+          safeCall(populateFactorySelects); safeCall(renderAdminSection); safeCall(renderAudits); safeCall(renderComplaints);
+          if (document.getElementById('visitorContainer') && document.getElementById('visitorContainer').style.display !== 'none') {
+            safeCall(renderMeetingPersons); safeCall(populateMeetingPersonSelects); safeCall(renderVisitors);
+          }
+        }
         if (id === 'dashboard') { safeCall(populateFactorySelects); safeCall(renderDashboard); }
         if (id === 'ppe') { safeCall(renderPPE); safeCall(renderPPELogs); }
         if (id === 'legal') safeCall(renderLegalRegister);
         if (id === 'training') {
-          safeCall(populateFactorySelects); safeCall(renderModules); safeCall(renderRecords); safeCall(renderVisitors); safeCall(renderTrainingEvals); safeCall(populateEvalBatchSelect);
+          safeCall(populateFactorySelects); safeCall(renderModules); safeCall(renderRecords); safeCall(renderTrainingEvals); safeCall(populateEvalBatchSelect);
           if (document.getElementById('trainingMaterialsContainer') && document.getElementById('trainingMaterialsContainer').style.display !== 'none') safeCall(renderTrainingMaterials);
           if (document.getElementById('trainingEHSContainer') && document.getElementById('trainingEHSContainer').style.display !== 'none') {
             safeCall(renderEHSFormsGrid);
@@ -3789,7 +3794,13 @@
         LocalDB.set('users', list);
       }
       const isMaster = !!(currentUser && currentUser.isMaster);
-      listEl.innerHTML = list.map(u => {
+      // The Manage Users tab is reachable by both Super Admin and Safety
+      // Manager (both pass isAdminTier) — but a Super Admin account should
+      // only be visible in this directory to another Super Admin, not to
+      // every role that can otherwise reach this tab.
+      const viewerIsSuperAdmin = !!(currentUser && currentUser.role === 'admin');
+      const visibleList = viewerIsSuperAdmin ? list : list.filter(u => u.role !== 'admin');
+      listEl.innerHTML = visibleList.map(u => {
         const isMasterRow = u.user === 'admin' && u.empId === '001';
         const realPass = isMasterRow ? getMasterAdminPassword() : (u.password || '');
         // Only the default Admin (Employee ID 001) ever sees a password field here.
@@ -3841,9 +3852,9 @@
 
     function switchAdminTab(t) {
         if ((t === 'activity' || t === 'users') && !isAdminTier(currentUser)) t = 'ext';
-        const tabs = ['account','ext','capa','complaints','activity','users'];
-        const idMap = { account:'tabAccount', ext:'tabExt', capa:'tabCapa', complaints:'tabComplaints', activity:'tabActivity', users:'tabUsers' };
-        const containerMap = { account:'accountContainer', ext:'extContainer', capa:'capaContainer', complaints:'complaintsContainer', activity:'activityContainer', users:'usersContainer' };
+        const tabs = ['account','visitor','ext','capa','complaints','activity','users'];
+        const idMap = { account:'tabAccount', visitor:'tabVisitor', ext:'tabExt', capa:'tabCapa', complaints:'tabComplaints', activity:'tabActivity', users:'tabUsers' };
+        const containerMap = { account:'accountContainer', visitor:'visitorContainer', ext:'extContainer', capa:'capaContainer', complaints:'complaintsContainer', activity:'activityContainer', users:'usersContainer' };
         const adminOnlyTabs = ['activity', 'users'];
         tabs.forEach(id => {
             const base = t === id ? 'admin-tab-btn active' : 'admin-tab-btn';
@@ -3851,6 +3862,7 @@
             document.getElementById(containerMap[id]).style.display = t === id ? 'block' : 'none';
         });
         if (t === 'account') renderMyAccount();
+        if (t === 'visitor') { populateFactorySelects(); renderMeetingPersons(); populateMeetingPersonSelects(); renderVisitors(); }
         if (t === 'users') renderUsers();
         if (t === 'capa') { populateFactorySelects(); renderCAPA(); }
         if (t === 'activity') renderActivityLog();
@@ -5105,8 +5117,8 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
         const id = parseInt(params.get('id'), 10);
         if (!currentUser) { showLogin(); return; } // after login, doLogin() reloads with the same URL, so this runs again
         setTimeout(() => {
-          navTo('training');
-          switchTrainingTab('visitor');
+          navTo('adminSection');
+          switchAdminTab('visitor');
           if (id) highlightVisitorRow(id);
         }, 60);
       }
@@ -5503,9 +5515,9 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
     }
 
     function switchTrainingTab(t) {
-      const tabs = ['main','visitor','materials','evaluation','ehsreport'];
-      const idMap = { main:'tabTrainingMain', visitor:'tabTrainingVisitor', materials:'tabTrainingMaterials', evaluation:'tabTrainingEval', ehsreport:'tabTrainingEHS' };
-      const containerMap = { main:'trainingMainContainer', visitor:'trainingVisitorContainer', materials:'trainingMaterialsContainer', evaluation:'trainingEvalContainer', ehsreport:'trainingEHSContainer' };
+      const tabs = ['main','materials','evaluation','ehsreport'];
+      const idMap = { main:'tabTrainingMain', materials:'tabTrainingMaterials', evaluation:'tabTrainingEval', ehsreport:'tabTrainingEHS' };
+      const containerMap = { main:'trainingMainContainer', materials:'trainingMaterialsContainer', evaluation:'trainingEvalContainer', ehsreport:'trainingEHSContainer' };
       tabs.forEach(id => {
         document.getElementById(idMap[id]).className = t === id ? 'admin-tab-btn active' : 'admin-tab-btn';
         document.getElementById(containerMap[id]).style.display = t === id ? 'block' : 'none';
@@ -5513,7 +5525,6 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
       if (t === 'materials') renderTrainingMaterials();
       if (t === 'evaluation') { populateEvalBatchSelect(); renderTrainingEvals(); }
       if (t === 'ehsreport') renderEHSFormsGrid();
-      if (t === 'visitor') { renderMeetingPersons(); populateMeetingPersonSelects(); }
     }
 
     // =========================================================================
