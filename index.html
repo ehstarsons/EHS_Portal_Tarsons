@@ -2230,9 +2230,14 @@
           <canvas id="apvCanvas" style="max-width:100%;border-radius:12px;box-shadow:var(--shadow-sm);background:#eef3f4"></canvas>
         </div>
         <p class="small" id="apvLocationText" style="text-align:center;margin-top:10px;color:var(--muted)"></p>
-        <div style="text-align:center;margin-top:12px">
+        <p class="small" id="apvHeadingText" style="text-align:center;margin-top:2px;color:var(--muted);font-weight:700"></p>
+        <div style="text-align:center;margin-top:12px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+          <button class="ghost-dark btn-sm" id="apvCompassBtn" onclick="apvEnableCompass()">🧭 Enable Compass</button>
           <button class="ghost-dark btn-sm" onclick="refreshAssemblyPointLocation()">📍 Restart Live Tracking</button>
         </div>
+        <p class="small" style="text-align:center;margin-top:6px;color:var(--muted);opacity:.8">
+          🔵 Blue arrow = the way your phone is pointing &nbsp;•&nbsp; 🟢 Green arrow = the way you're walking
+        </p>
       </div>
     </section>
 
@@ -4538,6 +4543,120 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
     let apvDrawnPixel = null;  // on-screen pixel, eased toward apvTargetPixel each frame
     let apvTargetPixel = null; // latest true pixel computed from GPS
     let apvLastDiag = null;    // most recent diagnostic snapshot, shown by toggleApvDiagnostics()
+    let apvTransform = null;   // cached calib transform for the currently open factory (used to rotate the heading arrow into photo space)
+
+    /* ---------- Live "which way am I facing / which way did I move" arrow ----------
+       Like Google Maps' blue dot: a translucent cone rotates on the pin to show
+       either (a) which way the phone is physically pointing, read from the
+       device's magnetometer/compass ("deviceorientation"), or — when compass data
+       isn't available/granted — (b) which way the person is walking, derived
+       either from the GPS's own reported heading or, failing that, computed
+       ourselves from the last two GPS fixes. Whichever source is live, the arrow
+       is rotated through the same photo calibration transform used for the pin
+       itself, so it points the correct way *on the photo* even if the uploaded
+       emergency-plan photo isn't drawn north-up. */
+    let apvHeadingDeg = null;        // latest target heading, degrees clockwise from true north (0=N,90=E,180=S,270=W)
+    let apvDrawnHeadingDeg = null;   // eased/animated heading actually drawn each frame
+    let apvHeadingSource = null;     // 'compass' (phone facing) | 'movement' (walking direction) | null
+    let apvGotAbsoluteHeading = false; // true once a real (absolute/true-north) compass reading has arrived
+    let apvLastCompassAt = 0;        // Date.now() of the last compass reading, used to time out stale compass data
+    let apvOrientationActive = false;
+    let apvLastFix = null;           // { lat, lon, t } of the previous GPS fix, for movement-bearing fallback
+    function haversineMeters(lat1, lon1, lat2, lon2) {
+      const R = 6371000, toRad = d => d * Math.PI / 180;
+      const dLat = toRad(lat2 - lat1), dLon = toRad(lon2 - lon1);
+      const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    }
+    function computeBearing(lat1, lon1, lat2, lon2) {
+      const toRad = d => d * Math.PI / 180;
+      const y = Math.sin(toRad(lon2 - lon1)) * Math.cos(toRad(lat2));
+      const x = Math.cos(toRad(lat1)) * Math.sin(toRad(lat2)) - Math.sin(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.cos(toRad(lon2 - lon1));
+      return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
+    }
+    function compassPoint(deg) {
+      const pts = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
+      return pts[Math.round(deg / 22.5) % 16];
+    }
+    function updateApvHeadingLabel() {
+      const el = document.getElementById('apvHeadingText');
+      if (!el) return;
+      if (apvHeadingDeg === null) { el.innerText = ''; return; }
+      const deg = Math.round(apvHeadingDeg);
+      if (apvHeadingSource === 'compass') {
+        el.innerText = `🧭 Phone facing ${compassPoint(apvHeadingDeg)} (${deg}°)`;
+      } else if (apvHeadingSource === 'movement') {
+        el.innerText = `🚶 Moving toward ${compassPoint(apvHeadingDeg)} (${deg}°)`;
+      } else {
+        el.innerText = '';
+      }
+    }
+    function apvCompassHeading(event) {
+      const isAbsolute = event.absolute === true || typeof event.webkitCompassHeading === 'number';
+      if (apvGotAbsoluteHeading && !isAbsolute) return; // once true-north data is flowing, ignore the noisier relative stream
+      let heading = null;
+      if (typeof event.webkitCompassHeading === 'number' && !isNaN(event.webkitCompassHeading)) {
+        heading = event.webkitCompassHeading; // iOS Safari already gives true-north clockwise heading
+      } else if (typeof event.alpha === 'number' && event.alpha !== null) {
+        heading = 360 - event.alpha; // Android/others: alpha increases counter-clockwise from north
+      }
+      if (heading === null || isNaN(heading)) return;
+      const screenAngle = (screen.orientation && typeof screen.orientation.angle === 'number') ? screen.orientation.angle : (window.orientation || 0);
+      heading = ((heading + screenAngle) % 360 + 360) % 360;
+      apvHeadingDeg = heading;
+      apvHeadingSource = 'compass';
+      apvLastCompassAt = Date.now();
+      if (isAbsolute) apvGotAbsoluteHeading = true;
+      if (lastNavId === 'assemblyPointView') {
+        updateApvHeadingLabel();
+        if (!apvAnimFrame) apvTick();
+      }
+    }
+    function apvAttachOrientationListeners() {
+      if (apvOrientationActive) return;
+      window.addEventListener('deviceorientationabsolute', apvCompassHeading, true);
+      window.addEventListener('deviceorientation', apvCompassHeading, true);
+      apvOrientationActive = true;
+    }
+    function apvDetachOrientationListeners() {
+      window.removeEventListener('deviceorientationabsolute', apvCompassHeading, true);
+      window.removeEventListener('deviceorientation', apvCompassHeading, true);
+      apvOrientationActive = false;
+    }
+    function apvEnableCompass() {
+      const btn = document.getElementById('apvCompassBtn');
+      if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+        // iOS 13+ requires an explicit user-gesture permission prompt for motion/orientation sensors
+        DeviceOrientationEvent.requestPermission().then(state => {
+          if (state === 'granted') {
+            apvAttachOrientationListeners();
+            if (btn) { btn.innerText = '🧭 Compass on'; btn.disabled = true; }
+          } else if (btn) {
+            btn.innerText = '🧭 Compass permission denied';
+          }
+        }).catch(() => { if (btn) btn.innerText = '🧭 Compass unavailable'; });
+      } else {
+        apvAttachOrientationListeners();
+        if (btn) { btn.innerText = '🧭 Compass on'; btn.disabled = true; }
+      }
+    }
+    // headingToCanvasAngle: converts a true-north compass heading into the on-canvas
+    // rotation angle (radians, 0 = pointing along +x/right), routed through the same
+    // lat/lon-to-pixel calibration transform as the pin itself, so the arrow is
+    // correct even on a photo that isn't drawn north-up. Falls back to a plain
+    // north-up assumption when the photo hasn't been calibrated yet.
+    function headingToCanvasAngle(headingDeg, transform) {
+      const rad = headingDeg * Math.PI / 180;
+      const dWx = Math.sin(rad), dWy = Math.cos(rad); // unit vector: east, north
+      let vx, vy;
+      if (transform) {
+        vx = transform.kRe * dWx - transform.kIm * dWy;
+        vy = transform.kIm * dWx + transform.kRe * dWy;
+      } else {
+        vx = dWx; vy = -dWy; // assume north-up photo (canvas y grows downward, so north = -y)
+      }
+      return Math.atan2(vy, vx);
+    }
     function toggleApvDiagnostics() {
       const panel = document.getElementById('apvDiagnostics');
       if (!panel) return;
@@ -4570,11 +4689,24 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
       navTo('assemblyPointView');
       apvCurrentFactory = factory || '';
       apvCachedImg = null; apvDrawnPixel = null; apvTargetPixel = null;
+      apvHeadingDeg = null; apvDrawnHeadingDeg = null; apvHeadingSource = null;
+      apvGotAbsoluteHeading = false; apvLastCompassAt = 0; apvLastFix = null;
       document.getElementById('apvFactoryLabel').innerText = factory ? `${factory} — locating you on the emergency plan…` : 'Locating you on the emergency plan…';
       const locText = document.getElementById('apvLocationText');
       if (locText) locText.innerText = 'Getting your GPS position…';
+      const headingText = document.getElementById('apvHeadingText');
+      if (headingText) headingText.innerText = '';
+      const compassBtn = document.getElementById('apvCompassBtn');
+      if (compassBtn) { compassBtn.disabled = false; compassBtn.innerText = '🧭 Enable Compass'; }
       loadApvImage(factory, () => drawAssemblyPointCanvas());
       refreshAssemblyPointLocation(factory);
+      // On platforms that don't gate motion sensors behind a permission prompt (Android/desktop),
+      // start the compass right away; iOS needs the person to tap "Enable Compass" (a user
+      // gesture is required there before DeviceOrientationEvent.requestPermission() will work).
+      if (!(typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function')) {
+        apvAttachOrientationListeners();
+        if (compassBtn) { compassBtn.innerText = '🧭 Compass on'; compassBtn.disabled = true; }
+      }
     }
     function loadApvImage(factory, cb) {
       const plans = getEmergencyPlans();
@@ -4598,9 +4730,9 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
         ctx.fillStyle = '#5b7a84'; ctx.font = '16px Inter, sans-serif'; ctx.textAlign = 'center';
         ctx.fillText('No emergency plan photo uploaded yet for ' + (apvCurrentFactory || 'this factory') + '.', canvas.width / 2, canvas.height / 2);
       }
-      if (apvDrawnPixel) drawLocationPin(ctx, apvDrawnPixel);
+      if (apvDrawnPixel) drawLocationPin(ctx, apvDrawnPixel, apvDrawnHeadingDeg, apvHeadingSource);
     }
-    function drawLocationPin(ctx, pin) {
+    function drawLocationPin(ctx, pin, headingDeg, headingSource) {
       const { x, y, offCanvas, accuracyPx, approx } = pin;
       ctx.save();
       if (accuracyPx && accuracyPx > 6) {
@@ -4608,6 +4740,38 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
         ctx.fillStyle = 'rgba(11,125,191,.14)'; ctx.fill();
         ctx.lineWidth = 1.5; ctx.strokeStyle = 'rgba(11,125,191,.35)'; ctx.stroke();
       }
+
+      // Google-Maps-style directional cone: shows either which way the phone is
+      // physically facing (blue, wide) or which way the person is walking
+      // (green, narrower), rotated into photo-pixel space via headingToCanvasAngle.
+      if (headingDeg !== null && headingDeg !== undefined) {
+        const angle = headingToCanvasAngle(headingDeg, apvTransform);
+        const isCompass = headingSource === 'compass';
+        const coneRadius = 48;
+        const halfWidth = (isCompass ? 34 : 20) * Math.PI / 180;
+        const rgb = isCompass ? '11,125,191' : '18,183,106';
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(angle);
+        const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, coneRadius);
+        grad.addColorStop(0, `rgba(${rgb},.5)`);
+        grad.addColorStop(1, `rgba(${rgb},0)`);
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.arc(0, 0, coneRadius, -halfWidth, halfWidth);
+        ctx.closePath();
+        ctx.fillStyle = grad; ctx.fill();
+        // arrowhead at the tip of the cone for extra clarity at a glance
+        const tipR = coneRadius + 6;
+        ctx.beginPath();
+        ctx.moveTo(tipR, 0);
+        ctx.lineTo(tipR - 9, -6);
+        ctx.lineTo(tipR - 9, 6);
+        ctx.closePath();
+        ctx.fillStyle = `rgb(${rgb})`; ctx.fill();
+        ctx.restore();
+      }
+
       const pulse = 4 + 4 * Math.abs(Math.sin(Date.now() / 500)); // gentle "live" breathing halo
       ctx.beginPath(); ctx.arc(x, y, 14 + pulse, 0, Math.PI * 2);
       ctx.fillStyle = (offCanvas || approx) ? 'rgba(245,165,36,.18)' : 'rgba(229,72,77,.18)'; ctx.fill();
@@ -4626,6 +4790,7 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
     }
     function apvTick() {
       if (lastNavId !== 'assemblyPointView') { apvAnimFrame = null; return; }
+      let needsFrame = false;
       if (apvTargetPixel) {
         if (!apvDrawnPixel) apvDrawnPixel = { ...apvTargetPixel };
         else {
@@ -4635,8 +4800,24 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
           apvDrawnPixel.offCanvas = apvTargetPixel.offCanvas;
           apvDrawnPixel.approx = apvTargetPixel.approx;
         }
-        drawAssemblyPointCanvas();
+        needsFrame = true;
       }
+      // Time out a stale heading source (e.g. phone left stationary long enough that
+      // an old movement bearing no longer means anything) so the arrow fades rather
+      // than pointing somewhere no-longer-true.
+      if (apvHeadingSource === 'compass' && Date.now() - apvLastCompassAt > 6000) { apvHeadingDeg = null; apvHeadingSource = null; updateApvHeadingLabel(); }
+      if (apvHeadingDeg !== null) {
+        if (apvDrawnHeadingDeg === null) apvDrawnHeadingDeg = apvHeadingDeg;
+        else {
+          // shortest-path circular easing so the arrow never spins the "long way round" through 0/360
+          let diff = ((apvHeadingDeg - apvDrawnHeadingDeg + 540) % 360) - 180;
+          apvDrawnHeadingDeg = (apvDrawnHeadingDeg + diff * 0.18 + 360) % 360;
+        }
+        needsFrame = true;
+      } else {
+        apvDrawnHeadingDeg = null;
+      }
+      if (needsFrame) drawAssemblyPointCanvas();
       apvAnimFrame = requestAnimationFrame(apvTick);
     }
     function refreshAssemblyPointLocation(factory) {
@@ -4652,12 +4833,35 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
       if (apvWatchId !== null) { navigator.geolocation.clearWatch(apvWatchId); apvWatchId = null; }
       const calib = getAssemblyCalibration(factory);
       const transform = calib ? buildCalibTransform(calib) : null;
+      apvTransform = transform;
       const plans = getEmergencyPlans();
       const photoSource = plans[factory] ? (String(plans[factory]).startsWith('http') ? 'Cloud (shared with all devices)' : 'Local to this device only (not yet migrated to cloud storage)') : 'No photo uploaded for this factory';
       apvWatchId = navigator.geolocation.watchPosition((pos) => {
         const { latitude, longitude, accuracy } = pos.coords;
         const coordsText = `Lat ${latitude.toFixed(5)}, Lon ${longitude.toFixed(5)} (±${Math.round(accuracy)}m)`;
         if (label) label.innerText = factory ? `${factory} — emergency plan` : 'Emergency plan';
+
+        // "Which direction did I move" fallback arrow — only used when a live phone
+        // compass reading isn't available/recent, so it never fights the compass arrow.
+        const compassIsFresh = apvGotAbsoluteHeading && (Date.now() - apvLastCompassAt < 6000);
+        if (!compassIsFresh) {
+          if (typeof pos.coords.heading === 'number' && !isNaN(pos.coords.heading) && (pos.coords.speed || 0) > 0.3) {
+            // Some Android devices/browsers report a GPS-derived heading directly while moving
+            apvHeadingDeg = pos.coords.heading;
+            apvHeadingSource = 'movement';
+            updateApvHeadingLabel();
+          } else if (apvLastFix) {
+            const movedM = haversineMeters(apvLastFix.lat, apvLastFix.lon, latitude, longitude);
+            if (movedM > 3) { // ignore GPS jitter — only treat it as "movement" past a small threshold
+              apvHeadingDeg = computeBearing(apvLastFix.lat, apvLastFix.lon, latitude, longitude);
+              apvHeadingSource = 'movement';
+              updateApvHeadingLabel();
+            }
+          }
+        }
+        if (!apvLastFix || haversineMeters(apvLastFix.lat, apvLastFix.lon, latitude, longitude) > 3) {
+          apvLastFix = { lat: latitude, lon: longitude, t: Date.now() };
+        }
         const canvas = document.getElementById('apvCanvas');
         const mapsLink = `<a href="https://www.google.com/maps?q=${latitude},${longitude}" target="_blank" rel="noopener">Open in Maps</a>`;
         apvLastDiag = {
@@ -4688,6 +4892,7 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
     function stopApvWatch() {
       if (apvWatchId !== null && navigator.geolocation) { navigator.geolocation.clearWatch(apvWatchId); apvWatchId = null; }
       if (apvAnimFrame) { cancelAnimationFrame(apvAnimFrame); apvAnimFrame = null; }
+      apvDetachOrientationListeners();
     }
     window.addEventListener('pagehide', stopApvWatch);
 
@@ -8150,6 +8355,7 @@ TARSONS HSE Portal`;
     window.openAssemblyPointView = openAssemblyPointView;
     window.toggleApvDiagnostics = toggleApvDiagnostics;
     window.refreshAssemblyPointLocation = refreshAssemblyPointLocation;
+    window.apvEnableCompass = apvEnableCompass;
     window.openCalibrateModal = openCalibrateModal;
     window.closeCalibrateModal = closeCalibrateModal;
     window.captureCalibrationGPS = captureCalibrationGPS;
