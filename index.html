@@ -965,6 +965,37 @@
   .eval-trainee-row select{min-width:150px}
   body.dark-theme .eval-trainee-row{border-color:#24384a}
 
+  /* ---------- Training Evaluation — graphical rating widget ---------- */
+  .eval-progress-wrap{margin-bottom:16px}
+  .eval-progress-label{display:flex;justify-content:space-between;font-size:12px;font-weight:700;color:var(--muted);margin-bottom:5px}
+  .eval-progress-track{height:9px;border-radius:999px;background:#e6edf0;overflow:hidden}
+  .eval-progress-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--accent-3),var(--accent-2),var(--accent));transition:width var(--dur-slow) var(--ease-standard)}
+  body.dark-theme .eval-progress-track{background:#24384a}
+
+  .eval-trainee-card{background:#fff;border:1px solid var(--border);border-radius:var(--radius-sm);padding:13px 14px;margin-bottom:10px;box-shadow:var(--shadow-xs);transition:box-shadow var(--dur-base) var(--ease-standard),border-color var(--dur-base) var(--ease-standard),transform var(--dur-base) var(--ease-standard)}
+  .eval-trainee-card:hover{box-shadow:var(--shadow-card);transform:translateY(-1px)}
+  .eval-trainee-card.is-rated{border-left:4px solid var(--card-accent,var(--accent))}
+  body.dark-theme .eval-trainee-card{background:#0e1e30;border-color:#24384a}
+  .eval-trainee-head{display:flex;align-items:center;gap:10px;margin-bottom:11px;flex-wrap:wrap}
+  .eval-avatar{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:12.5px;flex:0 0 auto;box-shadow:0 2px 6px rgba(0,0,0,.2)}
+  .eval-trainee-name{font-weight:700;font-size:14px;flex:1 1 auto;min-width:100px}
+  .eval-live-badge{font-size:11.5px;font-weight:800;padding:5px 11px;border-radius:999px;white-space:nowrap;background:#eef3f4;color:var(--muted);transition:background var(--dur-base) var(--ease-standard),color var(--dur-base) var(--ease-standard),transform var(--dur-base) var(--ease-spring)}
+  body.dark-theme .eval-live-badge{background:#16283b}
+  .eval-scale{display:flex;gap:6px;flex-wrap:wrap}
+  .eval-dot{width:30px;height:30px;border-radius:50%;border:2px solid var(--dot-color,#c8d2d6);background:#fff;color:var(--dot-color,#5b7a84);font-weight:800;font-size:12px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;transition:transform .15s var(--ease-spring),background .15s,color .15s,box-shadow .15s}
+  .eval-dot:hover{transform:translateY(-2px) scale(1.1)}
+  .eval-dot.active{background:var(--dot-color,#5b7a84);color:#fff;transform:scale(1.2);box-shadow:0 4px 10px rgba(0,0,0,.24)}
+  body.dark-theme .eval-dot{background:#0e1e30}
+  .eval-scale-caption{display:flex;justify-content:space-between;font-size:9.5px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:var(--muted);margin-top:5px;opacity:.75}
+
+  .eval-score-cell{display:flex;align-items:center;gap:8px}
+  .eval-score-chip{display:inline-flex;align-items:center;justify-content:center;min-width:26px;height:26px;padding:0 4px;border-radius:50%;color:#fff;font-weight:800;font-size:12px;flex:0 0 auto}
+  .eval-score-bar{width:56px;height:6px;border-radius:999px;background:#e6edf0;overflow:hidden;display:inline-block}
+  .eval-score-bar-fill{display:block;height:100%;border-radius:999px;transition:width var(--dur-base) var(--ease-standard)}
+  body.dark-theme .eval-score-bar{background:#24384a}
+  .eval-rating-pill{font-size:11px;font-weight:800;padding:3px 10px;border-radius:999px;white-space:nowrap;display:inline-block}
+
+
   .status-badge{padding:4px 10px;border-radius:20px;font-size:10.5px;font-weight:800;color:white;letter-spacing:.3px;text-transform:uppercase}
   .status-safe{background:var(--accent)}
   .status-warning{background:var(--warning)}
@@ -1970,7 +2001,7 @@
         <div id="trainingEvalContainer" style="display:none">
           <div class="training-add-only" style="background:#f9f9f9;padding:15px;border-radius:8px;margin-bottom:18px;border-left:4px solid var(--accent);">
             <h4>Training Evaluation — Trainer Assessment</h4>
-            <p class="small" style="text-transform:none;font-weight:500;margin:-4px 0 8px;">Select the training date / topic below — everyone recorded for that batch appears automatically. Rate each trainee 0–10 and save. <b>0</b> = Poor, <b>1–4</b> = Needs Improvement, <b>5–7</b> = Good, <b>8–9</b> = Very Good, <b>10</b> = Excellent. Retraining is flagged automatically for a score of 5 or below.</p>
+            <p class="small" style="text-transform:none;font-weight:500;margin:-4px 0 8px;">Select the training date / topic below — everyone recorded for that batch appears automatically. Tap a dot to rate each trainee 0–10 and save. <b>0</b> = Poor, <b>1–4</b> = Needs Improvement, <b>5–7</b> = Good, <b>8–9</b> = Very Good, <b>10</b> = Excellent. Retraining is flagged automatically for a score of 5 or below.</p>
             <div class="two-cols">
               <div style="display:flex;gap:8px;align-items:stretch">
                 <select id="evalBatchSelect" onchange="renderEvalTraineeRows()" style="flex:1"><option value="">Select Training Date / Topic</option></select>
@@ -7200,6 +7231,29 @@ for (let i = 0; i < 14; i++) {   // 14 months
     function evalScoreOf(ev) {
       return (ev.score !== undefined && ev.score !== null) ? ev.score : ev.avg;
     }
+    // Shared red→green rating-scale colour used across the rating dots, the live
+    // per-trainee badge, and the results table's score chip/bar/pill, so the same
+    // score always reads as the same colour everywhere in the module.
+    function evalScoreHue(score) {
+      if (score === null || score === undefined || score === '') return 200; // neutral blue-grey when unrated
+      return Math.max(0, Math.min(130, (Number(score) / 10) * 130)); // 0=red … 130=green
+    }
+    function evalScoreColor(score, alpha) {
+      const hue = evalScoreHue(score);
+      const sat = (score === null || score === undefined || score === '') ? 12 : 70;
+      return alpha !== undefined ? `hsla(${hue},${sat}%,44%,${alpha})` : `hsl(${hue},${sat}%,44%)`;
+    }
+    function evalInitials(name) {
+      const parts = String(name || '').trim().split(/\s+/).filter(Boolean);
+      if (!parts.length) return '?';
+      return (parts[0][0] + (parts.length > 1 ? parts[parts.length - 1][0] : '')).toUpperCase();
+    }
+    function evalNameHue(name) {
+      let hash = 0;
+      const s = String(name || '');
+      for (let i = 0; i < s.length; i++) hash = (hash * 31 + s.charCodeAt(i)) >>> 0;
+      return hash % 360;
+    }
     function populateEvalBatchSelect() {
       const sel = document.getElementById('evalBatchSelect');
       if (!sel) return;
@@ -7238,12 +7292,62 @@ for (let i = 0; i < 14; i++) {   // 14 months
         wrap.innerHTML = '<p style="color:grey;text-align:center;padding:12px 0">No trainees found for this batch.</p>';
         return;
       }
-      const scoreOptions = '<option value="">Rate 0–10</option>' + Array.from({length: 11}, (_, i) => i).map(n => `<option value="${n}">${n} – ${evalRatingLabel(n)}</option>`).join('');
-      wrap.innerHTML = trainees.map((r, i) => `
-        <div class="eval-trainee-row" data-name="${escapeHtml(r.name)}" data-index="${i}">
-          <span class="eval-trainee-name">${escapeHtml(r.name)}</span>
-          <select class="evalScoreInput" id="evalScore_${i}">${scoreOptions}</select>
+      // Graphical 0–10 rating widget: a colour-scaled dot for every score plus a
+      // live badge that fills in with that colour the moment a trainer taps one,
+      // and a progress bar up top so a trainer working through a big batch can
+      // see at a glance how many people are left to rate. A hidden native
+      // <select> per trainee stays the source of truth read by saveTrainingEval(),
+      // so none of the saving logic below needed to change.
+      wrap.innerHTML =
+        `<div class="eval-progress-wrap">
+          <div class="eval-progress-label"><span id="evalProgressText">0 of ${trainees.length} rated</span><span>${trainees.length} trainee${trainees.length === 1 ? '' : 's'} in this batch</span></div>
+          <div class="eval-progress-track"><div class="eval-progress-fill" id="evalProgressFill" style="width:0%"></div></div>
+        </div>` +
+        trainees.map((r, i) => `
+        <div class="eval-trainee-card" id="evalCard_${i}" data-name="${escapeHtml(r.name)}" data-index="${i}">
+          <div class="eval-trainee-head">
+            <span class="eval-avatar" style="background:hsl(${evalNameHue(r.name)},55%,42%)">${evalInitials(r.name)}</span>
+            <span class="eval-trainee-name">${escapeHtml(r.name)}</span>
+            <span class="eval-live-badge" id="evalBadge_${i}">Not rated</span>
+          </div>
+          <div class="eval-scale" role="radiogroup" aria-label="Rate ${escapeHtml(r.name)} from 0 to 10">
+            ${Array.from({length: 11}, (_, n) => n).map(n => `<button type="button" class="eval-dot" id="evalDot_${i}_${n}" style="--dot-color:${evalScoreColor(n)}" onclick="evalSetScore(${i},${n})" title="${n} – ${evalRatingLabel(n)}">${n}</button>`).join('')}
+          </div>
+          <div class="eval-scale-caption"><span>Poor</span><span>Needs Improvement</span><span>Good</span><span>Very Good</span><span>Excellent</span></div>
+          <select class="evalScoreInput" id="evalScore_${i}" style="display:none" onchange="evalSetScore(${i}, this.value === '' ? null : parseInt(this.value,10))"><option value="">Rate 0–10</option>${Array.from({length: 11}, (_, n) => n).map(n => `<option value="${n}">${n} – ${evalRatingLabel(n)}</option>`).join('')}</select>
         </div>`).join('');
+    }
+    function evalSetScore(i, score) {
+      const selEl = document.getElementById(`evalScore_${i}`);
+      if (selEl && selEl.value !== String(score)) selEl.value = (score === null ? '' : score);
+      const card = document.getElementById(`evalCard_${i}`);
+      for (let n = 0; n <= 10; n++) {
+        const dot = document.getElementById(`evalDot_${i}_${n}`);
+        if (dot) dot.classList.toggle('active', n === score);
+      }
+      const badge = document.getElementById(`evalBadge_${i}`);
+      const rated = score !== null && score !== undefined && !isNaN(score);
+      if (badge) {
+        badge.style.background = evalScoreColor(rated ? score : null, rated ? 1 : undefined);
+        badge.style.color = rated ? '#fff' : 'var(--muted)';
+        badge.style.transform = rated ? 'scale(1.04)' : 'scale(1)';
+        badge.innerText = rated ? `${score} · ${evalRatingLabel(score)}` : 'Not rated';
+      }
+      if (card) {
+        card.classList.toggle('is-rated', rated);
+        card.style.setProperty('--card-accent', rated ? evalScoreColor(score) : '');
+      }
+      evalUpdateProgress();
+    }
+    function evalUpdateProgress() {
+      const cards = document.querySelectorAll('#evalTraineeRows .eval-trainee-card');
+      if (!cards.length) return;
+      let rated = 0;
+      cards.forEach(c => { const s = document.getElementById(`evalScore_${c.dataset.index}`); if (s && s.value !== '') rated++; });
+      const text = document.getElementById('evalProgressText');
+      const fill = document.getElementById('evalProgressFill');
+      if (text) text.innerText = `${rated} of ${cards.length} rated`;
+      if (fill) fill.style.width = `${Math.round((rated / cards.length) * 100)}%`;
     }
     async function saveTrainingEval() {
       const sel = document.getElementById('evalBatchSelect');
@@ -7258,7 +7362,7 @@ for (let i = 0; i < 14; i++) {   // 14 months
       if (!trainer) { alert('Enter the trainer name'); return; }
       const evalDate = document.getElementById('evalDate').value || date;
 
-      const rows = document.querySelectorAll('#evalTraineeRows .eval-trainee-row');
+      const rows = document.querySelectorAll('#evalTraineeRows .eval-trainee-card');
       if (!rows.length) { alert('No trainees listed for this batch'); return; }
 
       const newEvals = [];
@@ -7305,8 +7409,13 @@ for (let i = 0; i < 14; i++) {   // 14 months
           <td>${ev.trainingDate || ev.date}</td>
           <td>${ev.date}</td>
           <td>${escapeHtml(ev.trainer)}</td>
-          <td><b>${score}</b></td>
-          <td>${evalRatingLabel(score)}</td>
+          <td>
+            <div class="eval-score-cell">
+              <span class="eval-score-chip" style="background:${evalScoreColor(score)}">${score}</span>
+              <span class="eval-score-bar"><span class="eval-score-bar-fill" style="width:${score * 10}%;background:${evalScoreColor(score)}"></span></span>
+            </div>
+          </td>
+          <td><span class="eval-rating-pill" style="background:${evalScoreColor(score, .14)};color:${evalScoreColor(score)};border:1px solid ${evalScoreColor(score, .4)}">${evalRatingLabel(score)}</span></td>
           <td><span class="status-badge ${ev.retrain ? 'status-expired' : 'status-safe'}">${ev.retrain ? 'Yes' : 'No'}</span></td>
           <td class="admin-only"><button class="btn-danger btn-sm" onclick="deleteTrainingEval(${ev.id})">Delete</button></td>
         </tr>`;
@@ -8326,6 +8435,7 @@ TARSONS HSE Portal`;
     window.populateEvalBatchSelect = populateEvalBatchSelect;
     window.renderTrainingEvals = renderTrainingEvals;
     window.renderEvalTraineeRows = renderEvalTraineeRows;
+    window.evalSetScore = evalSetScore;
     window.saveTrainingEval = saveTrainingEval;
     window.deleteTrainingEval = deleteTrainingEval;
     window.uploadTrainingMaterial = uploadTrainingMaterial;
