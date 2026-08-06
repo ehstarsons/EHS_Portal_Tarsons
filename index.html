@@ -2939,12 +2939,39 @@
       const [y, m, d] = String(dateStr).split('-').map(Number);
       return new Date(y, (m || 1) - 1, d || 1, 12, 0, 0);
     }
+    // Adds `months` calendar months to a Date, clamping the day-of-month to
+    // whatever the target month actually has. BUGFIX: plain
+    // `d.setMonth(d.getMonth()+n)` overflows past short months — e.g. Jan 31
+    // plus 1 month computes "Feb 31", which JS silently normalizes to Mar 2/3
+    // instead of the intended end of February. Training "next due" dates
+    // computed from a month-end completion date were landing 2-3 days later
+    // than intended. Used instead of setMonth() anywhere a training/renewal
+    // frequency in months needs to be added to a date.
+    function addMonthsClamped(dateObj, months) {
+      const totalMonths = dateObj.getMonth() + months;
+      const year = dateObj.getFullYear() + Math.floor(totalMonths / 12);
+      const month = ((totalMonths % 12) + 12) % 12;
+      const daysInTargetMonth = new Date(year, month + 1, 0).getDate();
+      const day = Math.min(dateObj.getDate(), daysInTargetMonth);
+      return new Date(year, month, day, dateObj.getHours(), dateObj.getMinutes(), dateObj.getSeconds());
+    }
     // Whole calendar days between a "yyyy-mm-dd" string and today (or a given
     // "from" Date), computed on Kolkata calendar dates only — never on raw
     // timestamps, which is what let timezone differences sneak in as off-by-one days.
+    // BUGFIX: `from` used to default to the live nowInKolkata() clock time while
+    // `target` is always noon-normalized — so anything due/expiring exactly
+    // *today* could read as one value before noon and another after noon
+    // (e.g. a legal license expiring today showed "Warning" all morning and
+    // flipped to "Expired" right after noon, with no actual change to the
+    // data). `from` is now normalized to Kolkata noon the same way as
+    // `target`, so every caller of this — expiry alerts, CAPA overdue,
+    // extinguisher due dates, training due dates, the bell badge — gets a
+    // day count that only changes when the calendar date actually changes,
+    // not with the time of day.
     function daysBetweenKolkata(dateStr, fromDate) {
       const target = parseKolkataDate(dateStr);
-      const from = fromDate || nowInKolkata();
+      const fromRaw = fromDate || nowInKolkata();
+      const from = parseKolkataDate(formatKolkataDate(fromRaw));
       return Math.ceil((target - from) / (1000 * 60 * 60 * 24));
     }
     // Formats any stored timestamp/date for display, always in Kolkata time,
@@ -3456,7 +3483,12 @@
             if (diff <= 30) count++;
         });
         capa.forEach(x => {
-            if (x.status !== 'Closed' && x.due && parseKolkataDate(x.due) < today) count++;
+            // BUGFIX: was `parseKolkataDate(x.due) < today` — comparing a
+            // noon-normalized due date against the live clock made a CAPA
+            // due *today* flip between counted/not-counted depending on
+            // whether it was checked before or after noon. daysBetweenKolkata()
+            // normalizes both sides the same way, matching capaStatusInfo().
+            if (x.status !== 'Closed' && x.due && daysBetweenKolkata(x.due, today) < 0) count++;
         });
         complaints.forEach(x => {
             if (x.status === 'Pending') count++;
@@ -3500,7 +3532,9 @@
             });
             html += '</ul>';
         }
-        const overdueCapa = capa.filter(x => x.status !== 'Closed' && x.due && parseKolkataDate(x.due) < today);
+        // BUGFIX: see the matching note in updateBell() — same noon-vs-live-clock
+        // mismatch, now normalized through daysBetweenKolkata().
+        const overdueCapa = capa.filter(x => x.status !== 'Closed' && x.due && daysBetweenKolkata(x.due, today) < 0);
         if (overdueCapa.length > 0) {
             html += '<h4>🛠️ Overdue CAPA Actions</h4><ul style="padding-left:20px;margin-bottom:10px">';
             overdueCapa.forEach(x => {
@@ -4021,7 +4055,12 @@
     function complaintStatusInfo(item) {
       if (item.status === 'Done') return { label: 'Done', cls: 'status-ok' };
       if (item.status === 'Ongoing') return { label: 'Ongoing', cls: 'status-due-soon' };
-      if (item.targetDate && parseKolkataDate(item.targetDate) < nowInKolkata()) return { label: 'Pending (Overdue)', cls: 'status-overdue' };
+      // BUGFIX: was `parseKolkataDate(item.targetDate) < nowInKolkata()` — a
+      // complaint due *today* would show as "Overdue" after noon and
+      // "Pending" before noon on the very same day, purely from clock time.
+      // daysBetweenKolkata() normalizes both sides to the same time-of-day
+      // so the status only flips once the due date has actually passed.
+      if (item.targetDate && daysBetweenKolkata(item.targetDate) < 0) return { label: 'Pending (Overdue)', cls: 'status-overdue' };
       return { label: 'Pending', cls: '' };
     }
     function toggleComplaintBox() {
@@ -4955,13 +4994,25 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
       btn.classList.add('active');
       updateInspLiveScore();
     }
+    // BUGFIX: score used to be the sum of each item's *rounded* points
+    // (Math.round(100/items.length) each) — for any checklist whose item
+    // count doesn't divide evenly into 100 (e.g. 6 items → 17pts each,
+    // summing to 102), an all-Pass inspection wouldn't show 100%, or would
+    // silently hit the Math.min(100,...) ceiling and mask that the per-item
+    // weights didn't add up. Scoring is now computed directly from the
+    // pass-count proportion, so an all-Pass inspection is always exactly
+    // 100% regardless of how many items the template has. `data-points` is
+    // kept only as the informational "pts each" display text.
+    function inspScoreFromCards(cards) {
+      if (!cards.length) return 0;
+      const passCount = cards.filter(c => c.dataset.pass === 'true').length;
+      return Math.round((passCount / cards.length) * 100);
+    }
     function updateInspLiveScore() {
       const ring = document.getElementById('inspLiveRing');
       if (!ring) return;
       const cards = Array.from(document.querySelectorAll('#inspChecklistWrap .insp-check-card'));
-      let score = 0;
-      cards.forEach(c => { if (c.dataset.pass === 'true') score += parseInt(c.dataset.points, 10) || 0; });
-      score = Math.min(100, score);
+      const score = inspScoreFromCards(cards);
       ring.textContent = score + '%';
       ring.style.background = scoreRingColor(score);
     }
@@ -4979,14 +5030,10 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
       const date = document.getElementById('inspDate').value;
       const cards = Array.from(document.querySelectorAll('#inspChecklistWrap .insp-check-card'));
       if (!cards.length) { alert('Select a template to load its checklist first'); return; }
-      let score = 0;
+      const score = inspScoreFromCards(cards); // see inspScoreFromCards() for the scoring bugfix
       const failed = [];
-      cards.forEach(c => {
-        const pts = parseInt(c.dataset.points, 10) || 0;
-        if (c.dataset.pass === 'true') score += pts;
-        else failed.push({ text: c.dataset.text });
-      });
-      pendingInspection = { template, factory, auditor, date, score: Math.min(100, score), maxScore: 100 };
+      cards.forEach(c => { if (c.dataset.pass !== 'true') failed.push({ text: c.dataset.text }); });
+      pendingInspection = { template, factory, auditor, date, score, maxScore: 100 };
       if (!failed.length) {
         finalizeInspection([]);
         return;
@@ -6873,7 +6920,7 @@ for (let i = 0; i < 14; i++) {   // 14 months
       if (!location) { alert('Select a location'); return; }
 
       const dateStr = document.getElementById('recDate').value;
-      const next = parseKolkataDate(dateStr); next.setMonth(next.getMonth() + (mod.freq || 0));
+      const next = addMonthsClamped(parseKolkataDate(dateStr), mod.freq || 0); // see addMonthsClamped() for the month-overflow bugfix
       const names = (document.getElementById('recNames').value || '')
         .split(/[\n,]/).map(s => s.trim()).filter(Boolean);
       if (!names.length) { alert('Enter at least one employee name'); return; }
@@ -7477,7 +7524,9 @@ TARSONS HSE Portal`;
         const capa = LocalDB.get('capa', []);
         const alerts = list.filter(x => daysBetweenKolkata(x.expiry) <= 30);
         const extAlerts = extinguishers.filter(x => x.due && daysBetweenKolkata(x.due) <= 30);
-        const capaAlerts = capa.filter(x => x.status !== 'Closed' && x.due && parseKolkataDate(x.due) < nowInKolkata());
+        // BUGFIX: see the matching note in updateBell() — same noon-vs-live-clock
+        // mismatch, now normalized through daysBetweenKolkata().
+        const capaAlerts = capa.filter(x => x.status !== 'Closed' && x.due && daysBetweenKolkata(x.due) < 0);
         const box = document.getElementById('expiryAlertSection');
         if (alerts.length || extAlerts.length || capaAlerts.length) {
             box.innerHTML = `<div class="card expiry-alert-card" id="expiryCard"><div style="display:flex;justify-content:space-between"><h4>⚠️ Statutory & Safety Alerts</h4><button class="ghost-dark btn-sm" onclick="document.getElementById('expiryCard').remove()">Dismiss</button></div>` + 
