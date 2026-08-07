@@ -538,6 +538,59 @@
   .calib-step-badge{display:inline-block;font-size:12px;font-weight:800;letter-spacing:.3px;color:white;background:linear-gradient(100deg,var(--accent-3),var(--accent-2));padding:5px 14px;border-radius:var(--radius-pill);box-shadow:var(--shadow-glow-info)}
   #apvCanvasWrap{position:relative}
   #apvCanvas{transition:box-shadow var(--dur-base) var(--ease-standard)}
+
+  /* ---------- Assembly Point live map — graphical overhaul ---------- */
+  .apv-card{position:relative;overflow:hidden}
+  .apv-card::before{content:'';position:absolute;left:0;right:0;top:0;height:3px;background:linear-gradient(90deg,var(--accent-3),var(--accent-2),var(--accent));opacity:.7}
+  .apv-header-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:2px}
+  .apv-live-badge{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:800;letter-spacing:.4px;color:#fff;background:linear-gradient(115deg,#ff6b6b,var(--danger));padding:4px 11px 4px 8px;border-radius:var(--radius-pill);box-shadow:0 2px 8px rgba(229,72,77,.35)}
+  .apv-live-dot{width:7px;height:7px;border-radius:50%;background:#fff;animation:apvLivePulse 1.4s ease-in-out infinite}
+  @keyframes apvLivePulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.7)}}
+
+  .apv-signal{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;color:var(--muted);background:rgba(91,122,132,.08);padding:4px 10px;border-radius:var(--radius-pill)}
+  .apv-signal-bars{display:inline-flex;align-items:flex-end;gap:2px;height:11px}
+  .apv-signal-bars span{width:3px;border-radius:1px;background:#cfd8dc;display:inline-block}
+  .apv-signal-bars span:nth-child(1){height:35%}
+  .apv-signal-bars span:nth-child(2){height:58%}
+  .apv-signal-bars span:nth-child(3){height:80%}
+  .apv-signal-bars span:nth-child(4){height:100%}
+  .apv-signal-bars span.on{background:var(--sig-color,var(--accent))}
+  body.dark-theme .apv-signal{background:rgba(255,255,255,.06)}
+
+  .apv-perm-badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:4px 10px;border-radius:var(--radius-pill);background:rgba(91,122,132,.08);color:var(--muted);transition:background var(--dur-base) var(--ease-standard),color var(--dur-base) var(--ease-standard)}
+  .apv-perm-badge.granted{background:rgba(18,183,106,.14);color:#0d8a51}
+  .apv-perm-badge.denied{background:rgba(229,72,77,.12);color:var(--danger)}
+  .apv-perm-badge.pending{background:rgba(245,165,36,.15);color:#a5700a}
+  body.dark-theme .apv-perm-badge{background:rgba(255,255,255,.06)}
+
+  #apvCanvasWrap{border-radius:14px;overflow:hidden;box-shadow:var(--shadow-card);background:#0e1e2a}
+  #apvCanvasWrap canvas{display:block;width:100%;height:auto}
+  .apv-glass-chip{position:absolute;top:10px;left:10px;max-width:calc(100% - 20px);background:rgba(10,26,42,.62);backdrop-filter:blur(10px) saturate(150%);-webkit-backdrop-filter:blur(10px) saturate(150%);color:#eaf3f6;font-size:11.5px;font-weight:600;padding:8px 12px;border-radius:10px;line-height:1.55;box-shadow:0 4px 16px rgba(0,0,0,.25);pointer-events:none;opacity:0;transform:translateY(-4px);transition:opacity var(--dur-base) var(--ease-standard),transform var(--dur-base) var(--ease-standard)}
+  .apv-glass-chip.show{opacity:1;transform:translateY(0)}
+  .apv-glass-chip b{color:#fff}
+  .apv-fabs{position:absolute;right:10px;bottom:10px;display:flex;flex-direction:column;gap:8px}
+  .apv-fab{width:40px;height:40px;border-radius:50%;border:none;background:rgba(255,255,255,.94);color:#0b2027;font-size:17px;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 3px 12px rgba(0,0,0,.28);transition:transform var(--dur-fast) var(--ease-spring),background var(--dur-base) ease}
+  .apv-fab:hover{transform:scale(1.08)}
+  .apv-fab:active{transform:scale(.94)}
+  .apv-fab.active{background:linear-gradient(115deg,var(--accent-3),#3aa0e8);color:#fff}
+
+  .apv-radar-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;background:rgba(8,20,32,.72);color:#eaf3f6;opacity:0;pointer-events:none;transition:opacity var(--dur-slow) var(--ease-standard);z-index:2}
+  .apv-radar-overlay.show{opacity:1;pointer-events:auto}
+  .apv-radar{position:relative;width:74px;height:74px}
+  .apv-radar span{position:absolute;inset:0;border-radius:50%;border:2px solid var(--accent-2);opacity:0;animation:apvRadarPing 2s var(--ease-standard) infinite}
+  .apv-radar span:nth-child(2){animation-delay:.5s}
+  .apv-radar span:nth-child(3){animation-delay:1s}
+  .apv-radar::after{content:'📍';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:22px}
+  @keyframes apvRadarPing{0%{transform:scale(.35);opacity:.9}100%{transform:scale(1.6);opacity:0}}
+  .apv-radar-overlay p{font-size:12.5px;font-weight:600;margin:0;text-align:center;max-width:260px}
+
+  .apv-legend-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;justify-content:center}
+  .apv-legend-chip{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;color:var(--muted);background:rgba(91,122,132,.08);padding:5px 11px;border-radius:var(--radius-pill)}
+  body.dark-theme .apv-legend-chip{background:rgba(255,255,255,.06)}
+  .apv-legend-dot{width:9px;height:9px;border-radius:50%;display:inline-block}
+
+  .apv-toolbar{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:14px}
+  @media (max-width:640px){.apv-header-row{justify-content:center}}
   @keyframes modalIn{from{opacity:0;transform:translateY(14px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
   #exitConfirmBox{
     width:100%;max-width:340px;background:var(--panel);color:var(--text-dark);padding:26px 22px;border-radius:18px;
@@ -987,6 +1040,39 @@
   .eval-dot.active{background:var(--dot-color,#5b7a84);color:#fff;transform:scale(1.2);box-shadow:0 4px 10px rgba(0,0,0,.24)}
   body.dark-theme .eval-dot{background:#0e1e30}
   .eval-scale-caption{display:flex;justify-content:space-between;font-size:9.5px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:var(--muted);margin-top:5px;opacity:.75}
+
+  .eval-panel-head{display:flex;align-items:center;gap:14px;flex-wrap:wrap;justify-content:space-between;margin-bottom:6px}
+  .eval-panel-head h4{margin:0}
+  .eval-panel-head-right{display:flex;align-items:center;gap:10px;flex:0 0 auto}
+  .eval-avg-chip{display:none;align-items:center;gap:4px;font-size:12px;font-weight:800;padding:6px 12px;border-radius:999px;white-space:nowrap;transition:background var(--dur-base) ease,color var(--dur-base) ease}
+  .eval-ring{width:50px;height:50px;border-radius:50%;flex:0 0 auto;position:relative;background:conic-gradient(var(--ring-color,var(--accent-3)) calc(var(--pct,0)*1%), #e2e9ea 0);transition:background .35s ease}
+  body.dark-theme .eval-ring{background:conic-gradient(var(--ring-color,var(--accent-3)) calc(var(--pct,0)*1%), #24384a 0)}
+  .eval-ring::before{content:'';position:absolute;inset:5px;border-radius:50%;background:#fff}
+  body.dark-theme .eval-ring::before{background:#0e1e30}
+  .eval-ring span{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:800;color:var(--accent-3)}
+
+  .eval-fill-track{position:relative;height:6px;border-radius:999px;background:#e6edf0;margin:9px 0 10px;overflow:hidden}
+  body.dark-theme .eval-fill-track{background:#24384a}
+  .eval-fill-track .eval-fill{position:absolute;left:0;top:0;bottom:0;width:0%;border-radius:999px;transition:width var(--dur-base) var(--ease-standard),background var(--dur-base) ease}
+  .eval-emoji{font-size:19px;line-height:1;flex:0 0 auto}
+  .eval-emoji.pop{animation:evalEmojiPop .4s var(--ease-spring)}
+  @keyframes evalEmojiPop{0%{transform:scale(.35) rotate(-18deg)}60%{transform:scale(1.3) rotate(10deg)}100%{transform:scale(1) rotate(0)}}
+  .eval-trainee-card{position:relative}
+  .eval-trainee-card.celebrate::after{content:'✨';position:absolute;top:10px;right:12px;font-size:17px;animation:evalSparkle 1.1s ease forwards;pointer-events:none}
+  @keyframes evalSparkle{0%{opacity:0;transform:scale(.4) translateY(6px) rotate(-10deg)}30%{opacity:1;transform:scale(1.3) translateY(-4px) rotate(6deg)}100%{opacity:0;transform:scale(1) translateY(-16px) rotate(0)}}
+
+  .eval-summary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:18px}
+  .eval-donut-wrap{display:flex;align-items:center;gap:20px;flex-wrap:wrap;margin-bottom:20px;background:linear-gradient(180deg,#fbfdfd,#f2f7f6);border:1px solid var(--border);border-radius:var(--radius-sm);padding:16px 18px;box-shadow:var(--shadow-xs)}
+  body.dark-theme .eval-donut-wrap{background:#0e1e30;border-color:#24384a}
+  .eval-donut{width:112px;height:112px;border-radius:50%;position:relative;flex:0 0 auto;transition:background .4s ease}
+  .eval-donut-center{position:absolute;inset:16px;border-radius:50%;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:inset 0 0 0 1px rgba(0,0,0,.04)}
+  body.dark-theme .eval-donut-center{background:#0e1e30}
+  .eval-donut-center .eval-donut-avg{font-size:21px;font-weight:800}
+  .eval-donut-center .eval-donut-label{font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+  .eval-donut-legend{display:flex;flex-direction:column;gap:7px;font-size:12.5px;font-weight:600;flex:1 1 160px}
+  .eval-donut-legend-item{display:flex;align-items:center;gap:7px}
+  .eval-donut-legend-count{margin-left:auto;font-weight:800;color:var(--muted)}
+  .eval-donut-legend-dot{width:10px;height:10px;border-radius:50%;flex:0 0 auto}
 
   .eval-score-cell{display:flex;align-items:center;gap:8px}
   .eval-score-chip{display:inline-flex;align-items:center;justify-content:center;min-width:26px;height:26px;padding:0 4px;border-radius:50%;color:#fff;font-weight:800;font-size:12px;flex:0 0 auto}
@@ -2000,7 +2086,13 @@
 
         <div id="trainingEvalContainer" style="display:none">
           <div class="training-add-only" style="background:#f9f9f9;padding:15px;border-radius:8px;margin-bottom:18px;border-left:4px solid var(--accent);">
-            <h4>Training Evaluation — Trainer Assessment</h4>
+            <div class="eval-panel-head">
+              <h4>Training Evaluation — Trainer Assessment</h4>
+              <div class="eval-panel-head-right">
+                <span class="eval-avg-chip" id="evalAvgChip">⭐ Avg —</span>
+                <div class="eval-ring" id="evalRing" style="--pct:0"><span id="evalRingPct">0%</span></div>
+              </div>
+            </div>
             <p class="small" style="text-transform:none;font-weight:500;margin:-4px 0 8px;">Select the training date / topic below — everyone recorded for that batch appears automatically. Tap a dot to rate each trainee 0–10 and save. <b>0</b> = Poor, <b>1–4</b> = Needs Improvement, <b>5–7</b> = Good, <b>8–9</b> = Very Good, <b>10</b> = Excellent. Retraining is flagged automatically for a score of 5 or below.</p>
             <div class="two-cols">
               <div style="display:flex;gap:8px;align-items:stretch">
@@ -2029,6 +2121,7 @@
             <label>📍 Filter by Location:</label>
             <select id="evalLocFilter" onchange="renderTrainingEvals()"><option value="">All Locations</option></select>
           </div>
+          <div id="evalSummaryWrap"></div>
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
             <h3 style="margin:0">Trainee Evaluations</h3>
             <button class="ghost-dark btn-sm" onclick="exportTableToExcel('evalTable','Training_Evaluations')">⬇ Excel</button>
@@ -2254,21 +2347,44 @@
     </section>
 
     <section id="assemblyPointView" style="display:none" class="container">
-      <div class="card">
-        <h2>📍 Assembly Point — Emergency Plan</h2>
-        <p class="small" style="color:var(--muted);text-transform:none;font-weight:500;" id="apvFactoryLabel">Locating you on the emergency plan…</p>
-        <div id="apvCanvasWrap" style="text-align:center">
-          <canvas id="apvCanvas" style="max-width:100%;border-radius:12px;box-shadow:var(--shadow-sm);background:#eef3f4"></canvas>
+      <div class="card apv-card">
+        <div class="apv-header-row">
+          <h2 style="margin:0">📍 Assembly Point — Emergency Plan</h2>
+          <span class="apv-live-badge" id="apvLiveBadge"><span class="apv-live-dot"></span>LIVE</span>
+          <span class="apv-signal" id="apvSignalMeter" title="GPS signal quality">
+            <span class="apv-signal-bars"><span></span><span></span><span></span><span></span></span>
+            <span id="apvSignalLabel">Acquiring…</span>
+          </span>
+        </div>
+        <p class="small" style="color:var(--muted);text-transform:none;font-weight:500;margin-top:2px" id="apvFactoryLabel">Locating you on the emergency plan…</p>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 10px">
+          <span class="apv-perm-badge pending" id="apvPermLocation">📡 Location: checking…</span>
+          <span class="apv-perm-badge pending" id="apvPermCompass">🧭 Compass: checking…</span>
+        </div>
+        <div id="apvCanvasWrap">
+          <canvas id="apvCanvas" style="max-width:100%"></canvas>
+          <div class="apv-glass-chip" id="apvGlassChip"></div>
+          <div class="apv-fabs">
+            <button type="button" class="apv-fab" id="apvRecenterFab" title="Recenter on my live location" onclick="apvRecenter()">🎯</button>
+            <button type="button" class="apv-fab" id="apvCompassFab" title="Enable phone compass" onclick="apvEnableCompass()">🧭</button>
+          </div>
+          <div class="apv-radar-overlay show" id="apvRadarOverlay">
+            <div class="apv-radar"><span></span><span></span><span></span></div>
+            <p id="apvRadarText">Acquiring your GPS position…</p>
+          </div>
         </div>
         <p class="small" id="apvLocationText" style="text-align:center;margin-top:10px;color:var(--muted)"></p>
         <p class="small" id="apvHeadingText" style="text-align:center;margin-top:2px;color:var(--muted);font-weight:700"></p>
-        <div style="text-align:center;margin-top:12px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+        <div class="apv-toolbar">
           <button class="ghost-dark btn-sm" id="apvCompassBtn" onclick="apvEnableCompass()">🧭 Enable Compass</button>
           <button class="ghost-dark btn-sm" onclick="refreshAssemblyPointLocation()">📍 Restart Live Tracking</button>
         </div>
-        <p class="small" style="text-align:center;margin-top:6px;color:var(--muted);opacity:.8">
-          🔵 Blue arrow = the way your phone is pointing &nbsp;•&nbsp; 🟢 Green arrow = the way you're walking
-        </p>
+        <div class="apv-legend-row">
+          <span class="apv-legend-chip"><span class="apv-legend-dot" style="background:#e5484d"></span>Your live position</span>
+          <span class="apv-legend-chip"><span class="apv-legend-dot" style="background:#0b7dbf"></span>Phone facing direction</span>
+          <span class="apv-legend-chip"><span class="apv-legend-dot" style="background:#12b76a"></span>Walking direction</span>
+          <span class="apv-legend-chip"><span class="apv-legend-dot" style="background:rgba(11,125,191,.4)"></span>GPS accuracy radius</span>
+        </div>
       </div>
     </section>
 
@@ -4571,6 +4687,96 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
     let apvCurrentFactory = '';
     let apvCachedImg = null;   // { factory, img }
     let apvAnimFrame = null;
+    let apvWakeLock = null;    // screen-wake-lock handle, kept while this view is live so the phone doesn't sleep mid-evacuation
+    // ---- GPS accuracy improvement: lightweight Kalman filter ----
+    // Raw GPS fixes jitter around, especially indoors/near buildings — the pin
+    // visibly "shakes" if drawn straight from pos.coords. This blends every new
+    // fix with the running estimate, weighted by each fix's own accuracy (a
+    // precise fix pulls the estimate hard toward it, a sloppy one barely moves
+    // it), and lets estimated uncertainty grow a little over time between fixes
+    // so genuine movement is still tracked responsively rather than smoothed away.
+    let apvKalman = { lat: 0, lon: 0, variance: -1, t: 0 };
+    function apvResetKalman() { apvKalman = { lat: 0, lon: 0, variance: -1, t: 0 }; }
+    function apvKalmanFilter(lat, lon, accuracy, timestamp) {
+      const MIN_ACCURACY = 1; // meters — a reported accuracy of 0 would otherwise make the filter snap instantly and ignore all future fixes
+      if (accuracy < MIN_ACCURACY) accuracy = MIN_ACCURACY;
+      if (apvKalman.variance < 0) {
+        apvKalman = { lat, lon, variance: accuracy * accuracy, t: timestamp };
+      } else {
+        const dtSec = Math.max(0, (timestamp - apvKalman.t) / 1000);
+        apvKalman.t = timestamp;
+        const DRIFT_SPEED = 2.2; // m/s — conservative walking-pace uncertainty growth between fixes
+        apvKalman.variance += dtSec * DRIFT_SPEED * DRIFT_SPEED;
+        const gain = apvKalman.variance / (apvKalman.variance + accuracy * accuracy);
+        apvKalman.lat += gain * (lat - apvKalman.lat);
+        apvKalman.lon += gain * (lon - apvKalman.lon);
+        apvKalman.variance *= (1 - gain);
+      }
+      return { lat: apvKalman.lat, lon: apvKalman.lon, accuracy: Math.sqrt(apvKalman.variance) };
+    }
+    function apvSignalQuality(accM) {
+      if (accM == null || isNaN(accM)) return { label: 'Acquiring…', bars: 0, color: '#cfd8dc' };
+      if (accM <= 8) return { label: 'Excellent', bars: 4, color: 'var(--accent)' };
+      if (accM <= 20) return { label: 'Good', bars: 3, color: '#7cc242' };
+      if (accM <= 45) return { label: 'Fair', bars: 2, color: 'var(--warning)' };
+      return { label: 'Poor', bars: 1, color: 'var(--danger)' };
+    }
+    function apvUpdateSignalMeter(accM) {
+      const q = apvSignalQuality(accM);
+      const bars = document.querySelectorAll('#apvSignalMeter .apv-signal-bars span');
+      bars.forEach((b, i) => { b.classList.toggle('on', i < q.bars); b.style.setProperty('--sig-color', q.color); });
+      const lbl = document.getElementById('apvSignalLabel');
+      if (lbl) lbl.innerText = (accM == null || isNaN(accM)) ? q.label : `${q.label} · ±${Math.round(accM)}m`;
+    }
+    function apvSetPermBadge(id, state, textByState) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.classList.remove('granted', 'denied', 'pending');
+      el.classList.add(state);
+      el.innerText = textByState[state];
+    }
+    async function apvRefreshPermissionBadges() {
+      // Reflects real permission state graphically (rather than only after an
+      // error occurs), and — where the Permissions API supports it — reacts live
+      // if the person changes the permission from the browser's own site settings.
+      if (navigator.permissions && navigator.permissions.query) {
+        try {
+          const status = await navigator.permissions.query({ name: 'geolocation' });
+          const map = { granted: 'granted', denied: 'denied', prompt: 'pending' };
+          apvSetPermBadge('apvPermLocation', map[status.state] || 'pending', {
+            granted: '📡 Location: granted', denied: '📡 Location: blocked — enable in browser settings', pending: '📡 Location: waiting for permission…'
+          });
+          status.onchange = () => apvRefreshPermissionBadges();
+        } catch (e) { /* Permissions API not supported for geolocation on this browser — the watchPosition error/success callbacks still cover it */ }
+      }
+      const hasOrientation = typeof window.DeviceOrientationEvent !== 'undefined';
+      if (!hasOrientation) {
+        apvSetPermBadge('apvPermCompass', 'denied', { granted: '', denied: '🧭 Compass: not supported on this device', pending: '' });
+      } else if (apvOrientationActive) {
+        apvSetPermBadge('apvPermCompass', 'granted', { granted: '🧭 Compass: active', denied: '', pending: '' });
+      } else {
+        apvSetPermBadge('apvPermCompass', 'pending', { granted: '', denied: '', pending: '🧭 Compass: tap to enable' });
+      }
+    }
+    async function apvRequestWakeLock() {
+      try {
+        if ('wakeLock' in navigator) {
+          apvWakeLock = await navigator.wakeLock.request('screen');
+        }
+      } catch (e) { /* wake lock is best-effort — denied/unsupported just means the screen may dim during a long evacuation, nothing breaks */ }
+    }
+    function apvReleaseWakeLock() {
+      if (apvWakeLock) { try { apvWakeLock.release(); } catch (e) {} apvWakeLock = null; }
+    }
+    function apvRecenter() {
+      // Snaps the eased pin straight to the latest known position instead of
+      // gliding, and briefly highlights the recenter button — handy after
+      // scrolling/zooming away from the live dot.
+      if (apvTargetPixel) apvDrawnPixel = { ...apvTargetPixel };
+      drawAssemblyPointCanvas();
+      const fab = document.getElementById('apvRecenterFab');
+      if (fab) { fab.classList.add('active'); setTimeout(() => fab.classList.remove('active'), 500); }
+    }
     let apvDrawnPixel = null;  // on-screen pixel, eased toward apvTargetPixel each frame
     let apvTargetPixel = null; // latest true pixel computed from GPS
     let apvLastDiag = null;    // most recent diagnostic snapshot, shown by toggleApvDiagnostics()
@@ -4648,6 +4854,7 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
       window.addEventListener('deviceorientationabsolute', apvCompassHeading, true);
       window.addEventListener('deviceorientation', apvCompassHeading, true);
       apvOrientationActive = true;
+      safeCall(apvRefreshPermissionBadges);
     }
     function apvDetachOrientationListeners() {
       window.removeEventListener('deviceorientationabsolute', apvCompassHeading, true);
@@ -4656,19 +4863,23 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
     }
     function apvEnableCompass() {
       const btn = document.getElementById('apvCompassBtn');
+      const fab = document.getElementById('apvCompassFab');
       if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
         // iOS 13+ requires an explicit user-gesture permission prompt for motion/orientation sensors
         DeviceOrientationEvent.requestPermission().then(state => {
           if (state === 'granted') {
             apvAttachOrientationListeners();
             if (btn) { btn.innerText = '🧭 Compass on'; btn.disabled = true; }
-          } else if (btn) {
-            btn.innerText = '🧭 Compass permission denied';
+            if (fab) fab.classList.add('active');
+          } else {
+            if (btn) btn.innerText = '🧭 Compass permission denied';
+            apvSetPermBadge('apvPermCompass', 'denied', { granted: '', denied: '🧭 Compass: permission denied — tap to retry', pending: '' });
           }
         }).catch(() => { if (btn) btn.innerText = '🧭 Compass unavailable'; });
       } else {
         apvAttachOrientationListeners();
         if (btn) { btn.innerText = '🧭 Compass on'; btn.disabled = true; }
+        if (fab) fab.classList.add('active');
       }
     }
     // headingToCanvasAngle: converts a true-north compass heading into the on-canvas
@@ -4722,6 +4933,7 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
       apvCachedImg = null; apvDrawnPixel = null; apvTargetPixel = null;
       apvHeadingDeg = null; apvDrawnHeadingDeg = null; apvHeadingSource = null;
       apvGotAbsoluteHeading = false; apvLastCompassAt = 0; apvLastFix = null;
+      apvResetKalman();
       document.getElementById('apvFactoryLabel').innerText = factory ? `${factory} — locating you on the emergency plan…` : 'Locating you on the emergency plan…';
       const locText = document.getElementById('apvLocationText');
       if (locText) locText.innerText = 'Getting your GPS position…';
@@ -4729,14 +4941,33 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
       if (headingText) headingText.innerText = '';
       const compassBtn = document.getElementById('apvCompassBtn');
       if (compassBtn) { compassBtn.disabled = false; compassBtn.innerText = '🧭 Enable Compass'; }
+      const compassFab = document.getElementById('apvCompassFab');
+      if (compassFab) compassFab.classList.remove('active');
+      const radar = document.getElementById('apvRadarOverlay');
+      if (radar) radar.classList.add('show');
+      const glass = document.getElementById('apvGlassChip');
+      if (glass) glass.classList.remove('show');
+      apvUpdateSignalMeter(null);
+      apvSetPermBadge('apvPermLocation', 'pending', { granted: '', denied: '', pending: '📡 Location: waiting for permission…' });
+      apvSetPermBadge('apvPermCompass', 'pending', { granted: '', denied: '', pending: '🧭 Compass: tap to enable' });
       loadApvImage(factory, () => drawAssemblyPointCanvas());
       refreshAssemblyPointLocation(factory);
-      // On platforms that don't gate motion sensors behind a permission prompt (Android/desktop),
-      // start the compass right away; iOS needs the person to tap "Enable Compass" (a user
-      // gesture is required there before DeviceOrientationEvent.requestPermission() will work).
+      apvRequestWakeLock(); // keep the screen on while someone is following the live evacuation map
+      safeCall(apvRefreshPermissionBadges);
+      // Automatically try to bring up every relevant sensor permission the moment
+      // this view opens, instead of making the person hunt for a button:
+      // - Geolocation's native browser prompt fires as soon as watchPosition()
+      //   runs inside refreshAssemblyPointLocation() above.
+      // - On platforms that don't gate motion sensors behind a permission prompt
+      //   (Android/desktop), the compass just starts listening right away.
+      // - On iOS 13+, Apple requires a real tap (a "user gesture") before it will
+      //   grant motion/orientation access — calling requestPermission() here
+      //   without one is reliably denied by the OS, so apvEnableCompass() is left
+      //   as an always-visible button/FAB for that one remaining case.
       if (!(typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function')) {
         apvAttachOrientationListeners();
         if (compassBtn) { compassBtn.innerText = '🧭 Compass on'; compassBtn.disabled = true; }
+        if (compassFab) compassFab.classList.add('active');
       }
     }
     function loadApvImage(factory, cb) {
@@ -4859,6 +5090,7 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
       if (!navigator.geolocation) {
         if (locText) locText.innerText = 'Location services are not available on this device/browser.';
         apvLastDiag = { error: 'navigator.geolocation is not available on this device/browser.' };
+        apvSetPermBadge('apvPermLocation', 'denied', { granted: '', denied: '📡 Location: not supported on this device', pending: '' });
         return;
       }
       if (apvWatchId !== null) { navigator.geolocation.clearWatch(apvWatchId); apvWatchId = null; }
@@ -4867,10 +5099,28 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
       apvTransform = transform;
       const plans = getEmergencyPlans();
       const photoSource = plans[factory] ? (String(plans[factory]).startsWith('http') ? 'Cloud (shared with all devices)' : 'Local to this device only (not yet migrated to cloud storage)') : 'No photo uploaded for this factory';
+
+      // Seed the Kalman filter with a fast, possibly-cached low-accuracy fix so the
+      // pin can appear (roughly) right away instead of sitting on the radar overlay
+      // for the several seconds a fresh high-accuracy GPS lock can take indoors.
+      // The precise watchPosition fix below immediately supersedes it once it lands.
+      navigator.geolocation.getCurrentPosition((pos) => {
+        if (apvKalman.variance < 0) apvKalmanFilter(pos.coords.latitude, pos.coords.longitude, Math.max(pos.coords.accuracy, 50), pos.timestamp || Date.now());
+      }, () => {}, { enableHighAccuracy: false, maximumAge: 300000, timeout: 4000 });
+
       apvWatchId = navigator.geolocation.watchPosition((pos) => {
         const { latitude, longitude, accuracy } = pos.coords;
-        const coordsText = `Lat ${latitude.toFixed(5)}, Lon ${longitude.toFixed(5)} (±${Math.round(accuracy)}m)`;
+        // Blend this raw fix into the running Kalman estimate — smooths out GPS
+        // jitter (the pin no longer visibly "shakes" when standing still) while
+        // still tracking real movement responsively; see apvKalmanFilter() above.
+        const filtered = apvKalmanFilter(latitude, longitude, accuracy, pos.timestamp || Date.now());
+        const fLat = filtered.lat, fLon = filtered.lon, fAcc = filtered.accuracy;
+        const coordsText = `Lat ${fLat.toFixed(5)}, Lon ${fLon.toFixed(5)} (±${Math.round(fAcc)}m)`;
         if (label) label.innerText = factory ? `${factory} — emergency plan` : 'Emergency plan';
+        apvSetPermBadge('apvPermLocation', 'granted', { granted: '📡 Location: granted', denied: '', pending: '' });
+        apvUpdateSignalMeter(fAcc);
+        const radar = document.getElementById('apvRadarOverlay');
+        if (radar) radar.classList.remove('show');
 
         // "Which direction did I move" fallback arrow — only used when a live phone
         // compass reading isn't available/recent, so it never fights the compass arrow.
@@ -4882,28 +5132,34 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
             apvHeadingSource = 'movement';
             updateApvHeadingLabel();
           } else if (apvLastFix) {
-            const movedM = haversineMeters(apvLastFix.lat, apvLastFix.lon, latitude, longitude);
+            const movedM = haversineMeters(apvLastFix.lat, apvLastFix.lon, fLat, fLon);
             if (movedM > 3) { // ignore GPS jitter — only treat it as "movement" past a small threshold
-              apvHeadingDeg = computeBearing(apvLastFix.lat, apvLastFix.lon, latitude, longitude);
+              apvHeadingDeg = computeBearing(apvLastFix.lat, apvLastFix.lon, fLat, fLon);
               apvHeadingSource = 'movement';
               updateApvHeadingLabel();
             }
           }
         }
-        if (!apvLastFix || haversineMeters(apvLastFix.lat, apvLastFix.lon, latitude, longitude) > 3) {
-          apvLastFix = { lat: latitude, lon: longitude, t: Date.now() };
+        if (!apvLastFix || haversineMeters(apvLastFix.lat, apvLastFix.lon, fLat, fLon) > 3) {
+          apvLastFix = { lat: fLat, lon: fLon, t: Date.now() };
         }
         const canvas = document.getElementById('apvCanvas');
-        const mapsLink = `<a href="https://www.google.com/maps?q=${latitude},${longitude}" target="_blank" rel="noopener">Open in Maps</a>`;
+        const mapsLink = `<a href="https://www.google.com/maps?q=${fLat},${fLon}" target="_blank" rel="noopener">Open in Maps</a>`;
         apvLastDiag = {
           factory, photoSource, calibrated: !!transform,
-          lat: latitude, lon: longitude, accuracyM: Math.round(accuracy),
+          lat: fLat, lon: fLon, accuracyM: Math.round(fAcc), rawAccuracyM: Math.round(accuracy),
         };
+        const glass = document.getElementById('apvGlassChip');
+        if (glass) {
+          const q = apvSignalQuality(fAcc);
+          glass.innerHTML = `<b>📡 ${q.label} signal</b> · ±${Math.round(fAcc)}m<br>${fLat.toFixed(5)}, ${fLon.toFixed(5)}<br><span style="opacity:.75">Updated ${new Date().toLocaleTimeString()}</span>`;
+          glass.classList.add('show');
+        }
         if (transform && canvas) {
-          const px = calibToPixel(transform, latitude, longitude);
+          const px = calibToPixel(transform, fLat, fLon);
           const margin = 18, w = canvas.width || 640, h = canvas.height || 360;
           const offCanvas = (px.x < margin || px.x > w - margin || px.y < margin || px.y > h - margin);
-          apvTargetPixel = { x: Math.min(Math.max(px.x, margin), w - margin), y: Math.min(Math.max(px.y, margin), h - margin), accuracyPx: accuracy * transform.scale, offCanvas };
+          apvTargetPixel = { x: Math.min(Math.max(px.x, margin), w - margin), y: Math.min(Math.max(px.y, margin), h - margin), accuracyPx: fAcc * transform.scale, offCanvas };
           apvLastDiag.pixel = { x: Math.round(px.x), y: Math.round(px.y), clamped: offCanvas, photoWidth: w, photoHeight: h };
           if (locText) locText.innerHTML = `Your current location (live): <strong>${coordsText}</strong> &nbsp;${mapsLink}` + (offCanvas ? ' <span style="color:var(--warning);font-weight:700">— you are currently outside the area shown in this photo</span>' : '');
         } else {
@@ -4916,16 +5172,31 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
       }, (err) => {
         if (label) label.innerText = factory ? `${factory} — emergency plan` : 'Emergency plan';
         if (locText) locText.innerText = 'Could not get your location (permission denied or unavailable). Showing the emergency plan photo only.';
+        apvUpdateSignalMeter(null);
+        apvSetPermBadge('apvPermLocation', err.code === 1 ? 'denied' : 'pending', {
+          granted: '', denied: '📡 Location: permission denied — enable it in your browser/site settings', pending: '📡 Location: unavailable — retrying…'
+        });
+        const radar = document.getElementById('apvRadarOverlay');
+        const radarText = document.getElementById('apvRadarText');
+        if (radarText) radarText.innerText = err.code === 1 ? 'Location permission denied — enable it in your browser settings to see your live position.' : 'Could not get a GPS fix. Retrying…';
+        if (radar) radar.classList.add('show');
         apvLastDiag = { factory, photoSource, calibrated: !!transform, error: `Geolocation error (code ${err.code}): ${err.message}` };
         if (document.getElementById('apvDiagnostics') && document.getElementById('apvDiagnostics').style.display !== 'none') renderApvDiagnostics();
-      }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 2000 });
+      }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 1000 });
     }
     function stopApvWatch() {
       if (apvWatchId !== null && navigator.geolocation) { navigator.geolocation.clearWatch(apvWatchId); apvWatchId = null; }
       if (apvAnimFrame) { cancelAnimationFrame(apvAnimFrame); apvAnimFrame = null; }
       apvDetachOrientationListeners();
+      apvReleaseWakeLock();
     }
     window.addEventListener('pagehide', stopApvWatch);
+    // Wake locks are released automatically by the browser whenever the tab is
+    // hidden (switching apps, locking the phone) — re-acquire it on return so the
+    // screen still stays awake for the rest of an evacuation.
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible' && lastNavId === 'assemblyPointView' && !apvWakeLock) safeCall(apvRequestWakeLock);
+    });
 
     /* =====================================================================
        NEW MODULE: MEETING PERSONS DIRECTORY (WhatsApp)
@@ -7254,6 +7525,14 @@ for (let i = 0; i < 14; i++) {   // 14 months
       for (let i = 0; i < s.length; i++) hash = (hash * 31 + s.charCodeAt(i)) >>> 0;
       return hash % 360;
     }
+    function evalScoreEmoji(score) {
+      if (score === null || score === undefined || isNaN(score)) return '⚪';
+      if (score <= 0) return '😞';
+      if (score <= 4) return '😕';
+      if (score <= 7) return '🙂';
+      if (score <= 9) return '😄';
+      return '🤩';
+    }
     function populateEvalBatchSelect() {
       const sel = document.getElementById('evalBatchSelect');
       if (!sel) return;
@@ -7288,16 +7567,23 @@ for (let i = 0; i < 14; i++) {   // 14 months
       if (trainingDateField) trainingDateField.value = date;
       const dateField = document.getElementById('evalDate');
       if (dateField && !dateField.value) dateField.value = date;
+      // Reset the header's progress ring + running-average chip for the new batch
+      const ring = document.getElementById('evalRing'), ringPct = document.getElementById('evalRingPct'), avgChip = document.getElementById('evalAvgChip');
+      if (ring) { ring.style.setProperty('--pct', 0); ring.style.setProperty('--ring-color', 'var(--accent-3)'); }
+      if (ringPct) ringPct.innerText = '0%';
+      if (avgChip) avgChip.style.display = 'none';
       if (!trainees.length) {
         wrap.innerHTML = '<p style="color:grey;text-align:center;padding:12px 0">No trainees found for this batch.</p>';
         return;
       }
-      // Graphical 0–10 rating widget: a colour-scaled dot for every score plus a
-      // live badge that fills in with that colour the moment a trainer taps one,
-      // and a progress bar up top so a trainer working through a big batch can
-      // see at a glance how many people are left to rate. A hidden native
-      // <select> per trainee stays the source of truth read by saveTrainingEval(),
-      // so none of the saving logic below needed to change.
+      // Graphical 0–10 rating widget: a colour-scaled dot for every score, a
+      // "thermometer" fill bar and a reacting emoji that update live, a badge
+      // that fills in with that colour the moment a trainer taps one, a little
+      // sparkle celebration for a 9 or 10, and a progress ring + running average
+      // up in the header so a trainer working through a big batch gets an
+      // at-a-glance read on both completion and how the batch is trending. A
+      // hidden native <select> per trainee stays the source of truth read by
+      // saveTrainingEval(), so none of the saving logic below needed to change.
       wrap.innerHTML =
         `<div class="eval-progress-wrap">
           <div class="eval-progress-label"><span id="evalProgressText">0 of ${trainees.length} rated</span><span>${trainees.length} trainee${trainees.length === 1 ? '' : 's'} in this batch</span></div>
@@ -7308,8 +7594,10 @@ for (let i = 0; i < 14; i++) {   // 14 months
           <div class="eval-trainee-head">
             <span class="eval-avatar" style="background:hsl(${evalNameHue(r.name)},55%,42%)">${evalInitials(r.name)}</span>
             <span class="eval-trainee-name">${escapeHtml(r.name)}</span>
+            <span class="eval-emoji" id="evalEmoji_${i}">⚪</span>
             <span class="eval-live-badge" id="evalBadge_${i}">Not rated</span>
           </div>
+          <div class="eval-fill-track"><div class="eval-fill" id="evalFill_${i}"></div></div>
           <div class="eval-scale" role="radiogroup" aria-label="Rate ${escapeHtml(r.name)} from 0 to 10">
             ${Array.from({length: 11}, (_, n) => n).map(n => `<button type="button" class="eval-dot" id="evalDot_${i}_${n}" style="--dot-color:${evalScoreColor(n)}" onclick="evalSetScore(${i},${n})" title="${n} – ${evalRatingLabel(n)}">${n}</button>`).join('')}
           </div>
@@ -7325,29 +7613,60 @@ for (let i = 0; i < 14; i++) {   // 14 months
         const dot = document.getElementById(`evalDot_${i}_${n}`);
         if (dot) dot.classList.toggle('active', n === score);
       }
-      const badge = document.getElementById(`evalBadge_${i}`);
       const rated = score !== null && score !== undefined && !isNaN(score);
+      const badge = document.getElementById(`evalBadge_${i}`);
       if (badge) {
         badge.style.background = evalScoreColor(rated ? score : null, rated ? 1 : undefined);
         badge.style.color = rated ? '#fff' : 'var(--muted)';
         badge.style.transform = rated ? 'scale(1.04)' : 'scale(1)';
         badge.innerText = rated ? `${score} · ${evalRatingLabel(score)}` : 'Not rated';
       }
+      const emoji = document.getElementById(`evalEmoji_${i}`);
+      if (emoji) {
+        emoji.innerText = evalScoreEmoji(rated ? score : null);
+        emoji.classList.remove('pop'); void emoji.offsetWidth; emoji.classList.add('pop'); // restart the pop animation even on repeat taps of the same score
+      }
+      const fill = document.getElementById(`evalFill_${i}`);
+      if (fill) {
+        fill.style.width = rated ? `${score * 10}%` : '0%';
+        fill.style.background = rated ? evalScoreColor(score) : 'transparent';
+      }
       if (card) {
         card.classList.toggle('is-rated', rated);
         card.style.setProperty('--card-accent', rated ? evalScoreColor(score) : '');
+        card.classList.remove('celebrate');
+        if (rated && score >= 9) { void card.offsetWidth; card.classList.add('celebrate'); } // small sparkle reward for a Very Good/Excellent rating
       }
       evalUpdateProgress();
     }
     function evalUpdateProgress() {
       const cards = document.querySelectorAll('#evalTraineeRows .eval-trainee-card');
       if (!cards.length) return;
-      let rated = 0;
-      cards.forEach(c => { const s = document.getElementById(`evalScore_${c.dataset.index}`); if (s && s.value !== '') rated++; });
+      let rated = 0, sum = 0;
+      cards.forEach(c => {
+        const s = document.getElementById(`evalScore_${c.dataset.index}`);
+        if (s && s.value !== '') { rated++; sum += parseFloat(s.value); }
+      });
       const text = document.getElementById('evalProgressText');
       const fill = document.getElementById('evalProgressFill');
+      const pct = Math.round((rated / cards.length) * 100);
       if (text) text.innerText = `${rated} of ${cards.length} rated`;
-      if (fill) fill.style.width = `${Math.round((rated / cards.length) * 100)}%`;
+      if (fill) fill.style.width = `${pct}%`;
+      const ring = document.getElementById('evalRing'), ringPct = document.getElementById('evalRingPct');
+      if (ring) { ring.style.setProperty('--pct', pct); ring.style.setProperty('--ring-color', pct === 100 ? 'var(--accent)' : 'var(--accent-3)'); }
+      if (ringPct) ringPct.innerText = `${pct}%`;
+      const avgChip = document.getElementById('evalAvgChip');
+      if (avgChip) {
+        if (rated) {
+          const avg = sum / rated;
+          avgChip.style.display = 'inline-flex';
+          avgChip.style.background = evalScoreColor(avg, .16);
+          avgChip.style.color = evalScoreColor(avg);
+          avgChip.innerText = `⭐ Avg ${avg.toFixed(1)}`;
+        } else {
+          avgChip.style.display = 'none';
+        }
+      }
     }
     async function saveTrainingEval() {
       const sel = document.getElementById('evalBatchSelect');
@@ -7394,9 +7713,69 @@ for (let i = 0; i < 14; i++) {   // 14 months
       renderTrainingEvals();
       safeCall(renderModules); // so the matching Training Modules batch flips to "Completed" right away
     }
+    function evalComputeSummary(evals) {
+      const bands = { poor: 0, needs: 0, good: 0, verygood: 0, excellent: 0 };
+      let total = 0, sum = 0, retrain = 0;
+      evals.forEach(ev => {
+        const s = evalScoreOf(ev);
+        if (s === null || s === undefined || isNaN(s)) return;
+        total++; sum += Number(s);
+        if (ev.retrain) retrain++;
+        if (s <= 0) bands.poor++;
+        else if (s <= 4) bands.needs++;
+        else if (s <= 7) bands.good++;
+        else if (s <= 9) bands.verygood++;
+        else bands.excellent++;
+      });
+      return { total, avg: total ? sum / total : 0, retrain, bands };
+    }
+    // A quick-scan dashboard above the results table: four stat tiles (reusing
+    // the app's existing tile component) plus a CSS conic-gradient donut
+    // breaking the whole filtered list down by rating band, so a Safety Manager
+    // can see at a glance how a training batch (or a whole location) is trending
+    // without reading every row.
+    function renderEvalSummary() {
+      const wrap = document.getElementById('evalSummaryWrap');
+      if (!wrap) return;
+      const locFilter = document.getElementById('evalLocFilter') ? document.getElementById('evalLocFilter').value : '';
+      const evals = LocalDB.get('trainingEvals', []).filter(ev => !locFilter || ev.location === locFilter);
+      const { total, avg, retrain, bands } = evalComputeSummary(evals);
+      if (!total) { wrap.innerHTML = ''; return; }
+      const bandDefs = [
+        { key: 'poor', label: 'Poor', score: 0 },
+        { key: 'needs', label: 'Needs Improvement', score: 2 },
+        { key: 'good', label: 'Good', score: 6 },
+        { key: 'verygood', label: 'Very Good', score: 8.5 },
+        { key: 'excellent', label: 'Excellent', score: 10 },
+      ];
+      let angle = 0;
+      const stops = bandDefs.map(b => {
+        const pct = (bands[b.key] / total) * 100;
+        if (pct <= 0) return null;
+        const from = angle; angle += pct;
+        return `${evalScoreColor(b.score)} ${from}% ${angle}%`;
+      }).filter(Boolean).join(', ') || '#e6edf0 0% 100%';
+      const avgTile = avg >= 7 ? 'tile-good' : avg >= 5 ? 'tile-info' : 'tile-warn';
+      wrap.innerHTML = `
+        <div class="eval-summary-grid">
+          <div class="tile tile-info"><div class="tile-icon">🎓</div><div class="small">Total Evaluations</div><div class="big">${total}</div></div>
+          <div class="tile ${avgTile}"><div class="tile-icon">⭐</div><div class="small">Average Score</div><div class="big">${avg.toFixed(1)}<span style="font-size:13px;font-weight:700;opacity:.6">/10</span></div></div>
+          <div class="tile ${retrain ? 'tile-danger' : 'tile-good'}"><div class="tile-icon">🔁</div><div class="small">Needs Retraining</div><div class="big">${retrain}</div></div>
+          <div class="tile tile-good"><div class="tile-icon">🏆</div><div class="small">Excellent (10)</div><div class="big">${bands.excellent}</div></div>
+        </div>
+        <div class="eval-donut-wrap">
+          <div class="eval-donut" style="background:conic-gradient(${stops})">
+            <div class="eval-donut-center"><span class="eval-donut-avg" style="color:${evalScoreColor(avg)}">${avg.toFixed(1)}</span><span class="eval-donut-label">Avg / 10</span></div>
+          </div>
+          <div class="eval-donut-legend">
+            ${bandDefs.map(b => `<div class="eval-donut-legend-item"><span class="eval-donut-legend-dot" style="background:${evalScoreColor(b.score)}"></span>${b.label}<span class="eval-donut-legend-count">${bands[b.key]}</span></div>`).join('')}
+          </div>
+        </div>`;
+    }
     function renderTrainingEvals() {
       const locFilter = document.getElementById('evalLocFilter') ? document.getElementById('evalLocFilter').value : '';
       const evals = LocalDB.get('trainingEvals', []).filter(ev => !locFilter || ev.location === locFilter);
+      renderEvalSummary();
       const tbody = document.querySelector('#evalTable tbody');
       if (!tbody) return;
       tbody.innerHTML = evals.map(ev => {
@@ -8466,6 +8845,7 @@ TARSONS HSE Portal`;
     window.toggleApvDiagnostics = toggleApvDiagnostics;
     window.refreshAssemblyPointLocation = refreshAssemblyPointLocation;
     window.apvEnableCompass = apvEnableCompass;
+    window.apvRecenter = apvRecenter;
     window.openCalibrateModal = openCalibrateModal;
     window.closeCalibrateModal = closeCalibrateModal;
     window.captureCalibrationGPS = captureCalibrationGPS;
