@@ -2604,9 +2604,9 @@
     <div id="calibBox">
       <h4 style="margin-bottom:4px">📐 Calibrate GPS — <span id="calibFactoryLabel"></span></h4>
       <p class="small" style="color:var(--muted);text-transform:none;font-weight:500;margin-bottom:10px">
-        Walk to two different, clearly recognisable spots in this photo — a pillar, gate, or corner — then tap them here. This teaches the app exactly where "here" is in the photo.
+        Walk to three different, clearly recognisable spots in this photo — a pillar, gate, or corner — then tap them here. The third spot must be off to the side, not in a line with the first two: that's what lets the app tell left from right correctly on the photo.
       </p>
-      <div class="calib-step-badge" id="calibStepBadge">Step 1 of 2 — Point A</div>
+      <div class="calib-step-badge" id="calibStepBadge">Step 1 of 3 — Point A</div>
       <div style="text-align:center;margin-top:8px">
         <canvas id="calibCanvas" onclick="calibCanvasClick(event)" style="max-width:100%;border-radius:12px;box-shadow:var(--shadow-card);background:#eef3f4;cursor:crosshair"></canvas>
       </div>
@@ -4469,13 +4469,19 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
       const calibs = getAssemblyCalibrations();
       grid.innerHTML = FACTORY_LIST.map(f => {
         const hasPlan = !!plans[f];
-        const isCalibrated = !!calibs[f];
+        // BUGFIX: used to just check `!!calibs[f]`, which still showed
+        // "✅ GPS calibrated" for calibrations saved under the old 2-point
+        // method (which is mathematically ambiguous about mirroring — see
+        // the note above buildCalibTransform()). Those are now treated as
+        // needing a redo, same as buildCalibTransform() itself treats them.
+        const isCalibrated = !!(calibs[f] && Array.isArray(calibs[f].points) && calibs[f].points.length === 3);
+        const needsRedo = !!calibs[f] && !isCalibrated;
         const safe = f.replace(/'/g, "");
         return `
         <div class="factory-card" style="padding:14px">
           <h4 style="margin:0 0 4px">${escapeHtml(f)}</h4>
           ${hasPlan ? `<img src="${plans[f]}" style="width:100%;border-radius:8px;margin:6px 0" alt="Emergency plan — ${escapeHtml(f)}">` : '<p class="small" style="color:grey;margin:6px 0">No photo uploaded yet.</p>'}
-          ${hasPlan ? `<span class="calib-badge ${isCalibrated ? 'calib-badge-on' : 'calib-badge-off'}">${isCalibrated ? '✅ GPS calibrated — live position is precise' : '⚠️ Not calibrated — position will be approximate'}</span>` : ''}
+          ${hasPlan ? `<span class="calib-badge ${isCalibrated ? 'calib-badge-on' : 'calib-badge-off'}">${isCalibrated ? '✅ GPS calibrated — live position is precise' : needsRedo ? '⚠️ Needs recalibration (old 2-point method — please redo with the improved 3-point method)' : '⚠️ Not calibrated — position will be approximate'}</span>` : ''}
           <input type="file" accept="image/*" id="epFile_${cssId(f)}" style="margin-top:6px">
           <div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap">
             <button class="ghost-dark btn-sm" onclick="uploadEmergencyPlanPhoto('${safe}')">Upload</button>
@@ -4539,27 +4545,50 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
     }
 
     /* ---------- Geo math: real lat/lon <-> photo pixel space ----------
-       Two calibration points (each a real spot walked-to + the matching
-       pixel tapped on the photo) are enough to solve a similarity
-       transform (rotation + uniform scale, no distortion) that converts
+       Three calibration points (each a real spot walked-to + the matching
+       pixel tapped on the photo) determine a full 2D affine transform
+       (rotation + scale + skew, and — critically — MIRRORING) that converts
        any live lat/lon into the exact pixel on that photo. Distances are
        flattened to local metres with an equirectangular approximation,
-       which is accurate to centimetres over a single factory's footprint. */
+       which is accurate to centimetres over a single factory's footprint.
+       BUGFIX: this used to be a 2-point calibration solving only a rotation
+       + uniform-scale transform. That model is mathematically INCAPABLE of
+       representing every real photo correctly: two points fix a single
+       real-world direction, but whether "the direction 90° to that, in real
+       life" should map clockwise or counter-clockwise on the photo is a
+       coin flip a rotation-only transform can't resolve — and for an very
+       common shooting angle (camera facing further into the site, so
+       "away from camera" reads as "up" in the photo) it silently guessed
+       wrong. That's what caused the position to look right near the two
+       calibrated points but drift to the wrong side of the photo as you
+       walked away from that line, and made the compass/movement arrow
+       point in a mirrored direction. A third point — off to the side, not
+       in a line with the first two — fully removes that ambiguity and also
+       improves plain positional accuracy further from the calibrated spots. */
     function metersPerDeg(latRef) { return { lat: 111320, lon: 111320 * Math.cos(latRef * Math.PI / 180) }; }
     function buildCalibTransform(calib) {
-      const { p1, p2 } = calib;
+      if (!calib || !Array.isArray(calib.points) || calib.points.length !== 3) return null; // old 2-point calibrations can't be trusted — see note above; must be redone
+      const [p1, p2, p3] = calib.points;
       const m = metersPerDeg(p1.lat);
       const w2x = (p2.lon - p1.lon) * m.lon, w2y = (p2.lat - p1.lat) * m.lat;
-      const dPx = p2.x - p1.x, dPy = p2.y - p1.y;
-      const wMagSq = w2x * w2x + w2y * w2y;
-      if (wMagSq < 1e-6) return null; // the two real-world points coincide — can't derive scale/rotation
-      const kRe = (dPx * w2x + dPy * w2y) / wMagSq;
-      const kIm = (dPy * w2x - dPx * w2y) / wMagSq;
-      return { p1, m, kRe, kIm, scale: Math.sqrt(kRe * kRe + kIm * kIm) };
+      const w3x = (p3.lon - p1.lon) * m.lon, w3y = (p3.lat - p1.lat) * m.lat;
+      const det = w2x * w3y - w3x * w2y;
+      if (Math.abs(det) < 1e-6) return null; // the three real-world points are (numerically) collinear or coincide — no unique affine fit exists
+      const p2x = p2.x - p1.x, p2y = p2.y - p1.y;
+      const p3x = p3.x - p1.x, p3y = p3.y - p1.y;
+      // Solve the 2x2 matrix M (a,b,c,d) such that M·(p2-p1)_world = (p2-p1)_pixel
+      // and M·(p3-p1)_world = (p3-p1)_pixel — i.e. M = P · W⁻¹ for the two
+      // world/pixel vector pairs, worked out algebraically below.
+      const a = (p2x * w3y - p3x * w2y) / det;
+      const b = (p3x * w2x - p2x * w3x) / det;
+      const c = (p2y * w3y - p3y * w2y) / det;
+      const d = (p3y * w2x - p2y * w3x) / det;
+      const scale = Math.sqrt(Math.abs(a * d - b * c)); // area-based average linear scale — used for the accuracy-circle radius, since a/b/c/d can differ slightly per direction on a perspective photo
+      return { p1, m, a, b, c, d, scale };
     }
     function calibToPixel(t, lat, lon) {
       const dWx = (lon - t.p1.lon) * t.m.lon, dWy = (lat - t.p1.lat) * t.m.lat;
-      return { x: t.p1.x + (t.kRe * dWx - t.kIm * dWy), y: t.p1.y + (t.kIm * dWx + t.kRe * dWy) };
+      return { x: t.p1.x + (t.a * dWx + t.b * dWy), y: t.p1.y + (t.c * dWx + t.d * dWy) };
     }
 
     /* ---------- Calibration wizard (Admin) ---------- */
@@ -4583,8 +4612,9 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
     function closeCalibrateModal() { document.getElementById('calibModal').style.display = 'none'; calibState = null; }
     function calibSetStep(n) {
       const badge = document.getElementById('calibStepBadge'), hint = document.getElementById('calibHint'), btn = document.getElementById('calibCaptureBtn');
-      if (n === 1) { badge.innerText = 'Step 1 of 2 — Point A'; hint.innerText = 'Stand at a clearly visible spot in the factory (e.g. a pillar or gate), then tap the button below.'; btn.disabled = false; btn.innerText = '📍 Capture my GPS here'; }
-      else { badge.innerText = 'Step 2 of 2 — Point B'; hint.innerText = 'Now walk to a different spot, at least ~15 steps away, then tap the button below again.'; btn.disabled = false; btn.innerText = '📍 Capture my GPS here'; }
+      if (n === 1) { badge.innerText = 'Step 1 of 3 — Point A'; hint.innerText = 'Stand at a clearly visible spot in the factory (e.g. a pillar or gate), then tap the button below.'; btn.disabled = false; btn.innerText = '📍 Capture my GPS here'; }
+      else if (n === 2) { badge.innerText = 'Step 2 of 3 — Point B'; hint.innerText = 'Now walk to a different spot, at least ~15 steps away, then tap the button below again.'; btn.disabled = false; btn.innerText = '📍 Capture my GPS here'; }
+      else { badge.innerText = 'Step 3 of 3 — Point C'; hint.innerText = 'One more: walk to a THIRD spot that\u2019s off to the side — not in a straight line with A and B (e.g. if A and B were along one wall, pick C near the opposite wall or a corner). This is what lets the map tell left from right, so don\u2019t skip the sideways step.'; btn.disabled = false; btn.innerText = '📍 Capture my GPS here'; }
     }
     function captureCalibrationGPS() {
       if (!calibState) return;
@@ -4633,6 +4663,7 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
       calibState.pendingGeo = null;
       drawCalibMarkers();
       if (calibState.points.length === 1) calibSetStep(2);
+      else if (calibState.points.length === 2) calibSetStep(3);
       else finishCalibration();
     }
     function drawCalibMarkers() {
@@ -4641,45 +4672,59 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
       const ctx = canvas.getContext('2d');
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(calibState.img, 0, 0);
+      const labels = ['A', 'B', 'C'], colors = ['rgba(11,125,191,.95)', 'rgba(18,183,106,.95)', 'rgba(245,165,36,.95)'];
       calibState.points.forEach((p, i) => {
         ctx.save();
         ctx.beginPath(); ctx.arc(p.x, p.y, 13, 0, Math.PI * 2);
-        ctx.fillStyle = i === 0 ? 'rgba(11,125,191,.95)' : 'rgba(18,183,106,.95)'; ctx.fill();
+        ctx.fillStyle = colors[i]; ctx.fill();
         ctx.lineWidth = 3; ctx.strokeStyle = '#fff'; ctx.stroke();
         ctx.font = 'bold 13px Inter, sans-serif'; ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillText(i === 0 ? 'A' : 'B', p.x, p.y);
+        ctx.fillText(labels[i], p.x, p.y);
         ctx.restore();
       });
     }
+    function calibRestart(message) {
+      alert(message);
+      calibState.points = [];
+      drawCalibMarkers();
+      calibSetStep(1);
+    }
     function finishCalibration() {
-      const p1 = calibState.points[0], p2 = calibState.points[1];
-      const t = buildCalibTransform({ p1, p2 });
-      if (!t) {
-        alert('Points A and B were captured at (almost) the exact same real-world spot, so a scale/rotation can\u2019t be worked out. Please recalibrate from two spots further apart.');
-        calibState.points = [];
-        drawCalibMarkers();
-        calibSetStep(1);
-        return;
-      }
+      const [p1, p2, p3] = calibState.points;
+      const m = metersPerDeg(p1.lat);
+      const distM = (pa, pb) => Math.hypot((pb.lon - pa.lon) * m.lon, (pb.lat - pa.lat) * m.lat);
       // A short real-world distance between A and B means ordinary GPS noise
       // (a few metres either way) swings the computed rotation/scale wildly —
       // this is the most common reason a calibration "looks done" but the
       // live pin still lands nowhere near the right spot. 15m keeps that
       // noise down to a small, stable error.
-      const baselineM = Math.hypot((p2.lon - p1.lon) * t.m.lon, (p2.lat - p1.lat) * t.m.lat);
-      if (baselineM < 15) {
-        alert(`Points A and B are only about ${Math.round(baselineM)}m apart in real life — that's too close for an accurate result, since ordinary GPS noise gets amplified into a much bigger error on the photo. Please recalibrate from two spots at least 15-20m apart (further apart is more accurate).`);
-        calibState.points = [];
-        drawCalibMarkers();
-        calibSetStep(1);
+      const abM = distM(p1, p2);
+      if (abM < 15) {
+        calibRestart(`Points A and B are only about ${Math.round(abM)}m apart in real life — that's too close for an accurate result, since ordinary GPS noise gets amplified into a much bigger error on the photo. Please recalibrate from spots at least 15-20m apart (further apart is more accurate).`);
         return;
       }
-      saveAssemblyCalibration(calibState.factory, { p1, p2 });
+      // Point C needs real sideways spread off the A-B line — that's what
+      // lets the calibration tell left from right (see the BUGFIX note
+      // above buildCalibTransform() for why two points alone can't).
+      const w2x = (p2.lon - p1.lon) * m.lon, w2y = (p2.lat - p1.lat) * m.lat;
+      const w3x = (p3.lon - p1.lon) * m.lon, w3y = (p3.lat - p1.lat) * m.lat;
+      const cross = w2x * w3y - w3x * w2y;
+      const perpM = Math.abs(cross) / Math.hypot(w2x, w2y);
+      if (perpM < 8) {
+        calibRestart(`Point C is only about ${Math.round(perpM)}m to the side of the A-B line — that's too close to a straight line to reliably tell left from right on the photo. Please recalibrate, and for point C pick a spot clearly off to one side (e.g. near the opposite wall or a corner), not roughly between or beyond A and B.`);
+        return;
+      }
+      const t = buildCalibTransform({ points: [p1, p2, p3] });
+      if (!t) {
+        calibRestart('Those three points don\u2019t give enough spread to work out an accurate mapping. Please recalibrate from three spots that are clearly spread out (not close together, not in a line).');
+        return;
+      }
+      saveAssemblyCalibration(calibState.factory, { points: [p1, p2, p3] });
       logActivity('Assembly point GPS calibrated', calibState.factory);
       const factory = calibState.factory;
       closeCalibrateModal();
       renderEmergencyPlanUploadGrid();
-      alert('Calibration saved for ' + factory + '. The Assembly Point view will now show a precise, live-tracked location pin.');
+      alert('Calibration saved for ' + factory + '. The Assembly Point view will now show a precise, live-tracked location pin and a correctly-oriented direction arrow.');
     }
 
     /* ---------- Live viewer (public, no login) ---------- */
@@ -4885,15 +4930,16 @@ Please log in to the HSE Portal (Admin → Complaints/Suggestions) to update the
     // headingToCanvasAngle: converts a true-north compass heading into the on-canvas
     // rotation angle (radians, 0 = pointing along +x/right), routed through the same
     // lat/lon-to-pixel calibration transform as the pin itself, so the arrow is
-    // correct even on a photo that isn't drawn north-up. Falls back to a plain
-    // north-up assumption when the photo hasn't been calibrated yet.
+    // correct even on a photo that isn't drawn north-up (or is mirrored — see the
+    // BUGFIX note above buildCalibTransform()). Falls back to a plain north-up
+    // assumption when the photo hasn't been calibrated yet.
     function headingToCanvasAngle(headingDeg, transform) {
       const rad = headingDeg * Math.PI / 180;
       const dWx = Math.sin(rad), dWy = Math.cos(rad); // unit vector: east, north
       let vx, vy;
       if (transform) {
-        vx = transform.kRe * dWx - transform.kIm * dWy;
-        vy = transform.kIm * dWx + transform.kRe * dWy;
+        vx = transform.a * dWx + transform.b * dWy;
+        vy = transform.c * dWx + transform.d * dWy;
       } else {
         vx = dWx; vy = -dWy; // assume north-up photo (canvas y grows downward, so north = -y)
       }
